@@ -1,390 +1,307 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Nueva Predicción - IA{% endblock %}
+{% block title %}Nueva Predicción — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Estilos específicos del formulario de predicción */
+    .prediction-card {
+        background: var(--bg-surface);
+        border: 0.5px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+    .prediction-card-header {
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 0.5px solid var(--border-primary);
+    }
+    .form-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: var(--bg-primary);
+        border: 0.5px solid var(--border-secondary);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        font-family: var(--font-body);
+        font-size: 0.95rem;
+        cursor: pointer;
+        outline: none;
+        transition: border-color 0.2s;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888880' viewBox='0 0 16 16'%3E%3Cpath d='M4.646 5.646a.5.5 0 0 1 .708 0L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        padding-right: 2.5rem;
+    }
+    .form-select:focus {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(198, 241, 53, 0.08);
+    }
+    .form-select option {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+    }
+
+    .team-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+    }
+    @media (max-width: 600px) {
+        .team-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+        background: var(--bg-surface);
+        border: 0.5px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        padding: 2rem;
+        text-align: center;
+        margin-top: 1.5rem;
+    }
+    .progress-track-lg {
+        width: 100%;
+        height: 8px;
+        background: var(--border-primary);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+        margin: 1rem 0;
+    }
+    .progress-fill-lg {
+        height: 100%;
+        background: var(--accent-primary);
+        border-radius: var(--radius-full);
+        transition: width 0.3s ease;
+        width: 0%;
+    }
+    .progress-text {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    .progress-detail {
+        color: var(--text-tertiary);
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+    }
+
+    /* Spinner */
+    .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid var(--border-secondary);
+        border-top-color: var(--accent-primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Info feature cards */
+    .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    .feature-item {
+        text-align: center;
+        padding: 1.25rem;
+        background: var(--bg-surface);
+        border-radius: var(--radius-sm);
+    }
+    .feature-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .feature-item h5 { font-size: 0.9rem; font-weight: 500; color: var(--text-primary); margin-bottom: 0.35rem; }
+    .feature-item p { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card bg-primary text-white border-0 shadow-lg">
-                <div class="card-body">
-                    <div class="text-center">
-                        <h1 class="mb-3">
-                            <i class="fas fa-magic"></i> Predicción Inteligente
-                        </h1>
-                        <p class="mb-0 opacity-75">Selecciona los equipos y obtén predicciones precisas usando IA</p>
-                    </div>
-                </div>
-            </div>
+<div class="page-header">
+    <div class="section-tag">Predicción</div>
+    <h2>NUEVA PREDICCIÓN</h2>
+    <p class="page-subtitle">Selecciona liga y equipos para generar predicciones con IA</p>
+</div>
+
+<form method="post" id="predictionForm" style="max-width:700px;margin:0 auto;">
+    {% csrf_token %}
+
+    <!-- Liga -->
+    <div class="prediction-card">
+        <div class="prediction-card-header">Liga</div>
+        {{ form.league }}
+    </div>
+
+    <!-- Equipos -->
+    <div class="team-grid">
+        <div class="prediction-card">
+            <div class="prediction-card-header">Equipo Local</div>
+            {{ form.home_team }}
+        </div>
+        <div class="prediction-card">
+            <div class="prediction-card-header">Equipo Visitante</div>
+            {{ form.away_team }}
         </div>
     </div>
 
-    <!-- Formulario -->
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <form method="post" id="predictionForm">
-                {% csrf_token %}
-                
-                <!-- Liga -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-light">
-                        <h4 class="mb-0 text-primary">
-                            <i class="fas fa-trophy"></i> Liga
-                        </h4>
-                    </div>
-                    <div class="card-body">
-                        {{ form.league }}
-                        <small class="text-muted mt-2 d-block">
-                            Selecciona la liga de los equipos
-                        </small>
-                    </div>
-                </div>
+    <!-- Acción -->
+    <div style="text-align:center;margin-top:2rem;">
+        <button type="submit" class="btn btn-primary" id="predictBtn" style="font-size:1.05rem;padding:1rem 2.8rem;">Predecir</button>
 
-                <!-- Equipos -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-header bg-light">
-                                <h4 class="mb-0 text-primary">
-                                    <i class="fas fa-home"></i> Equipo Local
-                                </h4>
-                            </div>
-                            <div class="card-body">
-                                {{ form.home_team }}
-                                <small class="text-muted mt-2 d-block">
-                                    Equipo que juega en casa
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-header bg-light">
-                                <h4 class="mb-0 text-primary">
-                                    <i class="fas fa-plane"></i> Equipo Visitante
-                                </h4>
-                            </div>
-                            <div class="card-body">
-                                {{ form.away_team }}
-                                <small class="text-muted mt-2 d-block">
-                                    Equipo que juega fuera
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div id="loadingSpinner" style="display:none;margin-top:1.5rem;">
+            <div class="spinner"></div>
+            <p style="color:var(--text-secondary);">Iniciando análisis...</p>
+        </div>
 
-                <!-- Botón de Predicción -->
-                <div class="text-center mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg px-5 py-3" id="predictBtn" style="background-color: #00ABE4 !important; border-color: #00ABE4 !important; color: white !important;" onmouseover="this.style.backgroundColor='#0099CC' !important" onmouseout="this.style.backgroundColor='#00ABE4' !important">
-                        <i class="fas fa-brain"></i> Predecir
-                    </button>
-                    
-                    <div class="d-none mt-3" id="loadingSpinner">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Cargando...</span>
-                        </div>
-                        <p class="text-primary mt-2">Iniciando análisis...</p>
-                    </div>
-                    
-                    <!-- Barra de Progreso -->
-                    <div class="card border-0 shadow-sm mt-4 d-none" id="progressContainer">
-                        <div class="card-body text-center">
-                            <h5 class="text-primary mb-3">
-                                <i class="fas fa-brain"></i> Generando Predicciones
-                            </h5>
-                            <div class="progress mb-3" style="height: 25px;">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
-                                     id="progressBar" role="progressbar" style="width: 0%">
-                                    <span style="position: relative; z-index: 1;">0%</span>
-                                </div>
-                            </div>
-                            <div class="text-primary fw-bold" id="progressText">
-                                Iniciando...
-                            </div>
-                            <div class="text-muted small" id="progressDetails">
-                                0 de 10 tipos de predicción completados
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Errores del formulario -->
-                {% if form.errors %}
-                <div class="alert alert-danger mt-4">
-                    <h5><i class="fas fa-exclamation-triangle"></i> Errores en el formulario:</h5>
-                    <ul class="mb-0">
-                        {% for field, errors in form.errors.items %}
-                            {% for error in errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        {% endfor %}
-                    </ul>
-                </div>
-                {% endif %}
-            </form>
+        <div id="progressContainer" class="progress-wrap" style="display:none;">
+            <h5 style="font-size:0.95rem;margin-bottom:0.5rem;">Generando predicciones</h5>
+            <div class="progress-track-lg">
+                <div class="progress-fill-lg" id="progressBar"></div>
+            </div>
+            <p class="progress-text" id="progressText">Iniciando...</p>
+            <p class="progress-detail" id="progressDetails">0 de 10 tipos de predicción completados</p>
         </div>
     </div>
 
-    <!-- Información sobre el sistema -->
-    <div class="row mt-5">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0 text-primary"><i class="fas fa-info-circle"></i> Cómo Funciona la Predicción</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <div class="text-center">
-                                <i class="fas fa-chart-line fa-2x text-primary mb-2"></i>
-                                <h6 class="text-primary">Análisis Histórico</h6>
-                                <p class="text-muted small">Analiza los últimos partidos de cada equipo para identificar patrones de rendimiento.</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="text-center">
-                                <i class="fas fa-fist-raised fa-2x text-success mb-2"></i>
-                                <h6 class="text-success">Forma Reciente</h6>
-                                <p class="text-muted small">Evalúa la forma actual de cada equipo basándose en victorias, empates y derrotas recientes.</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="text-center">
-                                <i class="fas fa-handshake fa-2x text-info mb-2"></i>
-                                <h6 class="text-info">Enfrentamientos Directos</h6>
-                                <p class="text-muted small">Considera el historial de enfrentamientos entre los dos equipos específicos.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="text-center">
-                                <i class="fas fa-home fa-2x text-warning mb-2"></i>
-                                <h6 class="text-warning">Ventaja de Local</h6>
-                                <p class="text-muted small">Incluye el factor de jugar en casa, que tradicionalmente da ventaja al equipo local.</p>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="text-center">
-                                <i class="fas fa-calculator fa-2x text-danger mb-2"></i>
-                                <h6 class="text-danger">Algoritmo Avanzado</h6>
-                                <p class="text-muted small">Utiliza regresión lineal y machine learning para generar predicciones precisas.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    {% if form.errors %}
+    <div class="message message-error" style="margin-top:1.5rem;">
+        <ul style="list-style:none;padding:0;">
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</form>
+
+<!-- Info -->
+<div class="feature-list">
+    <div class="feature-item">
+        <div class="feature-icon">📊</div>
+        <h5>Análisis Histórico</h5>
+        <p>Patrones de rendimiento de cada equipo</p>
+    </div>
+    <div class="feature-item">
+        <div class="feature-icon">⚡</div>
+        <h5>Forma Reciente</h5>
+        <p>Victorias, empates y derrotas recientes</p>
+    </div>
+    <div class="feature-item">
+        <div class="feature-icon">🤝</div>
+        <h5>H2H Directo</h5>
+        <p>Historial de enfrentamientos entre ambos</p>
+    </div>
+    <div class="feature-item">
+        <div class="feature-icon">🏠</div>
+        <h5>Ventaja Local</h5>
+        <p>Factor estadístico de jugar en casa</p>
+    </div>
+    <div class="feature-item">
+        <div class="feature-icon">🧠</div>
+        <h5>Modelo Ensemble</h5>
+        <p>Poisson, regresión y machine learning</p>
     </div>
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% block extra_head_js %}
 <script>
+let isProcessing = false;
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Cargar equipos cuando se selecciona una liga
+    // Cargar equipos al seleccionar liga
     const leagueSelect = document.querySelector('select[name="league"]');
     if (leagueSelect) {
-        // Cargar equipos si ya hay una liga seleccionada
-        const currentLeagueId = leagueSelect.value;
-        console.log('Liga actual al cargar:', currentLeagueId);
-        if (currentLeagueId && currentLeagueId !== '' && currentLeagueId !== 'undefined') {
-            loadTeams(currentLeagueId);
-        }
-        
+        const currentId = leagueSelect.value;
+        if (currentId && currentId !== '' && currentId !== 'undefined') loadTeams(currentId);
+
         leagueSelect.addEventListener('change', function() {
-            const leagueId = this.value;
-            console.log('Liga seleccionada:', leagueId);
-            if (leagueId && leagueId !== '' && leagueId !== 'undefined') {
-                loadTeams(leagueId);
-            } else {
-                console.warn('Valor de liga inválido seleccionado:', leagueId);
-            }
+            if (this.value && this.value !== '' && this.value !== 'undefined') loadTeams(this.value);
         });
-    } else {
-        console.warn('No se encontró el select de liga');
     }
-    
-    // Variable para prevenir envíos duplicados
-    let isProcessing = false;
-    
-    // Manejar envío del formulario
+
     const form = document.getElementById('predictionForm');
     if (form) {
         form.addEventListener('submit', function(e) {
-            e.preventDefault(); // Prevenir envío normal
-            e.stopPropagation(); // Prevenir propagación
-            
-            // Prevenir envíos duplicados
-            if (isProcessing) {
-                console.log('Ya hay un procesamiento en curso');
-                return false;
-            }
-            
+            e.preventDefault(); e.stopPropagation();
+            if (isProcessing) return false;
             isProcessing = true;
-            
-            const submitBtn = document.getElementById('predictBtn');
-            const loadingSpinner = document.getElementById('loadingSpinner');
-            const progressContainer = document.getElementById('progressContainer');
-            
-            console.log('Iniciando predicción...');
-            
-            // Mostrar barra de progreso inmediatamente
-            if (submitBtn) submitBtn.style.display = 'none';
-            if (loadingSpinner) loadingSpinner.classList.remove('d-none');
-            if (progressContainer) {
-                progressContainer.classList.remove('d-none');
-                console.log('Barra de progreso mostrada');
-            }
-            
-            // Iniciar monitoreo de progreso ANTES de enviar el formulario
+
+            document.getElementById('predictBtn').style.display = 'none';
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('progressContainer').style.display = 'block';
+
             startProgressMonitoring();
-            
-            // Enviar formulario con AJAX de forma asíncrona
+
             const formData = new FormData(form);
-            
             fetch(form.action, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            }).then(response => {
-                console.log('Respuesta recibida');
-                return response.text();
-            }).catch(error => {
-                console.error('Error:', error);
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(r => r.text()).catch(err => {
+                console.error(err);
                 alert('Error procesando predicción');
-                if (submitBtn) submitBtn.style.display = 'block';
-                if (progressContainer) progressContainer.classList.add('d-none');
+                document.getElementById('predictBtn').style.display = 'inline-block';
+                document.getElementById('progressContainer').style.display = 'none';
                 isProcessing = false;
             });
-            
             return false;
         });
     }
-    
-    // Función para monitorear el progreso
-    function startProgressMonitoring() {
-        console.log('Iniciando monitoreo de progreso...');
-        const progressBar = document.getElementById('progressBar');
-        const progressText = document.getElementById('progressText');
-        const progressDetails = document.getElementById('progressDetails');
-        
-        let checkCount = 0;
-        const maxChecks = 120; // Máximo 60 segundos (120 × 500ms)
-        
-        const interval = setInterval(function() {
-            checkCount++;
-            
-            // Timeout de seguridad reducido a 30 segundos
-            if (checkCount > 30) { // 30 × 1000ms = 30 segundos
-                console.log('Timeout alcanzado, verificando resultados...');
-                clearInterval(interval);
-                // Intentar ir a resultados de todos modos
-                setTimeout(function() {
-                    window.location.href = '/ai/predict/result/';
-                }, 500);
-                return;
-            }
-            
-            fetch('/ai/api/prediction-progress/')
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Progreso:', data);
-                    const percentage = Math.round((data.current / data.total) * 100);
-                    
-                    // Actualizar barra de progreso
-                    if (progressBar) {
-                        progressBar.style.width = percentage + '%';
-                        const span = progressBar.querySelector('span');
-                        if (span) {
-                            span.textContent = percentage + '%';
-                        } else {
-                            progressBar.textContent = percentage + '%';
-                        }
-                    }
-                    
-                    // Actualizar texto
-                    if (progressText) {
-                        progressText.textContent = 'Procesando: ' + data.current_type;
-                    }
-                    
-                    // Actualizar detalles
-                    if (progressDetails) {
-                        progressDetails.textContent = data.current + ' de ' + data.total + ' tipos de predicción completados';
-                    }
-                    
-                    // Si está completado, detener el monitoreo y redirigir
-                    if (data.status === 'completed' || percentage >= 100 || data.current >= data.total) {
-                        console.log('Predicción completada, redirigiendo...');
-                        clearInterval(interval);
-                        
-                        // Actualizar a 100%
-                        if (progressBar) {
-                            progressBar.style.width = '100%';
-                            const span = progressBar.querySelector('span');
-                            if (span) span.textContent = '100%';
-                        }
-                        
-                        // Mostrar mensaje de completado
-                        if (progressText) {
-                            progressText.textContent = '¡Predicciones completadas!';
-                        }
-                        
-                        // Redirigir después de 500ms
-                        setTimeout(function() {
-                            window.location.href = '/ai/predict/result/';
-                        }, 500);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error obteniendo progreso:', error);
-                });
-        }, 2000); // Consultar cada 2 segundos para reducir carga
-    }
 });
 
-function loadTeams(leagueId) {
-    // Validar que leagueId no sea undefined o vacío
-    if (!leagueId || leagueId === 'undefined') {
-        console.warn('loadTeams llamado con leagueId inválido:', leagueId);
-        return;
-    }
-    
-    console.log('Cargando equipos para liga ID:', leagueId);
-    fetch(`/ai/api/teams/${leagueId}/`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.teams) {
-                updateTeamSelect('home_team', data.teams);
-                updateTeamSelect('away_team', data.teams);
-            }
-        })
-        .catch(error => {
-            console.error('Error cargando equipos:', error);
-        });
+function startProgressMonitoring() {
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const progressDetails = document.getElementById('progressDetails');
+    let checks = 0;
+
+    const interval = setInterval(function() {
+        checks++;
+        if (checks > 30) { clearInterval(interval); setTimeout(() => { window.location.href = '/ai/predict/result/'; }, 500); return; }
+
+        fetch('/ai/api/prediction-progress/')
+            .then(r => r.json())
+            .then(data => {
+                const pct = Math.round((data.current / data.total) * 100);
+                if (progressBar) progressBar.style.width = pct + '%';
+                if (progressText) progressText.textContent = 'Procesando: ' + data.current_type;
+                if (progressDetails) progressDetails.textContent = data.current + ' de ' + data.total + ' completados';
+
+                if (data.status === 'completed' || pct >= 100 || data.current >= data.total) {
+                    clearInterval(interval);
+                    if (progressBar) progressBar.style.width = '100%';
+                    if (progressText) progressText.textContent = '¡Predicciones completadas!';
+                    setTimeout(() => { window.location.href = '/ai/predict/result/'; }, 500);
+                }
+            })
+            .catch(err => console.error('Error progreso:', err));
+    }, 2000);
 }
 
-function updateTeamSelect(selectName, teams) {
-    const select = document.querySelector(`select[name="${selectName}"]`);
-    if (select) {
-        select.innerHTML = '<option value="">Seleccionar equipo...</option>';
-        
-        teams.forEach(team => {
-            const option = document.createElement('option');
-            option.value = team;
-            option.textContent = team;
-            select.appendChild(option);
-        });
-    }
+function loadTeams(leagueId) {
+    if (!leagueId || leagueId === 'undefined') return;
+    fetch('/ai/api/teams/' + leagueId + '/')
+        .then(r => r.json())
+        .then(data => { if (data.teams) { updateSelect('home_team', data.teams); updateSelect('away_team', data.teams); } })
+        .catch(err => console.error('Error equipos:', err));
+}
+
+function updateSelect(name, teams) {
+    const sel = document.querySelector('select[name="' + name + '"]');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Seleccionar equipo...</option>';
+    teams.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
 }
 </script>
 {% endblock %}

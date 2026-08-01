@@ -2,6 +2,7 @@
 Servicios para interactuar con Betfair Exchange API
 """
 
+import os
 import betfairlightweight
 from betfairlightweight import APIClient
 from betfairlightweight.filters import market_filter
@@ -39,29 +40,64 @@ class BetfairAPIService:
         
     def login(self) -> bool:
         """
-        Inicia sesión en Betfair
+        Inicia sesión en Betfair usando certificados SSL para robot login
+        
+        Para sandbox: usa credenciales normales (sin certificado)
+        Para producción: usa certificados SSL de /etc/betfair/certs/
         
         Returns:
             bool: True si el login fue exitoso, False en caso contrario
         """
         try:
-            # Configurar cliente
-            self.client = APIClient(
-                username=self.username,
-                password=self.password,
-                app_key=self.app_key,
-                certs='',  # Certificados para producción
-                locale='es',  # Idioma español
-                light_weight=True
-            )
-            
-            # Usar sandbox si está configurado
             if self.sandbox:
-                # Para sandbox, usar endpoint de prueba
-                self.client.login()
+                # Sandbox - no requiere certificados SSL
+                self.client = APIClient(
+                    username=self.username,
+                    password=self.password,
+                    app_key=self.app_key,
+                    locale='es',
+                    light_weight=True
+                )
+                logger.info("Configurado cliente Betfair para SANDBOX")
+                
             else:
-                self.client.login()
+                # Producción - requiere certificados SSL para robot login
+                cert_dir = getattr(settings, 'BETFAIR_CERT_DIR', '/etc/betfair/certs/')
+                cert_path = getattr(settings, 'BETFAIR_CERT_PATH', '')
+                key_path = getattr(settings, 'BETFAIR_KEY_PATH', '')
+                
+                if cert_path and key_path and os.path.exists(cert_path) and os.path.exists(key_path):
+                    # Usar certificados individuales
+                    logger.info(f"Usando certificados individuales: {cert_path}, {key_path}")
+                    cert_files = (cert_path, key_path)
+                    self.client = APIClient(
+                        username=self.username,
+                        password=self.password,
+                        app_key=self.app_key,
+                        cert_files=cert_files,  # Tupla (cert_path, key_path)
+                        locale='es',
+                        light_weight=True
+                    )
+                elif os.path.exists(cert_dir):
+                    # Usar directorio de certificados
+                    logger.info(f"Usando directorio de certificados: {cert_dir}")
+                    self.client = APIClient(
+                        username=self.username,
+                        password=self.password,
+                        app_key=self.app_key,
+                        certs=cert_dir,  # Directorio con certificados
+                        locale='es',
+                        light_weight=True
+                    )
+                else:
+                    logger.error(f"No se encontraron certificados SSL en {cert_dir}")
+                    logger.error("Se requieren certificados para robot login en producción")
+                    return False
+                
+                logger.info("Configurado cliente Betfair para PRODUCCIÓN con certificados SSL")
             
+            # Intentar login
+            self.client.login()
             logger.info("Login exitoso en Betfair")
             return True
             

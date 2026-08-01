@@ -1,167 +1,61 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Panel de Administración de Usuarios{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/cuentas/admin.css' %}">
-{% endblock %}
+{% block title %}Panel de Usuarios — Predicta{% endblock %}
 
 {% block content %}
-<div class="admin-container">
-    <!-- Header del Panel -->
-    <div class="admin-header dark-bg">
-        <h1>👥 Panel de Administración de Usuarios</h1>
-        <p>Gestiona todos los usuarios del sistema desde aquí</p>
-    </div>
-
-    <!-- Estadísticas -->
-    <div class="admin-stats">
-        <div class="stat-card light-bg">
-            <div class="stat-number">{{ total_usuarios }}</div>
-            <div class="stat-label">Total Usuarios</div>
-        </div>
-        <div class="stat-card light-bg">
-            <div class="stat-number">{{ usuarios|length }}</div>
-            <div class="stat-label">En esta página</div>
-        </div>
-        <div class="stat-card light-bg">
-            <div class="stat-number">{{ usuarios|length }}</div>
-            <div class="stat-label">Usuarios Activos</div>
-        </div>
-    </div>
-
-    <!-- Acciones Principales -->
-    <div class="admin-actions">
-        <a href="{% url 'cuentas:crear_usuario' %}" class="btn-admin btn-success-admin">
-            ➕ Crear Nuevo Usuario
-        </a>
-        <a href="{% url 'cuentas:dashboard' %}" class="btn-admin btn-primary-admin">
-            🏠 Volver al Dashboard
-        </a>
-    </div>
-
-    <!-- Búsqueda -->
-    <div class="search-container light-bg">
-        <form method="get" class="search-form">
-            <input type="text" name="q" class="search-input" 
-                   placeholder="Buscar por nombre, apellido o email..." 
-                   value="{{ query }}">
-            <button type="submit" class="btn-admin btn-primary-admin">
-                🔍 Buscar
-            </button>
-            {% if query %}
-                <a href="/panel_usuarios/" class="btn-admin btn-warning-admin">
-                    ❌ Limpiar
-                </a>
-            {% endif %}
-        </form>
-    </div>
-
-    <!-- Tabla de Usuarios -->
-    <div class="users-table-container light-bg">
-        {% if usuarios %}
-            <table class="users-table">
-                <thead>
-                    <tr>
-                        <th>Usuario</th>
-                        <th>Email</th>
-                        <th>Estado</th>
-                        <th>Fecha Registro</th>
-                        <th>Último Acceso</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for usuario in usuarios %}
-                        <tr>
-                            <td>
-                                <div class="user-info">
-                                    <div class="user-avatar">
-                                        {{ usuario.first_name|first|upper }}{{ usuario.last_name|first|upper }}
-                                    </div>
-                                    <div class="user-details">
-                                        <h4>{{ usuario.get_full_name }}</h4>
-                                        <p>@{{ usuario.username }}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>{{ usuario.email }}</td>
-                            <td>
-                                {% if usuario.is_active %}
-                                    <span class="status-badge status-active">Activo</span>
-                                {% else %}
-                                    <span class="status-badge status-inactive">Inactivo</span>
-                                {% endif %}
-                                {% if usuario.is_staff %}
-                                    <span class="status-badge status-staff">Staff</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ usuario.fecha_registro|date:"d/m/Y H:i" }}</td>
-                            <td>
-                                {% if usuario.last_login %}
-                                    {{ usuario.last_login|date:"d/m/Y H:i" }}
-                                {% else %}
-                                    <span style="color: #6c757d;">Nunca</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="action-buttons">
-                                    <a href="{% url 'cuentas:editar_usuario' usuario.id %}" 
-                                       class="btn-action btn-edit" title="Editar Usuario">
-                                        ✏️
-                                    </a>
-                                    <a href="{% url 'cuentas:cambiar_contraseña' usuario.id %}" 
-                                       class="btn-action btn-password" title="Cambiar Contraseña">
-                                        🔒
-                                    </a>
-                                    <a href="{% url 'cuentas:eliminar_usuario' usuario.id %}" 
-                                       class="btn-action btn-delete" title="Eliminar Usuario">
-                                        🗑️
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-            <!-- Paginación -->
-            {% if usuarios.has_other_pages %}
-                <div class="pagination-container">
-                    <div class="pagination">
-                        {% if usuarios.has_previous %}
-                            <a href="?page=1{% if query %}&q={{ query }}{% endif %}">« Primera</a>
-                            <a href="?page={{ usuarios.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">‹ Anterior</a>
-                        {% endif %}
-
-                        {% for num in usuarios.paginator.page_range %}
-                            {% if usuarios.number == num %}
-                                <span class="current">{{ num }}</span>
-                            {% elif num > usuarios.number|add:'-3' and num < usuarios.number|add:'3' %}
-                                <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">{{ num }}</a>
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if usuarios.has_next %}
-                            <a href="?page={{ usuarios.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Siguiente ›</a>
-                            <a href="?page={{ usuarios.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">Última »</a>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endif %}
-        {% else %}
-            <div style="text-align: center; padding: 60px; color: #6c757d;">
-                <h3>No se encontraron usuarios</h3>
-                <p>{% if query %}No hay usuarios que coincidan con tu búsqueda.{% else %}Aún no hay usuarios registrados.{% endif %}</p>
-                {% if not query %}
-                    <a href="{% url 'cuentas:crear_usuario' %}" class="btn-admin btn-success-admin" style="margin-top: 20px;">
-                        ➕ Crear Primer Usuario
-                    </a>
-                {% endif %}
-            </div>
-        {% endif %}
-    </div>
+<div class="page-header">
+    <div class="section-tag">Administración</div>
+    <h2>PANEL DE USUARIOS</h2>
+    <p class="page-subtitle">Gestiona todos los usuarios del sistema</p>
 </div>
-{% endblock %}
 
+<div class="actions-bar" style="margin-bottom:2rem;">
+    <a href="{% url 'cuentas:crear_usuario' %}" class="btn btn-primary">Crear Usuario</a>
+</div>
+
+{% if page_obj.object_list %}
+<div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+        <thead>
+            <tr style="border-bottom:1px solid var(--border-primary);text-align:left;">
+                <th style="padding:0.75rem 0.5rem;color:var(--text-secondary);font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;">Usuario</th>
+                <th style="padding:0.75rem 0.5rem;color:var(--text-secondary);font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;">Email</th>
+                <th style="padding:0.75rem 0.5rem;color:var(--text-secondary);font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;">Estado</th>
+                <th style="padding:0.75rem 0.5rem;color:var(--text-secondary);font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;">Registro</th>
+                <th style="padding:0.75rem 0.5rem;color:var(--text-secondary);font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for usuario in page_obj.object_list %}
+            <tr style="border-bottom:0.5px solid var(--border-primary);">
+                <td style="padding:0.75rem 0.5rem;color:var(--text-primary);">
+                    {{ usuario.get_full_name|default:usuario.username }}
+                    {% if usuario.is_superuser %}<span style="color:var(--accent-primary);font-size:0.7rem;font-weight:500;"> SUPERADMIN</span>{% endif %}
+                </td>
+                <td style="padding:0.75rem 0.5rem;color:var(--text-secondary);">{{ usuario.email }}</td>
+                <td style="padding:0.75rem 0.5rem;">
+                    {% if usuario.is_active %}
+                        <span class="status-active">Activo</span>
+                    {% else %}
+                        <span class="status-inactive">Inactivo</span>
+                    {% endif %}
+                </td>
+                <td style="padding:0.75rem 0.5rem;color:var(--text-secondary);">{{ usuario.fecha_registro|date:"d/m/Y" }}</td>
+                <td style="padding:0.75rem 0.5rem;">
+                    <a href="{% url 'cuentas:editar_usuario' user_id=usuario.id %}" class="btn btn-secondary btn-sm" style="font-size:0.78rem;margin-right:0.35rem;">Editar</a>
+                    {% if usuario != request.user %}
+                    <a href="{% url 'cuentas:eliminar_usuario' user_id=usuario.id %}" class="btn btn-secondary btn-sm" style="font-size:0.78rem;color:var(--danger);border-color:rgba(255,107,107,0.25);">Eliminar</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div style="text-align:center;padding:3rem;color:var(--text-secondary);">
+    <p>No hay usuarios registrados.</p>
+</div>
+{% endif %}
+{% endblock %}

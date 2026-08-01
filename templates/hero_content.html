@@ -1,0 +1,183 @@
+<h1>APUESTA CON<br><em>EDGE REAL.</em><br>NO CON INTUICIÓN.</h1>
+    <p class="hero-sub">Predicciones 1X2 con probabilidades calibradas estadísticamente. Para apostadores en BetPlay, Wplay y Rushbet.</p>
+    
+    <div class="hero-cta">
+        {% if user.is_authenticated %}
+            <a href="{% url 'prediction_form' %}" class="btn-primary">Hacer Predicción</a>
+            <a href="{% url 'dashboard' %}" class="btn-ghost">Ver Dashboard</a>
+        {% else %}
+            <a href="{% url 'registro' %}" class="btn-primary">Crear Cuenta Gratis</a>
+            <a href="{% url 'login' %}" class="btn-ghost">Ingresar</a>
+        {% endif %}
+    </div>
+    
+    <div class="stats-bar">
+        <div class="stat">
+            <div class="stat-num">73%</div>
+            <div class="stat-label">Accuracy promedio</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">12K+</div>
+            <div class="stat-label">Partidos analizados</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">+18%</div>
+            <div class="stat-label">ROI histórico</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">38</div>
+            <div class="stat-label">Ligas cubiertas</div>
+        </div>
+    </div>
+</div>
+
+<!-- COMO FUNCIONA -->
+<section id="como">
+    <div class="section-tag">El método</div>
+    <h2>DEL DATO A<br>LA APUESTA</h2>
+    <p class="section-sub">Nuestra IA procesa señales que el ojo humano no puede capturar a tiempo.</p>
+    
+    <div class="steps">
+        <div class="step">
+            <div class="step-num">01</div>
+            <div class="step-icon">📡</div>
+            <h3>Datos en tiempo real</h3>
+            <p>Ingestamos estadísticas de forma, lesiones, h2h, cuotas de mercado y clima de 38 ligas.</p>
+        </div>
+        <div class="step">
+            <div class="step-num">02</div>
+            <div class="step-icon">🧠</div>
+            <h3>Modelo predictivo</h3>
+            <p>Ensemble de modelos entrenado con +150K partidos. Genera probabilidades calibradas por Brier Score.</p>
+        </div>
+        <div class="step">
+            <div class="step-num">03</div>
+            <div class="step-icon">⚡</div>
+            <h3>Edge detection</h3>
+            <p>Comparamos nuestras probabilidades vs. cuotas del mercado. Solo publicamos cuando hay edge real (>5%).</p>
+        </div>
+        <div class="step">
+            <div class="step-num">04</div>
+            <div class="step-icon">📲</div>
+            <h3>Delivery instantáneo</h3>
+            <p>Recibes la predicción vía web + Telegram/WhatsApp. Tú apuestas donde quieras.</p>
+        </div>
+    </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+    <div class="section-tag">Planes</div>
+    <h2>ELIGE TU<br>NIVEL DE EDGE</h2>
+    <p class="section-sub">Sin compromisos. Cancela cuando quieras. Primer mes con garantía de satisfacción.</p>
+    
+    <div class="plans">
+        <!-- Pay-per-pred -->
+        <div class="plan">
+            <div class="plan-name">Pay-per-tip</div>
+            <div class="plan-price">$0.50 <span>/ predicción</span></div>
+            <div class="plan-desc">Prueba sin comprometerte. Paga solo lo que usas.</div>
+            <ul class="plan-features">
+                <li class="active">1 predicción a la vez</li>
+                <li class="active">Probabilidades 1X2</li>
+                <li class="active">Confianza del modelo</li>
+                <li>Sin notificaciones</li>
+                <li>Sin historial</li>
+            </ul>
+            {% if user.is_authenticated %}
+                <a href="{% url 'prediction_form' %}" class="plan-cta">Comprar Ahora</a>
+            {% else %}
+                <a href="{% url 'registro' %}" class="plan-cta">Regístrate Gratis</a>
+            {% endif %}
+        </div>
+        
+        <!-- Bronze -->
+        <div class="plan">
+            <div class="plan-name">Bronze</div>
+            <div class="plan-price">$9.99 <span>/ mes</span></div>
+            <div class="plan-desc">Para apostadores ocasionales que quieren edge consistente.</div>
+            <ul class="plan-features">
+                <li class="active">10 predicciones / mes</li>
+                <li class="active">Probabilidades 1X2</li>
+                <li class="active">Confianza del modelo</li>
+                <li class="active">Acceso web</li>
+                <li>Sin notificaciones push</li>
+            </ul>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="plan-cta">Actualizar Plan</a>
+            {% else %}
+                <a href="{% url 'registro' %}" class="plan-cta">Suscribirse</a>
+            {% endif %}
+        </div>
+        
+        <!-- Silver FEATURED -->
+        <div class="plan featured">
+            <div class="plan-tag">Más popular</div>
+            <div class="plan-name">Silver</div>
+            <div class="plan-price">$19.99 <span>/ mes</span></div>
+            <div class="plan-desc">El plan preferido de apostadores serios en BetPlay y Wplay.</div>
+            <ul class="plan-features">
+                <li class="active">Predicciones ilimitadas</li>
+                <li class="active">Probabilidades 1X2 + edge</li>
+                <li class="active">Confianza del modelo</li>
+                <li class="active">Notificaciones Telegram</li>
+                <li class="active">Historial de accuracy</li>
+            </ul>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="plan-cta">Suscribirse →</a>
+            {% else %}
+                <a href="{% url 'registro' %}" class="plan-cta">Suscribirse →</a>
+            {% endif %}
+        </div>
+        
+        <!-- Gold -->
+        <div class="plan">
+            <div class="plan-name">Gold</div>
+            <div class="plan-price">$49.99 <span>/ mes</span></div>
+            <div class="plan-desc">Para traders y desarrolladores que quieren integrar el modelo.</div>
+            <ul class="plan-features">
+                <li class="active">Todo lo de Silver</li>
+                <li class="active">Acceso API REST</li>
+                <li class="active">Análisis avanzado</li>
+                <li class="active">Notificaciones WhatsApp</li>
+                <li class="active">Soporte prioritario</li>
+            </ul>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="plan-cta">Suscribirse</a>
+            {% else %}
+                <a href="{% url 'registro' %}" class="plan-cta">Suscribirse</a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <p style="text-align:center;margin-top:1.5rem;font-size:0.78rem;color:var(--dim);">
+        💳 Aceptamos Nequi · Daviplata · PSE · Tarjeta · USDT &nbsp;|&nbsp; 🇨🇴 Precios en USD — equivalente en COP al momento del pago
+    </p>
+</section>
+
+<!-- FOOTER CTA -->
+<div class="footer-cta">
+    <h2>EMPIEZA HOY.<br>PRIMERA SEMANA GRATIS.</h2>
+    <p>Sin tarjeta. Sin compromisos. Valida el edge tú mismo.</p>
+    {% if user.is_authenticated %}
+        <a href="{% url 'prediction_form' %}" class="btn-primary" style="font-size:1rem;padding:1rem 2.5rem;">Hacer Predicción →</a>
+    {% else %}
+        <a href="{% url 'registro' %}" class="btn-primary" style="font-size:1rem;padding:1rem 2.5rem;">Crear Cuenta Gratis →</a>
+    {% endif %}
+</div>
+
+<footer>
+    <div class="logo" style="font-size:1.2rem;">PREDIC<span>TA</span></div>
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+        <a href="#">Términos</a>
+        <a href="#">Privacidad</a>
+        <a href="#">Juego responsable</a>
+        <a href="#">Contacto</a>
+    </div>
+    <div>© 2026 Predicta.com.co · +18 · Juega con responsabilidad</div>
+</footer>
+
+<a href="https://t.me/TUCANAL" class="tg-float" target="_blank" title="Canal Telegram">✈</a>
+
+</body>
+</html>

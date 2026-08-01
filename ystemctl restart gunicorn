@@ -1,0 +1,23 @@
+[0;1;32m●[0m gunicorn.service - Gunicorn daemon for Predicta
+     Loaded: loaded (]8;;file://srv691697/etc/systemd/system/gunicorn.service/etc/systemd/system/gunicorn.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: [0;1;32mactive (running)[0m since Thu 2025-10-30 02:11:43 UTC; 3min 55s ago
+   Main PID: 1788049 (gunicorn)
+      Tasks: 4[0;38;5;245m (limit: 4685)[0m
+     Memory: 458.1M
+        CPU: 24.735s
+     CGroup: /system.slice/gunicorn.service
+             ├─[0;38;5;245m1788049 /var/www/predicta.com.co/venv/bin/python3 /var/www/predicta.com.co/venv/bin/gunicorn --config /var/www/predicta.com.co/gunicorn_config.py betting_bot.wsgi:application[0m
+             ├─[0;38;5;245m1788051 /var/www/predicta.com.co/venv/bin/python3 /var/www/predicta.com.co/venv/bin/gunicorn --config /var/www/predicta.com.co/gunicorn_config.py betting_bot.wsgi:application[0m
+             ├─[0;38;5;245m1788052 /var/www/predicta.com.co/venv/bin/python3 /var/www/predicta.com.co/venv/bin/gunicorn --config /var/www/predicta.com.co/gunicorn_config.py betting_bot.wsgi:application[0m
+             └─[0;38;5;245m1788053 /var/www/predicta.com.co/venv/bin/python3 /var/www/predicta.com.co/venv/bin/gunicorn --config /var/www/predicta.com.co/gunicorn_config.py betting_bot.wsgi:application[0m
+
+Oct 30 02:14:01 srv691697 gunicorn[1788053]: INFO ⏰ Fuera de rango (descartado): West Ham United vs Burnley - diff 228.8h, kickoff 2025-11-08 15:00:00+00:00 UTC
+Oct 30 02:14:01 srv691697 gunicorn[1788053]: INFO ⏰ Fuera de rango (descartado): Everton vs Fulham - diff 228.8h, kickoff 2025-11-08 15:00:00+00:00 UTC
+Oct 30 02:14:01 srv691697 gunicorn[1788053]: INFO ⏰ Fuera de rango (descartado): Sunderland vs Arsenal - diff 231.3h, kickoff 2025-11-08 17:30:00+00:00 UTC
+Oct 30 02:14:01 srv691697 gunicorn[1788053]: INFO ⏰ Fuera de rango (descartado): Chelsea vs Wolverhampton Wanderers - diff 233.8h, kickoff 2025-11-08 20:00:00+00:00 UTC
+Oct 30 02:14:01 srv691697 gunicorn[1788053]: INFO ⏰ Fuera de rango (descartado): Aston Villa vs Bournemouth - diff 251.8h, kickoff 2025-11-09 14:00:00+00:00 UTC
+Oct 30 02:14:01 srv691697 gunicorn[1788053]: INFO ⏰ Fuera de rango (descartado): Brentford vs Newcastle United - diff 251.8h, kickoff 2025-11-09 14:00:00+00:00 UTC
+Oct 30 02:14:01 srv691697 gunicorn[1788053]: INFO ⏰ Fuera de rango (descartado): Crystal Palace vs Brighton and Hove Albion - diff 251.8h, kickoff 2025-11-09 14:00:00+00:00 UTC
+Oct 30 02:14:01 srv691697 gunicorn[1788053]: INFO ⏰ Fuera de rango (descartado): Nottingham Forest vs Leeds United - diff 251.8h, kickoff 2025-11-09 14:00:00+00:00 UTC
+Oct 30 02:14:01 srv691697 gunicorn[1788053]: INFO ⏰ Fuera de rango (descartado): Manchester City vs Liverpool - diff 254.3h, kickoff 2025-11-09 16:30:00+00:00 UTC
+Oct 30 02:14:01 srv691697 gunicorn[1788053]: INFO 📊 Total partidos procesados: 0 de 20 obtenidos

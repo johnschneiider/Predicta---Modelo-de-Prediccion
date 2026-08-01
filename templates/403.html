@@ -13,76 +13,66 @@
         text-align: center;
         padding: 20px;
     }
-    
     .error-card {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        padding: 40px;
+        background: var(--bg-surface);
+        border: 0.5px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        padding: 2.5rem 2rem;
         max-width: 500px;
         width: 100%;
     }
-    
     .error-icon {
         font-size: 4rem;
-        color: #dc3545;
-        margin-bottom: 20px;
+        margin-bottom: 1.25rem;
     }
-    
     .error-title {
-        color: #2c3e50;
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 15px;
+        color: var(--text-primary);
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
     }
-    
     .error-message {
-        color: #6c757d;
-        font-size: 1.1rem;
-        margin-bottom: 30px;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
         line-height: 1.6;
+        margin-bottom: 1.5rem;
     }
-    
     .error-actions {
         display: flex;
-        gap: 15px;
+        gap: 0.75rem;
         justify-content: center;
         flex-wrap: wrap;
     }
-    
     .btn-error {
-        padding: 12px 25px;
+        padding: 0.75rem 1.5rem;
         border: none;
-        border-radius: 8px;
-        font-weight: 600;
+        border-radius: var(--radius-sm);
+        font-weight: 500;
+        font-size: 0.9rem;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        transition: all 0.3s ease;
-        cursor: pointer;
+        gap: 0.5rem;
+        transition: all 0.2s;
     }
-    
+    .btn-error:hover {
+        transform: translateY(-1px);
+    }
     .btn-primary-error {
-        background: var(--azul-electrico);
-        color: white;
+        background: var(--accent-primary);
+        color: var(--btn-primary-text);
     }
-    
     .btn-primary-error:hover {
-        background: #0056B3;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 123, 255, 0.3);
-        color: white;
+        background: var(--accent-secondary);
+        box-shadow: var(--shadow-accent);
     }
-    
     .btn-secondary-error {
-        background: #6c757d;
-        color: white;
+        background: var(--bg-surface-alt);
+        border: 0.5px solid var(--border-secondary);
+        color: var(--text-secondary);
     }
-    
     .btn-secondary-error:hover {
-        background: #5a6268;
-        color: white;
+        background: rgba(255,255,255,0.03);
+        border-color: rgba(255,255,255,0.25);
     }
 </style>
 {% endblock %}

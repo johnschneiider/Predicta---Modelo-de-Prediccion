@@ -1,89 +1,59 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Editar Usuario - {{ usuario.get_full_name }}{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/cuentas/admin.css' %}">
-{% endblock %}
+{% block title %}Editar Usuario — {{ usuario.get_full_name }}{% endblock %}
 
 {% block content %}
-<div class="admin-container">
-    <div class="form-container">
-        <div class="form-header">
-            <h2>✏️ Editar Usuario</h2>
-            <p>Modifica los datos de {{ usuario.get_full_name }}</p>
+<div class="page-header">
+    <div class="section-tag">Administración</div>
+    <h2>EDITAR USUARIO</h2>
+    <p class="page-subtitle">Modifica los datos de {{ usuario.get_full_name }}</p>
+</div>
+
+<div class="auth-form">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+            <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" class="form-control" value="{{ form.email.value|default:'' }}">
+            {% if form.email.errors %}
+                <p style="color:var(--danger);font-size:0.8rem;margin-top:0.25rem;">{{ form.email.errors.0 }}</p>
+            {% endif %}
         </div>
 
-        <form method="post">
-            {% csrf_token %}
-            
+        <div class="form-row">
             <div class="form-group">
-                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
-                {{ form.email }}
-                {% if form.email.errors %}
-                    <div style="color: #dc3545; font-size: 0.9rem; margin-top: 5px;">
-                        {{ form.email.errors.0 }}
-                    </div>
-                {% endif %}
+                <label for="{{ form.first_name.id_for_label }}" class="form-label">Nombre</label>
+                <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}" class="form-control" value="{{ form.first_name.value|default:'' }}">
             </div>
-
             <div class="form-group">
-                <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
-                {{ form.first_name }}
-                {% if form.first_name.errors %}
-                    <div style="color: #dc3545; font-size: 0.9rem; margin-top: 5px;">
-                        {{ form.first_name.errors.0 }}
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
-                {{ form.last_name }}
-                {% if form.last_name.errors %}
-                    <div style="color: #dc3545; font-size: 0.9rem; margin-top: 5px;">
-                        {{ form.last_name.errors.0 }}
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="form-check">
-                {{ form.is_active }}
-                <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
-                    {{ form.is_active.label }}
-                </label>
-            </div>
-
-            <div class="form-check">
-                {{ form.is_staff }}
-                <label for="{{ form.is_staff.id_for_label }}" class="form-check-label">
-                    {{ form.is_staff.label }}
-                </label>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn-form btn-submit">
-                    ✅ Guardar Cambios
-                </button>
-                <a href="/panel_usuarios/" class="btn-form btn-cancel">
-                    ❌ Cancelar
-                </a>
-            </div>
-        </form>
-
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e9ecef;">
-            <h4 style="color: #2c3e50; margin-bottom: 15px;">Acciones Adicionales</h4>
-            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                <a href="{% url 'cuentas:cambiar_contraseña' usuario.id %}" class="btn-admin btn-warning-admin">
-                    🔒 Cambiar Contraseña
-                </a>
-                <a href="{% url 'cuentas:eliminar_usuario' usuario.id %}" class="btn-admin btn-danger-admin">
-                    🗑️ Eliminar Usuario
-                </a>
+                <label for="{{ form.last_name.id_for_label }}" class="form-label">Apellido</label>
+                <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}" class="form-control" value="{{ form.last_name.value|default:'' }}">
             </div>
         </div>
-    </div>
+
+        {% if form.is_active %}
+        <div class="form-group" style="display:flex;align-items:center;gap:0.5rem;">
+            <input type="checkbox" name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}" {% if form.is_active.value %}checked{% endif %} style="accent-color:var(--accent-primary);">
+            <label for="{{ form.is_active.id_for_label }}" class="form-label" style="margin-bottom:0;">Usuario activo</label>
+        </div>
+        {% endif %}
+        {% if form.is_staff %}
+        <div class="form-group" style="display:flex;align-items:center;gap:0.5rem;">
+            <input type="checkbox" name="{{ form.is_staff.name }}" id="{{ form.is_staff.id_for_label }}" {% if form.is_staff.value %}checked{% endif %} style="accent-color:var(--accent-primary);">
+            <label for="{{ form.is_staff.id_for_label }}" class="form-label" style="margin-bottom:0;">Acceso al admin</label>
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:1rem;">Guardar Cambios</button>
+    </form>
+</div>
+
+<div style="max-width:480px;margin:1.5rem auto 0;display:flex;justify-content:center;gap:1rem;">
+    <a href="{% url 'cuentas:cambiar_contraseña' user_id=usuario.id %}" class="btn btn-secondary">Cambiar Contraseña</a>
+    {% if usuario != request.user %}
+    <a href="{% url 'cuentas:eliminar_usuario' user_id=usuario.id %}" class="btn btn-secondary" style="color:var(--danger);border-color:rgba(255,107,107,0.25);">Eliminar Usuario</a>
+    {% endif %}
 </div>
 {% endblock %}
-

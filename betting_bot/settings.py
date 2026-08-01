@@ -148,6 +148,11 @@ LOGOUT_REDIRECT_URL = '/cuentas/login/'
 
 
 # Configuración del bot de apuestas
+# Configuración de Matchbook Exchange
+MATCHBOOK_USERNAME = os.getenv('MATCHBOOK_USERNAME', '')
+MATCHBOOK_PASSWORD = os.getenv('MATCHBOOK_PASSWORD', '')
+
+# Configuración de The Odds API (para partidos próximos)
 ODDS_API_KEY = os.getenv('ODDS_API_KEY', '9c2c101074ae4a4c3ec9b01a4d38cb6a')
 ODDS_API_BASE_URL = 'https://api.the-odds-api.com/v4'
 
@@ -156,6 +161,9 @@ BETFAIR_APP_KEY = os.getenv('BETFAIR_APP_KEY', 'your_betfair_app_key_here')
 BETFAIR_USERNAME = os.getenv('BETFAIR_USERNAME', 'your_betfair_username_here')
 BETFAIR_PASSWORD = os.getenv('BETFAIR_PASSWORD', 'your_betfair_password_here')
 BETFAIR_SANDBOX = os.getenv('BETFAIR_SANDBOX', 'True').lower() == 'true'
+BETFAIR_CERT_DIR = os.getenv('BETFAIR_CERT_DIR', '/etc/betfair/certs/')
+BETFAIR_CERT_PATH = os.getenv('BETFAIR_CERT_PATH', '/etc/betfair/certs/client-2048.crt')
+BETFAIR_KEY_PATH = os.getenv('BETFAIR_KEY_PATH', '/etc/betfair/certs/client-2048.key')
 
 # Configuración del bot
 SPORT_KEY = os.getenv('SPORT_KEY', 'soccer_germany_bundesliga')

@@ -1,739 +1,575 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Resultado de Predicción - IA{% endblock %}
+{% block title %}Resultado — Predicta{% endblock %}
 
-{% block content %}
+{% block extra_head %}
 <style>
-/* Estilos para la tabla de resultados */
-.models-table {
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 8px 25px rgba(0, 171, 228, 0.15);
-    padding: 30px;
-    margin-bottom: 30px;
-}
-
-.models-table h4 {
-    color: #1E3A8A;
-    font-weight: 600;
-    margin-bottom: 25px;
-}
-
-.table-responsive {
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.table {
-    margin-bottom: 0;
-    background: white;
-}
-
-.table thead th {
-    background: linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%) !important;
-    color: white !important;
-    font-weight: 600;
-    text-align: center;
-    padding: 15px 10px;
-    border: none;
-    font-size: 14px;
-}
-
-.table tbody tr {
-    border-bottom: 2px solid #E9F1FA;
-    transition: all 0.3s ease;
-}
-
-.table tbody tr:hover {
-    background: linear-gradient(135deg, #E9F1FA 0%, #F8FAFC 100%) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 171, 228, 0.2);
-}
-
-.table tbody td {
-    padding: 20px 15px;
-    vertical-align: middle;
-    border: none;
+/* ── Cabecera del partido ── */
+.match-header {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 2rem 1.5rem;
+    margin-bottom: 1.5rem;
     text-align: center;
 }
-
-/* Estilos para el modelo destacado */
-.model-row {
-    background: linear-gradient(135deg, #00ABE4 0%, #0099CC 100%) !important;
-    color: white !important;
-    font-weight: 600;
+.match-header h2 {
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    margin-bottom: 0.35rem;
+}
+.match-header .match-meta {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+.match-header .match-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-top: 0.5rem;
+    letter-spacing: 0.04em;
+}
+.match-header .match-accent {
+    background: var(--accent-subtle);
+    border: 0.5px solid var(--accent-border);
+    color: var(--accent-primary);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    margin: 0 0.25rem;
 }
 
-.model-row:hover {
-    background: linear-gradient(135deg, #0099CC 0%, #0088BB 100%) !important;
-    color: white !important;
+/* ── Tabla de modelos ── */
+.models-wrap {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
 }
-
-.model-row td {
-    color: white !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
+.models-wrap h4 {
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
-
-/* Iconos de modelos */
-.model-icon {
-    width: 40px;
-    height: 40px;
+.model-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    min-width: 700px;
+}
+.model-table thead th {
+    background: var(--bg-surface-alt);
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.65rem 0.5rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border-primary);
+}
+.model-table tbody td {
+    padding: 0.7rem 0.5rem;
+    text-align: center;
+    border-bottom: 0.5px solid var(--border-subtle);
+    color: var(--text-primary);
+}
+.model-table tbody tr:hover {
+    background: var(--bg-overlay);
+}
+.model-table .model-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-align: left;
+}
+.model-table .model-chip {
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    font-size: 16px;
-    margin-right: 15px;
-    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+.model-table .chip-poisson { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+.model-table .chip-bayesian { background: rgba(78,205,196,0.2); color: #4ecdc4; }
+.model-table .chip-ensemble { background: rgba(198,241,53,0.2); color: var(--accent-primary); }
+.model-table .chip-linear { background: rgba(240,147,251,0.2); color: #f093fb; }
+.model-table .chip-historical { background: rgba(79,172,254,0.2); color: #4facfe; }
+
+.model-name-text { font-weight: 500; color: var(--text-primary); }
+.model-table .model-sub { font-size: 0.72rem; color: var(--text-tertiary); }
+
+.pred-number {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
-.poisson-icon { background: linear-gradient(135deg, #FF6B6B, #EE5A52); }
-.bayesian-icon { background: linear-gradient(135deg, #4ECDC4, #44A08D); }
-.ensemble-icon { background: linear-gradient(135deg, #45B7D1, #96C93D); }
-.linear-icon { background: linear-gradient(135deg, #F093FB, #F5576C); }
-.historical-icon { background: linear-gradient(135deg, #4FACFE, #00F2FE); }
-
-.model-name {
+.conf-badge {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-full);
+    font-size: 0.72rem;
     font-weight: 600;
-    font-size: 16px;
-    margin-bottom: 5px;
 }
+.conf-badge.conf-high { background: rgba(198,241,53,0.15); color: var(--accent-primary); }
+.conf-badge.conf-mid { background: rgba(255,209,102,0.15); color: var(--warning); }
+.conf-badge.conf-low { background: rgba(255,107,107,0.15); color: var(--danger); }
 
-/* Predicción principal */
-.prediction-number {
-    font-size: 24px;
-    font-weight: bold;
-    color: #00ABE4;
+.prob-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    justify-content: center;
 }
-
-.model-row .prediction-number {
-    color: white !important;
-    font-size: 28px;
-}
-
-/* Badges de confianza */
-.confidence-badge {
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 12px;
-}
-
-.confidence-high {
-    background: linear-gradient(135deg, #10B981, #059669);
-    color: white;
-}
-
-.confidence-medium {
-    background: linear-gradient(135deg, #F59E0B, #D97706);
-    color: white;
-}
-
-.confidence-low {
-    background: linear-gradient(135deg, #EF4444, #DC2626);
-    color: white;
-}
-
-/* Barras de probabilidad */
-.probability-bar {
-    width: 100px;
-    height: 8px;
-    background: #E5E7EB;
-    border-radius: 4px;
+.prob-bar {
+    width: 80px;
+    height: 5px;
+    background: var(--border-primary);
+    border-radius: var(--radius-full);
     overflow: hidden;
-    position: relative;
 }
-
-.probability-fill {
+.prob-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #00ABE4, #0099CC);
-    border-radius: 4px;
-    transition: width 0.8s ease;
+    background: var(--accent-primary);
+    border-radius: var(--radius-full);
+    transition: width 0.6s ease;
+}
+.prob-pct {
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    min-width: 42px;
+    text-align: left;
 }
 
-.probability-percentage {
-    font-weight: 600;
-    color: #1E3A8A;
-    font-size: 13px;
+.matches-count {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
 }
 
-.model-row .probability-percentage {
-    color: white !important;
+/* ── Fila destacada (oficial) ── */
+.model-table tr.row-official {
+    border-left: 2px solid var(--accent-primary);
+}
+.model-table tr.row-official td {
+    background: var(--accent-subtle);
+    font-weight: 500;
 }
 
-/* Cards adicionales */
-.probability-card, .backtest-card {
-    background: white;
-    border-radius: 15px;
-    padding: 25px;
-    box-shadow: 0 8px 25px rgba(0, 171, 228, 0.15);
-    border: 1px solid #E9F1FA;
+/* ── Cards de resumen (promedio + validación) ── */
+.summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
 }
-
-.prediction-value {
-    font-size: 48px;
-    font-weight: bold;
+@media (max-width: 700px) {
+    .summary-grid { grid-template-columns: 1fr; }
+}
+.summary-card {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+}
+.summary-card h4 {
     text-align: center;
-    margin: 20px 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.pred-big {
+    font-size: 3rem;
+    font-family: var(--font-heading);
+    color: var(--accent-primary);
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+.pred-label {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+}
+.interpret-box {
+    background: var(--bg-overlay);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
 }
 
-.backtest-item {
+/* Validación */
+.val-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
-    margin: 10px 0;
-    background: #F8FAFC;
-    border-radius: 10px;
-    border-left: 4px solid #00ABE4;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 0.5px solid var(--border-subtle);
+    font-size: 0.85rem;
 }
+.val-item:last-child { border-bottom: none; }
+.val-model { color: var(--text-primary); font-weight: 500; }
+.val-folds { color: var(--text-tertiary); font-size: 0.75rem; display: block; }
+.val-metrics { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.val-chip {
+    display: inline-block;
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+.val-chip.val-mae { background: rgba(198,241,53,0.1); color: var(--accent-primary); }
+.val-chip.val-acc { background: rgba(16,185,129,0.1); color: #10b981; }
+.val-chip.val-r2  { background: rgba(38,165,228,0.1); color: var(--info); }
 
-/* Botones de acción */
-.action-buttons {
+/* ── Gráfica ── */
+.chart-card {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.chart-card h5 {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+.chart-card .chart-sub {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    margin-bottom: 1rem;
+}
+.chart-container {
+    position: relative;
+    min-height: 200px;
+}
+#chart-loading {
+    padding: 3rem;
     text-align: center;
-    margin: 40px 0;
-    padding: 30px;
-    background: linear-gradient(135deg, #E9F1FA 0%, #F8FAFC 100%);
-    border-radius: 15px;
+    color: var(--text-secondary);
 }
-
-.btn-action {
-    margin: 0 10px;
-    padding: 12px 25px;
-    border-radius: 25px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.3s ease;
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
 }
-
-.btn-action:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 171, 228, 0.3);
+.legend-dot { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: var(--text-secondary); }
+.legend-dot::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    display: inline-block;
 }
+.legend-dot.dot-shots::before { background: #ff6b6b; }
+.legend-dot.dot-goals::before { background: #4ecdc4; }
+.legend-dot.dot-corners::before { background: #26a5e4; }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .models-table {
-        padding: 20px;
-    }
-    
-    .table thead th {
-        font-size: 12px;
-        padding: 10px 5px;
-    }
-    
-    .table tbody td {
-        padding: 15px 8px;
-        font-size: 13px;
-    }
-    
-    .model-icon {
-        width: 30px;
-        height: 30px;
-        font-size: 12px;
-        margin-right: 10px;
-    }
-    
-    .prediction-number {
-        font-size: 20px;
-    }
-    
-    .probability-bar {
-        width: 80px;
-    }
+/* ── Factores ── */
+.factors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.factor-item {
+    text-align: center;
+    padding: 1rem;
+    background: var(--bg-surface);
+    border-radius: var(--radius-sm);
+}
+.factor-icon { font-size: 1.4rem; margin-bottom: 0.5rem; }
+.factor-item h6 { font-size: 0.85rem; font-weight: 500; color: var(--text-primary); margin-bottom: 0.25rem; }
+.factor-item p { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 0; }
+
+/* ── Acciones ── */
+.result-actions {
+    text-align: center;
+    padding: 2rem 1rem;
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 </style>
+{% endblock %}
 
-<div class="container-fluid">
-    <!-- Header con información del partido -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-8 text-center">
-                            <h2 class="mb-2">
-                                <i class="fas fa-futbol"></i> 
-                                {{ prediction.home_team }} vs {{ prediction.away_team }}
-                            </h2>
-                            <p class="mb-0">
-                                <i class="fas fa-trophy"></i> {{ prediction.league }}
-                                <span class="mx-3">•</span>
-                                <i class="fas fa-chart-bar"></i> {{ prediction.prediction_type|title }}
-                            </p>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <div class="h4 mb-0">Análisis Multi-Modelo</div>
-                            <div class="h6">{{ prediction.predictions|length }} Modelos Estadísticos</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+{% block content %}
+
+<!-- Cabecera del partido -->
+<div class="match-header">
+    <h2>{{ prediction.home_team }} vs {{ prediction.away_team }}</h2>
+    <div class="match-meta">
+        <span class="match-accent">{{ prediction.league }}</span>
+        &nbsp;•&nbsp;
+        {{ prediction.prediction_type|title }}
     </div>
+    <div class="match-badge">{{ prediction.predictions|length }} modelos estadísticos combinados</div>
+</div>
 
-    <!-- Tabla de Comparación de Modelos -->
-    <div class="row">
-        <div class="col-12">
-            <div class="models-table">
-                <h4 class="text-center mb-4">
-                    <i class="fas fa-chart-line"></i> Comparación de Modelos Estadísticos
-                </h4>
-                
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Modelo</th>
-                                <th>Predicción</th>
-                                <th>Confianza</th>
-                                {% if 'goals' in prediction.prediction_type %}
-                                <th>Over 1.5</th>
-                                <th>Over 2.5</th>
-                                <th>Over 3.5</th>
-                                {% elif 'shots' in prediction.prediction_type %}
-                                <th>Over 10.5</th>
-                                <th>Over 15.5</th>
-                                <th>Over 20.5</th>
-                                {% elif 'corners' in prediction.prediction_type %}
-                                <th>Over 8.5</th>
-                                <th>Over 10.5</th>
-                                <th>Over 12.5</th>
-                                {% else %}
-                                <th>Mercado 1</th>
-                                <th>Mercado 2</th>
-                                <th>Mercado 3</th>
-                                {% endif %}
-                                <th>Datos</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for model_pred in prediction.predictions %}
-                            {% if model_pred.model_name == "Predicción Oficial" %}
-                            <tr class="model-row">
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="model-icon 
-                                            {% if 'Poisson' in model_pred.model_name %}poisson-icon
-                                            {% elif 'Bayesian' in model_pred.model_name %}bayesian-icon
-                                            {% elif 'Ensemble' in model_pred.model_name %}ensemble-icon
-                                            {% elif 'Linear' in model_pred.model_name %}linear-icon
-                                            {% else %}historical-icon{% endif %}">
-                                            {% if 'Poisson' in model_pred.model_name %}P
-                                            {% elif 'Bayesian' in model_pred.model_name %}B
-                                            {% elif 'Ensemble' in model_pred.model_name %}E
-                                            {% elif 'Linear' in model_pred.model_name %}L
-                                            {% else %}H{% endif %}
-                                        </div>
-                                        <div>
-                                            <div class="model-name">{{ model_pred.model_name }}</div>
-                                            <small class="text-muted">
-                                                {% if 'Poisson' in model_pred.model_name %}
-                                                    Distribución de Poisson Mejorada
-                                                {% elif 'Bayesian' in model_pred.model_name %}
-                                                    Modelo Bayesiano
-                                                {% elif 'Ensemble' in model_pred.model_name %}
-                                                    Modelo Ensemble
-                                                {% elif 'Linear' in model_pred.model_name %}
-                                                    Regresión Lineal
-                                                {% else %}
-                                                    Promedio Histórico
-                                                {% endif %}
-                                            </small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="prediction-number">{{ model_pred.prediction|floatformat:1 }}</div>
-                                </td>
-                                <td>
-                                    <span class="confidence-badge 
-                                        {% if model_pred.confidence > 0.7 %}confidence-high
-                                        {% elif model_pred.confidence > 0.4 %}confidence-medium
-                                        {% else %}confidence-low{% endif %}">
-                                        {{ model_pred.confidence|floatformat:3 }}%
-                                    </span>
-                                </td>
-                                {% if 'goals' in prediction.prediction_type %}
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="probability-bar">
-                                            <div class="probability-fill probability-bar-1" data-width="{{ model_pred.probabilities.over_1|floatformat:3 }}"></div>
-                                        </div>
-                                        <span class="ms-2 probability-percentage">{{ model_pred.probabilities.over_1|floatformat:3 }}</span>%
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="probability-bar">
-                                            <div class="probability-fill probability-bar-2" data-width="{{ model_pred.probabilities.over_2|floatformat:3 }}"></div>
-                                        </div>
-                                        <span class="ms-2 probability-percentage">{{ model_pred.probabilities.over_2|floatformat:3 }}</span>%
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="probability-bar">
-                                            <div class="probability-fill probability-bar-3" data-width="{{ model_pred.probabilities.over_3|floatformat:3 }}"></div>
-                                        </div>
-                                        <span class="ms-2 probability-percentage">{{ model_pred.probabilities.over_3|floatformat:3 }}</span>%
-                                    </div>
-                                </td>
-                                {% elif 'shots' in prediction.prediction_type %}
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="probability-bar">
-                                            <div class="probability-fill probability-bar-10" data-width="{{ model_pred.probabilities.over_10|floatformat:3 }}"></div>
-                                        </div>
-                                        <span class="ms-2 probability-percentage">{{ model_pred.probabilities.over_10|floatformat:3 }}</span>%
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="probability-bar">
-                                            <div class="probability-fill probability-bar-15" data-width="{{ model_pred.probabilities.over_15|floatformat:3 }}"></div>
-                                        </div>
-                                        <span class="ms-2 probability-percentage">{{ model_pred.probabilities.over_15|floatformat:3 }}</span>%
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="probability-bar">
-                                            <div class="probability-fill probability-bar-20" data-width="{{ model_pred.probabilities.over_20|floatformat:3 }}"></div>
-                                        </div>
-                                        <span class="ms-2 probability-percentage">{{ model_pred.probabilities.over_20|floatformat:3 }}</span>%
-                                    </div>
-                                </td>
-                                {% elif 'corners' in prediction.prediction_type %}
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="probability-bar">
-                                            <div class="probability-fill probability-bar-8" data-width="{{ model_pred.probabilities.over_8|floatformat:3 }}"></div>
-                                        </div>
-                                        <span class="ms-2 probability-percentage">{{ model_pred.probabilities.over_8|floatformat:3 }}</span>%
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="probability-bar">
-                                            <div class="probability-fill probability-bar-10" data-width="{{ model_pred.probabilities.over_10|floatformat:3 }}"></div>
-                                        </div>
-                                        <span class="ms-2 probability-percentage">{{ model_pred.probabilities.over_10|floatformat:3 }}</span>%
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="probability-bar">
-                                            <div class="probability-fill probability-bar-12" data-width="{{ model_pred.probabilities.over_12|floatformat:3 }}"></div>
-                                        </div>
-                                        <span class="ms-2 probability-percentage">{{ model_pred.probabilities.over_12|floatformat:3 }}</span>%
-                                    </div>
-                                </td>
-                                {% else %}
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="probability-bar">
-                                            <div class="probability-fill probability-bar-1" data-width="{{ model_pred.probabilities.over_1|floatformat:3 }}"></div>
-                                        </div>
-                                        <span class="ms-2 probability-percentage">{{ model_pred.probabilities.over_1|floatformat:3 }}</span>%
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="probability-bar">
-                                            <div class="probability-fill probability-bar-2" data-width="{{ model_pred.probabilities.over_2|floatformat:3 }}"></div>
-                                        </div>
-                                        <span class="ms-2 probability-percentage">{{ model_pred.probabilities.over_2|floatformat:3 }}</span>%
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="probability-bar">
-                                            <div class="probability-fill probability-bar-3" data-width="{{ model_pred.probabilities.over_3|floatformat:3 }}"></div>
-                                        </div>
-                                        <span class="ms-2 probability-percentage">{{ model_pred.probabilities.over_3|floatformat:3 }}</span>%
-                                    </div>
-                                </td>
-                                {% endif %}
-                                <td>
-                                    <small class="text-muted">
-                                        {% if model_pred.total_matches %}
-                                            {{ model_pred.total_matches }} partidos
-                                        {% else %}
-                                            N/A
-                                        {% endif %}
-                                    </small>
-                                </td>
-                            </tr>
-                            {% endif %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Predicción Promedio -->
-    <div class="row">
-        <div class="col-md-6">
-            <div class="probability-card">
-                <h4 class="text-center mb-4">
-                    <i class="fas fa-calculator"></i> Predicción Promedio
-                </h4>
-                
-                <div class="prediction-value text-primary">
-                    {% if prediction.predictions|length >= 3 %}
-                        {% with avg=prediction.predictions.0.prediction|add:prediction.predictions.1.prediction|add:prediction.predictions.2.prediction %}
-                            {% widthratio avg 3 1 %}
-                        {% endwith %}
-                    {% elif prediction.predictions|length > 0 %}
-                        {{ prediction.predictions.0.prediction|floatformat:1 }}
-                    {% else %}
-                        0.0
-                    {% endif %}
-                </div>
-                
-                <div class="text-center mb-4">
-                    <h5 class="text-muted">
-                        {% if prediction.prediction_type == 'shots_total' %}
-                            Remates Totales Promedio
-                        {% elif prediction.prediction_type == 'shots_home' %}
-                            Remates del Equipo Local
-                        {% elif prediction.prediction_type == 'shots_away' %}
-                            Remates del Equipo Visitante
-                        {% elif prediction.prediction_type == 'corners_total' %}
-                            Corners Totales Promedio
-                        {% elif prediction.prediction_type == 'corners_home' %}
-                            Corners del Equipo Local
-                        {% elif prediction.prediction_type == 'corners_away' %}
-                            Corners del Equipo Visitante
-                        {% elif prediction.prediction_type == 'goals_total' %}
-                            Goles Totales Promedio
-                        {% elif prediction.prediction_type == 'goals_home' %}
-                            Goles del Equipo Local
-                        {% elif prediction.prediction_type == 'goals_away' %}
-                            Goles del Equipo Visitante
-                        {% elif prediction.prediction_type == 'both_teams_score' %}
-                            Ambos Marcan
-                        {% else %}
-                            Valor Promedio Predicho
-                        {% endif %}
-                    </h5>
-                </div>
-
-                <div class="alert alert-info">
-                    <h6><i class="fas fa-info-circle"></i> Interpretación:</h6>
-                    <p class="mb-0">
-                        Esta predicción combina múltiples modelos estadísticos para proporcionar una estimación más robusta y confiable.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Validación Cruzada Temporal -->
-        <div class="col-md-6">
-            <div class="backtest-card">
-                <h5 class="backtest-title">
-                    <i class="fas fa-chart-line"></i> Validación Cruzada Temporal
-                </h5>
-                
-                {% if prediction.validation_results and not prediction.validation_results.error %}
-                {% for model_name, results in prediction.validation_results.items %}
-                <div class="backtest-item">
-                    <div>
-                        <strong>{{ model_name }}</strong>
-                        <small class="text-muted d-block">{{ results.folds }} folds</small>
-                    </div>
-                    <div class="text-end">
-                        <div class="small">
-                            <span class="badge bg-primary">MAE: {{ results.mae|floatformat:1 }}</span>
-                            <span class="badge bg-success">±2: {{ results.accuracy_2|floatformat:1 }}%</span>
-                            <span class="badge bg-info">R²: {{ results.r2|floatformat:2 }}</span>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
+<!-- Tabla de modelos -->
+<div class="models-wrap">
+    <h4>Comparación de modelos</h4>
+    <table class="model-table">
+        <thead>
+            <tr>
+                <th>Modelo</th>
+                <th>Pred.</th>
+                <th>Confianza</th>
+                {% if 'goals' in prediction.prediction_type %}
+                <th>Over 1.5</th><th>Over 2.5</th><th>Over 3.5</th>
+                {% elif 'shots' in prediction.prediction_type %}
+                <th>Over 10.5</th><th>Over 15.5</th><th>Over 20.5</th>
+                {% elif 'corners' in prediction.prediction_type %}
+                <th>Over 8.5</th><th>Over 10.5</th><th>Over 12.5</th>
                 {% else %}
-                <div class="text-center text-muted">
-                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
-                    <p>No se pudieron realizar las pruebas de validación.</p>
-                </div>
+                <th>M1</th><th>M2</th><th>M3</th>
                 {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Gráfica Histórica de la Liga -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-chart-line"></i> Estadísticas Históricas de {{ prediction.league }}</h5>
-                    <p class="mb-0 text-muted">Evolución diaria de remates, goles y corners en los últimos meses</p>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <div id="chart-loading" class="text-center" style="padding: 50px;">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                            <p class="mt-3">Cargando gráfica histórica...</p>
-                        </div>
-                        <canvas id="leagueHistoricalChart" width="800" height="400" style="display: none;"></canvas>
-                    </div>
-                    <div class="chart-info mt-3">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="text-center">
-                                    <span class="badge" style="background-color: #e74c3c; color: white; padding: 5px 10px;">
-                                        <i class="fas fa-bullseye"></i> Remates
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="text-center">
-                                    <span class="badge" style="background-color: #27ae60; color: white; padding: 5px 10px;">
-                                        <i class="fas fa-futbol"></i> Goles
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="text-center">
-                                    <span class="badge" style="background-color: #3498db; color: white; padding: 5px 10px;">
-                                        <i class="fas fa-flag"></i> Corners
-                                    </span>
-                                </div>
+                <th>Datos</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for model_pred in prediction.predictions %}
+            <tr{% if model_pred.model_name == "Predicción Oficial" %} class="row-official"{% endif %}>
+                <td>
+                    <div class="model-name-cell">
+                        {% if 'Poisson' in model_pred.model_name %}
+                        <div class="model-chip chip-poisson">P</div>
+                        {% elif 'Bayesian' in model_pred.model_name %}
+                        <div class="model-chip chip-bayesian">B</div>
+                        {% elif 'Ensemble' in model_pred.model_name %}
+                        <div class="model-chip chip-ensemble">E</div>
+                        {% elif 'Linear' in model_pred.model_name %}
+                        <div class="model-chip chip-linear">L</div>
+                        {% else %}
+                        <div class="model-chip chip-historical">H</div>
+                        {% endif %}
+                        <div>
+                            <div class="model-name-text">{{ model_pred.model_name }}</div>
+                            <div class="model-sub">
+                                {% if 'Poisson' in model_pred.model_name %}Distribución de Poisson{% elif 'Bayesian' in model_pred.model_name %}Modelo Bayesiano{% elif 'Ensemble' in model_pred.model_name %}Ensemble{% elif 'Linear' in model_pred.model_name %}Regresión Lineal{% else %}Promedio Histórico{% endif %}
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Factores Considerados -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-cogs"></i> Factores Considerados en la Predicción</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <i class="fas fa-chart-line fa-2x text-primary mb-2"></i>
-                                <h6>Forma Reciente</h6>
-                                <p class="text-muted small">Últimos 10 partidos de cada equipo</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <i class="fas fa-home fa-2x text-success mb-2"></i>
-                                <h6>Ventaja Local</h6>
-                                <p class="text-muted small">Factor de jugar en casa</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <i class="fas fa-handshake fa-2x text-info mb-2"></i>
-                                <h6>Historial Directo</h6>
-                                <p class="text-muted small">Enfrentamientos anteriores</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <i class="fas fa-calculator fa-2x text-warning mb-2"></i>
-                                <h6>Múltiples Modelos</h6>
-                                <p class="text-muted small">Poisson, Regresión, Promedios</p>
-                            </div>
-                        </div>
+                </td>
+                <td><span class="pred-number">{{ model_pred.prediction|floatformat:1 }}</span></td>
+                <td>
+                    <span class="conf-badge {% if model_pred.confidence > 0.7 %}conf-high{% elif model_pred.confidence > 0.4 %}conf-mid{% else %}conf-low{% endif %}">
+                        {{ model_pred.confidence|floatformat:3 }}%
+                    </span>
+                </td>
+                {% if 'goals' in prediction.prediction_type %}
+                <td>
+                    <div class="prob-bar-container">
+                        <div class="prob-bar"><div class="prob-bar-fill" data-width="{{ model_pred.probabilities.over_1|floatformat:3 }}"></div></div>
+                        <span class="prob-pct">{{ model_pred.probabilities.over_1|floatformat:3 }}%</span>
                     </div>
-                </div>
-            </div>
+                </td>
+                <td>
+                    <div class="prob-bar-container">
+                        <div class="prob-bar"><div class="prob-bar-fill" data-width="{{ model_pred.probabilities.over_2|floatformat:3 }}"></div></div>
+                        <span class="prob-pct">{{ model_pred.probabilities.over_2|floatformat:3 }}%</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="prob-bar-container">
+                        <div class="prob-bar"><div class="prob-bar-fill" data-width="{{ model_pred.probabilities.over_3|floatformat:3 }}"></div></div>
+                        <span class="prob-pct">{{ model_pred.probabilities.over_3|floatformat:3 }}%</span>
+                    </div>
+                </td>
+                {% elif 'shots' in prediction.prediction_type %}
+                <td><div class="prob-bar-container"><div class="prob-bar"><div class="prob-bar-fill" data-width="{{ model_pred.probabilities.over_10|floatformat:3 }}"></div></div><span class="prob-pct">{{ model_pred.probabilities.over_10|floatformat:3 }}%</span></div></td>
+                <td><div class="prob-bar-container"><div class="prob-bar"><div class="prob-bar-fill" data-width="{{ model_pred.probabilities.over_15|floatformat:3 }}"></div></div><span class="prob-pct">{{ model_pred.probabilities.over_15|floatformat:3 }}%</span></div></td>
+                <td><div class="prob-bar-container"><div class="prob-bar"><div class="prob-bar-fill" data-width="{{ model_pred.probabilities.over_20|floatformat:3 }}"></div></div><span class="prob-pct">{{ model_pred.probabilities.over_20|floatformat:3 }}%</span></div></td>
+                {% elif 'corners' in prediction.prediction_type %}
+                <td><div class="prob-bar-container"><div class="prob-bar"><div class="prob-bar-fill" data-width="{{ model_pred.probabilities.over_8|floatformat:3 }}"></div></div><span class="prob-pct">{{ model_pred.probabilities.over_8|floatformat:3 }}%</span></div></td>
+                <td><div class="prob-bar-container"><div class="prob-bar"><div class="prob-bar-fill" data-width="{{ model_pred.probabilities.over_10|floatformat:3 }}"></div></div><span class="prob-pct">{{ model_pred.probabilities.over_10|floatformat:3 }}%</span></div></td>
+                <td><div class="prob-bar-container"><div class="prob-bar"><div class="prob-bar-fill" data-width="{{ model_pred.probabilities.over_12|floatformat:3 }}"></div></div><span class="prob-pct">{{ model_pred.probabilities.over_12|floatformat:3 }}%</span></div></td>
+                {% else %}
+                <td><div class="prob-bar-container"><div class="prob-bar"><div class="prob-bar-fill" data-width="{{ model_pred.probabilities.over_1|floatformat:3 }}"></div></div><span class="prob-pct">{{ model_pred.probabilities.over_1|floatformat:3 }}%</span></div></td>
+                <td><div class="prob-bar-container"><div class="prob-bar"><div class="prob-bar-fill" data-width="{{ model_pred.probabilities.over_2|floatformat:3 }}"></div></div><span class="prob-pct">{{ model_pred.probabilities.over_2|floatformat:3 }}%</span></div></td>
+                <td><div class="prob-bar-container"><div class="prob-bar"><div class="prob-bar-fill" data-width="{{ model_pred.probabilities.over_3|floatformat:3 }}"></div></div><span class="prob-pct">{{ model_pred.probabilities.over_3|floatformat:3 }}%</span></div></td>
+                {% endif %}
+                <td>
+                    <span class="matches-count">
+                        {% if model_pred.total_matches %}{{ model_pred.total_matches }} partidos{% else %}N/A{% endif %}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Promedio + Validación -->
+<div class="summary-grid">
+    <div class="summary-card">
+        <h4>Predicción promedio</h4>
+        <div class="pred-big">
+            {% if prediction.predictions|length >= 3 %}
+                {% with avg=prediction.predictions.0.prediction|add:prediction.predictions.1.prediction|add:prediction.predictions.2.prediction %}
+                    {% widthratio avg 3 1 %}
+                {% endwith %}
+            {% elif prediction.predictions|length > 0 %}
+                {{ prediction.predictions.0.prediction|floatformat:1 }}
+            {% else %}
+                0.0
+            {% endif %}
+        </div>
+        <div class="pred-label">
+            {% if 'shots_total' in prediction.prediction_type %}Remates Totales Promedio
+            {% elif 'shots_home' in prediction.prediction_type %}Remates del Local
+            {% elif 'shots_away' in prediction.prediction_type %}Remates del Visitante
+            {% elif 'corners_total' in prediction.prediction_type %}Corners Totales Promedio
+            {% elif 'corners_home' in prediction.prediction_type %}Corners del Local
+            {% elif 'corners_away' in prediction.prediction_type %}Corners del Visitante
+            {% elif 'goals_total' in prediction.prediction_type %}Goles Totales Promedio
+            {% elif 'goals_home' in prediction.prediction_type %}Goles del Local
+            {% elif 'goals_away' in prediction.prediction_type %}Goles del Visitante
+            {% elif 'both_teams_score' in prediction.prediction_type %}Ambos Marcan
+            {% else %}Valor Promedio Predicho{% endif %}
+        </div>
+        <div class="interpret-box">
+            Esta predicción combina múltiples modelos estadísticos (Poisson, Bayesiano, Ensemble, Regresión) para una estimación más robusta y calibrada.
         </div>
     </div>
 
-    <!-- Acciones -->
-    <div class="action-buttons">
-        <a href="{% url 'ai_predictions:prediction_form' %}" class="btn btn-primary btn-action">
-            <i class="fas fa-plus"></i> Nueva Predicción
-        </a>
-        <a href="{% url 'ai_predictions:prediction_history' %}" class="btn btn-info btn-action">
-            <i class="fas fa-history"></i> Ver Historial
-        </a>
-        <a href="{% url 'ai_predictions:dashboard' %}" class="btn btn-secondary btn-action">
-            <i class="fas fa-home"></i> Dashboard
-        </a>
+    <div class="summary-card">
+        <h4>Validación cruzada</h4>
+        {% if prediction.validation_results and not prediction.validation_results.error %}
+        {% for model_name, results in prediction.validation_results.items %}
+        <div class="val-item">
+            <div>
+                <span class="val-model">{{ model_name }}</span>
+                <span class="val-folds">{{ results.folds }} folds</span>
+            </div>
+            <div class="val-metrics">
+                <span class="val-chip val-mae">MAE {{ results.mae|floatformat:1 }}</span>
+                <span class="val-chip val-acc">±2 {{ results.accuracy_2|floatformat:1 }}%</span>
+                <span class="val-chip val-r2">R² {{ results.r2|floatformat:2 }}</span>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="text-align:center;padding:2rem;color:var(--text-tertiary);">
+            <div style="font-size:2rem;margin-bottom:0.5rem;">⚠️</div>
+            <p>No se pudieron realizar las pruebas de validación para este partido.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- Script para la gráfica histórica -->
-<script src="{% static 'js/ai_predictions/league_chart.js' %}"></script>
+<!-- Gráfica histórica -->
+<div class="chart-card">
+    <h5>Estadísticas históricas de {{ prediction.league }}</h5>
+    <p class="chart-sub">Evolución diaria de remates, goles y corners</p>
+    <div class="chart-container">
+        <div id="chart-loading">
+            <div class="spinner"></div>
+            <p style="margin-top:1rem;">Cargando gráfica histórica...</p>
+        </div>
+        <canvas id="leagueHistoricalChart" width="800" height="400" style="display:none;max-width:100%;"></canvas>
+    </div>
+    <div class="chart-legend">
+        <span class="legend-dot dot-shots">Remates</span>
+        <span class="legend-dot dot-goals">Goles</span>
+        <span class="legend-dot dot-corners">Corners</span>
+    </div>
+</div>
 
+<!-- Factores -->
+<div class="models-wrap">
+    <h4 style="margin-bottom:0.5rem;">Factores considerados</h4>
+    <div class="factors-grid">
+        <div class="factor-item">
+            <div class="factor-icon">📊</div>
+            <h6>Forma Reciente</h6>
+            <p>Últimos 10 partidos de cada equipo</p>
+        </div>
+        <div class="factor-item">
+            <div class="factor-icon">🏠</div>
+            <h6>Ventaja Local</h6>
+            <p>Factor de jugar en casa</p>
+        </div>
+        <div class="factor-item">
+            <div class="factor-icon">🤝</div>
+            <h6>H2H Directo</h6>
+            <p>Historial de enfrentamientos</p>
+        </div>
+        <div class="factor-item">
+            <div class="factor-icon">🧠</div>
+            <h6>Ensemble</h6>
+            <p>Poisson, Bayesiano, Regresión</p>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones -->
+<div class="result-actions">
+    <a href="{% url 'ai_predictions:prediction_form' %}" class="btn btn-primary">Nueva Predicción</a>
+    <a href="{% url 'ai_predictions:prediction_history' %}" class="btn btn-secondary" style="border-color:var(--accent-border);color:var(--accent-primary);">Historial</a>
+    <a href="{% url 'ai_predictions:dashboard' %}" class="btn btn-secondary">Dashboard</a>
+</div>
+{% endblock %}
+
+{% block extra_head_js %}
+<script src="{% static 'js/ai_predictions/league_chart.js' %}"></script>
 <script>
-// Animación de las barras de probabilidad
 document.addEventListener('DOMContentLoaded', function() {
-    // Convertir valores de probabilidades a porcentajes
-    const probabilityElements = document.querySelectorAll('.probability-percentage');
-    probabilityElements.forEach(element => {
-        const value = parseFloat(element.textContent);
-        element.textContent = (value * 100).toFixed(1);
+    // Convertir probabilidades a porcentajes
+    document.querySelectorAll('.prob-pct').forEach(el => {
+        var v = parseFloat(el.textContent);
+        if (!isNaN(v) && v <= 1) el.textContent = (v * 100).toFixed(1);
     });
-    
-    // Actualizar barras de progreso
-    const probabilityBars = document.querySelectorAll('[class*="probability-bar-"]');
-    probabilityBars.forEach(bar => {
-        const width = parseFloat(bar.getAttribute('data-width'));
-        bar.style.width = (width * 100) + '%';
+    // Animar barras
+    document.querySelectorAll('.prob-bar-fill').forEach(bar => {
+        var w = parseFloat(bar.getAttribute('data-width'));
+        if (!isNaN(w)) {
+            if (w <= 1) w = w * 100;
+            bar.style.width = w + '%';
+        }
     });
-    
-    // Animación de barras
-    setTimeout(() => {
-        const bars = document.querySelectorAll('.probability-fill, .confidence-fill');
-        bars.forEach(bar => {
-            const width = bar.style.width;
+    // Animación
+    setTimeout(function() {
+        document.querySelectorAll('.prob-bar-fill').forEach(bar => {
+            var w = bar.style.width;
             bar.style.width = '0%';
-            setTimeout(() => {
-                bar.style.width = width;
-            }, 100);
+            setTimeout(function(){ bar.style.width = w; }, 80);
         });
-    }, 500);
-    
-    // PRUEBA SIMPLE: Verificar que todo funcione
+    }, 400);
+
     {% if prediction.league.id %}
-    console.log('=== INICIO DEBUG GRÁFICA ===');
-    console.log('Liga ID:', {{ prediction.league.id }});
-    console.log('initLeagueChart disponible:', typeof initLeagueChart === 'function');
-    console.log('Canvas encontrado:', document.getElementById('leagueHistoricalChart') !== null);
-    
-    // Prueba simple de fetch
+    console.log('Liga ID:', {{ prediction.league.id }}, '| chart:', typeof initLeagueChart);
     fetch('/ai/api/league-historical-data/{{ prediction.league.id }}/')
-        .then(response => {
-            console.log('Respuesta fetch:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('Datos recibidos:', data.success ? 'ÉXITO' : 'ERROR');
-            console.log('Datos:', data);
-        })
-        .catch(error => {
-            console.error('Error en fetch:', error);
-        });
-    
-    console.log('=== FIN DEBUG GRÁFICA ===');
-    {% else %}
-    console.log('No hay ID de liga disponible para la gráfica');
+        .then(r => r.json())
+        .then(data => console.log('Histórico:', data.success ? 'OK' : 'ERROR', data))
+        .catch(e => console.error('Error histórico:', e));
     {% endif %}
 });
 </script>
-{% endblock %}
-
-{% block extra_js %}
-<!-- Script para la gráfica histórica -->
-<script src="{% static 'js/ai_predictions/league_chart.js' %}"></script>
 {% endblock %}
