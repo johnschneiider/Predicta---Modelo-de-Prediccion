@@ -36,26 +36,15 @@ class VistaLogin(View):
 
 class VistaRegistro(View):
     """
-    Vista para el registro de usuarios
+    REGISTRO DESHABILITADO - Plataforma cerrada
     """
     def get(self, request):
-        if request.user.is_authenticated:
-            return redirect('cuentas:dashboard')
-        
-        form = FormularioRegistro()
-        return render(request, 'cuentas/registro.html', {'form': form})
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("Registro deshabilitado. Solo acceso por invitación.")
     
     def post(self, request):
-        form = FormularioRegistro(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, f'¡Cuenta creada exitosamente! Bienvenido, {user.get_full_name()}.')
-            return redirect('cuentas:dashboard')
-        else:
-            messages.error(request, 'Por favor, corrige los errores en el formulario.')
-        
-        return render(request, 'cuentas/registro.html', {'form': form})
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("Registro deshabilitado. Solo acceso por invitación.")
 
 @method_decorator(login_required, name='dispatch')
 class VistaDashboard(View):

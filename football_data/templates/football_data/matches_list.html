@@ -1,273 +1,252 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Lista de Partidos{% endblock %}
+{% block title %}Partidos — Predicta{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
-    .table-responsive {
-        overflow-x: auto;
-    }
-    .table-fixed-header thead th {
-        position: sticky;
-        top: 0;
-        background: #f8f9fa;
-        z-index: 10;
-        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-    }
-    .filters-section {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 30px;
-    }
-    .pagination .page-item.active .page-link {
-        background-color: #007bff;
-        border-color: #007bff;
-    }
-    .pagination .page-link {
-        color: #007bff;
-    }
-    .match-row:hover {
-        background-color: #f8f9fa;
-    }
-    .result-badge {
-        font-size: 0.8em;
-        padding: 0.25em 0.5em;
-    }
-    .result-H { background-color: #28a745; color: white; }
-    .result-D { background-color: #ffc107; color: black; }
-    .result-A { background-color: #dc3545; color: white; }
+.match-filters {
+    display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end;
+    margin-bottom: 1.5rem;
+}
+.match-filters select, .match-filters input {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 0.55rem 0.8rem;
+    font-size: 0.9rem;
+}
+.match-filters select:focus, .match-filters input:focus {
+    outline: none; border-color: var(--accent-primary);
+}
+.match-filters label {
+    display: block; font-size: 0.75rem; color: var(--text-tertiary);
+    margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.filter-btn {
+    background: var(--accent-primary); color: var(--btn-primary-text);
+    border: none; padding: 0.55rem 1.5rem; border-radius: var(--radius-sm);
+    font-weight: 600; cursor: pointer; font-size: 0.9rem;
+}
+.filter-btn:hover { background: var(--accent-hover); }
+.filter-clear {
+    background: transparent; color: var(--text-tertiary);
+    border: 0.5px solid var(--border-primary); padding: 0.55rem 1rem;
+    border-radius: var(--radius-sm); text-decoration: none; font-size: 0.9rem;
+}
+.filter-clear:hover { color: var(--text-primary); }
+
+.match-count {
+    color: var(--text-tertiary); font-size: 0.85rem; margin-bottom: 1rem;
+}
+
+/* ── Tabla ── */
+.match-table-wrap { overflow-x: auto; border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-primary); }
+table.match-table {
+    width: 100%; border-collapse: collapse; font-size: 0.85rem;
+    background: var(--bg-surface);
+}
+table.match-table thead th {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--bg-elevated); color: var(--text-tertiary);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    font-size: 0.72rem; padding: 0.7rem 0.6rem; text-align: center;
+    border-bottom: 1px solid var(--border-primary);
+    white-space: nowrap;
+}
+table.match-table thead th:first-child, table.match-table thead th:nth-child(2),
+table.match-table thead th:nth-child(3), table.match-table thead th:nth-child(4) {
+    text-align: left;
+}
+table.match-table tbody td {
+    padding: 0.5rem 0.6rem; text-align: center;
+    border-bottom: 0.5px solid var(--border-secondary);
+    white-space: nowrap;
+}
+table.match-table tbody td:first-child, table.match-table tbody td:nth-child(2),
+table.match-table tbody td:nth-child(3), table.match-table tbody td:nth-child(4) {
+    text-align: left;
+}
+table.match-table tbody tr:hover td { background: var(--bg-overlay); }
+table.match-table tbody tr:last-child td { border-bottom: none; }
+
+.team-name { font-weight: 600; color: var(--text-primary); }
+.score { font-weight: 700; font-size: 0.95rem; color: var(--text-primary); }
+.result-badge { font-size: 0.7rem; padding: 0.15em 0.45em; border-radius: 3px; font-weight: 700; }
+.result-H { background: #22c55e; color: #fff; }
+.result-D { background: #eab308; color: #000; }
+.result-A { background: #ef4444; color: #fff; }
+.xg-cell { font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.xg-cell.has-xg { color: var(--accent-primary); font-weight: 600; }
+.stat-num { font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.league-badge {
+    font-size: 0.72rem; padding: 0.15em 0.5em; border-radius: 3px;
+    background: var(--bg-overlay); color: var(--text-tertiary);
+}
+
+/* ── Paginación ── */
+.pagination-wrap { display: flex; justify-content: space-between; align-items: center;
+    margin-top: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+.pagination { display: flex; gap: 0.25rem; list-style: none; padding: 0; }
+.pagination a, .pagination span {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 36px; height: 36px; border-radius: var(--radius-sm);
+    text-decoration: none; font-size: 0.85rem; font-weight: 600;
+    border: 0.5px solid var(--border-primary); color: var(--text-secondary);
+    padding: 0 0.5rem;
+}
+.pagination a:hover { background: var(--bg-overlay); color: var(--text-primary); }
+.pagination .active span { background: var(--accent-primary); color: var(--btn-primary-text); border-color: var(--accent-primary); }
+.pagination-info { font-size: 0.82rem; color: var(--text-tertiary); }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="mb-0">
-                    <i class="fas fa-list"></i> Lista de Partidos
-                </h1>
-                <div class="btn-group">
-                    <a href="{% url 'odds:upcoming_matches' %}" class="btn btn-success">
-                        <i class="fas fa-calendar-alt"></i> Próximos Partidos
-                    </a>
-                    <a href="{% url 'odds:live_odds' %}" class="btn btn-info">
-                        <i class="fas fa-broadcast-tower"></i> Cuotas en Vivo
-                    </a>
-                </div>
-            </div>
+<div class="container-fluid" style="max-width: 1600px;">
 
-            <!-- Filtros -->
-            <div class="filters-section mb-4">
-                <form method="GET" id="filterForm">
-                    <div class="row align-items-end">
-                        <div class="col-md-3 mb-3">
-                            <label for="leagueFilter" class="form-label">Liga:</label>
-                            <select class="form-select" id="leagueFilter" name="league">
-                                <option value="">Todas las ligas</option>
-                                {% for league in leagues %}
-                                    <option value="{{ league.id }}" {% if league.id|stringformat:"s" == request.GET.league %}selected{% endif %}>
-                                        {{ league.name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="dateFrom" class="form-label">Desde:</label>
-                            <input type="date" class="form-control" id="dateFrom" name="date_from" value="{{ request.GET.date_from }}">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="dateTo" class="form-label">Hasta:</label>
-                            <input type="date" class="form-control" id="dateTo" name="date_to" value="{{ request.GET.date_to }}">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="fas fa-filter"></i> Filtrar
-                            </button>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{% url 'odds:upcoming_matches' %}" class="btn btn-success w-100">
-                                <i class="fas fa-calendar-alt"></i> Próximos Partidos
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="search" class="form-label">Buscar equipos:</label>
-                            <input type="text" class="form-control" id="search" name="search" 
-                                   placeholder="Nombre del equipo..." value="{{ request.GET.search }}">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="result" class="form-label">Resultado:</label>
-                            <select class="form-select" id="result" name="result">
-                                <option value="">Todos</option>
-                                <option value="H" {% if request.GET.result == 'H' %}selected{% endif %}>Victoria Local</option>
-                                <option value="D" {% if request.GET.result == 'D' %}selected{% endif %}>Empate</option>
-                                <option value="A" {% if request.GET.result == 'A' %}selected{% endif %}>Victoria Visitante</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{% url 'football_data:matches_list' %}" class="btn btn-outline-secondary w-100">
-                                <i class="fas fa-times"></i> Limpiar
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{% url 'odds:upcoming_matches' %}" class="btn btn-outline-success w-100">
-                                <i class="fas fa-calendar-alt"></i> Próximos
-                            </a>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Resumen de resultados -->
-            {% if matches %}
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Resultados encontrados:</strong> {{ matches.paginator.count }} partidos
-                    {% if request.GET.league %}
-                        en {{ selected_league.name }}
-                    {% endif %}
-                    {% if request.GET.search %}
-                        que contienen "{{ request.GET.search }}"
-                    {% endif %}
-                </div>
-            {% endif %}
-
-            <!-- Tabla de partidos -->
-            {% if matches %}
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover table-sm table-fixed-header">
-                        <thead>
-                            <tr>
-                                <th>Liga</th>
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                                <th>Local</th>
-                                <th>Visitante</th>
-                                <th>Goles L</th>
-                                <th>Goles V</th>
-                                <th>Resultado</th>
-                                <th>Remates L</th>
-                                <th>Remates V</th>
-                                <th>Rem. Puerta L</th>
-                                <th>Rem. Puerta V</th>
-                                <th>Corners L</th>
-                                <th>Corners V</th>
-                                <th>Faltas L</th>
-                                <th>Faltas V</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for match in matches %}
-                                <tr class="match-row">
-                                    <td>
-                                        <span class="badge bg-secondary">{{ match.league.name }}</span>
-                                    </td>
-                                    <td>{{ match.date|date:"d/m/Y" }}</td>
-                                    <td>{{ match.time|time:"H:i" }}</td>
-                                    <td><strong>{{ match.home_team }}</strong></td>
-                                    <td><strong>{{ match.away_team }}</strong></td>
-                                    <td>{{ match.fthg|default_if_none:"-" }}</td>
-                                    <td>{{ match.ftag|default_if_none:"-" }}</td>
-                                    <td>
-                                        {% if match.ftr %}
-                                            <span class="badge result-{{ match.ftr }} result-badge">
-                                                {% if match.ftr == 'H' %}L{% elif match.ftr == 'A' %}V{% else %}E{% endif %}
-                                            </span>
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ match.hs|default_if_none:"-" }}</td>
-                                    <td>{{ match.as_field|default_if_none:"-" }}</td>
-                                    <td>{{ match.hst|default_if_none:"-" }}</td>
-                                    <td>{{ match.ast|default_if_none:"-" }}</td>
-                                    <td>{{ match.hc|default_if_none:"-" }}</td>
-                                    <td>{{ match.ac|default_if_none:"-" }}</td>
-                                    <td>{{ match.hf|default_if_none:"-" }}</td>
-                                    <td>{{ match.af|default_if_none:"-" }}</td>
-                                    <td>
-                                        <a href="{% url 'football_data:match_detail' match.id %}" 
-                                           class="btn btn-sm btn-outline-primary" title="Ver detalles">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                <nav aria-label="Page navigation" class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        {% if matches.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?{% if request.GET.league %}league={{ request.GET.league }}&{% endif %}{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}{% if request.GET.result %}result={{ request.GET.result }}&{% endif %}page={{ matches.previous_page_number }}">
-                                    <i class="fas fa-chevron-left"></i> Anterior
-                                </a>
-                            </li>
-                        {% endif %}
-                        
-                        {% for i in matches.paginator.page_range %}
-                            {% if matches.number == i %}
-                                <li class="page-item active">
-                                    <span class="page-link">{{ i }}</span>
-                                </li>
-                            {% else %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?{% if request.GET.league %}league={{ request.GET.league }}&{% endif %}{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}{% if request.GET.result %}result={{ request.GET.result }}&{% endif %}page={{ i }}">{{ i }}</a>
-                                </li>
-                            {% endif %}
-                        {% endfor %}
-                        
-                        {% if matches.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?{% if request.GET.league %}league={{ request.GET.league }}&{% endif %}{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}{% if request.GET.result %}result={{ request.GET.result }}&{% endif %}page={{ matches.next_page_number }}">
-                                    Siguiente <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-
-                <!-- Información de paginación -->
-                <div class="text-center text-muted mt-3">
-                    Mostrando {{ matches.start_index }} a {{ matches.end_index }} de {{ matches.paginator.count }} partidos
-                </div>
-            {% else %}
-                <div class="alert alert-warning text-center">
-                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
-                    <h4>No se encontraron partidos</h4>
-                    <p>No hay partidos que coincidan con los criterios de búsqueda seleccionados.</p>
-                    {% if not request.GET.league and not request.GET.search and not request.GET.date_from and not request.GET.date_to and not request.GET.result %}
-                        <p>Por favor, <a href="{% url 'football_data:import' %}">carga algunos datos</a> para comenzar.</p>
-                    {% else %}
-                        <p>Intenta ajustar los filtros o <a href="{% url 'football_data:matches_list' %}">limpiar la búsqueda</a>.</p>
-                    {% endif %}
-                </div>
-            {% endif %}
-        </div>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h1 style="font-family: var(--font-heading); font-size: 1.6rem; margin: 0; color: var(--text-primary);">
+      📋 Partidos
+    </h1>
+    <div style="color: var(--text-tertiary); font-size: 0.85rem;">
+      Orden cronológico · Más recientes arriba
     </div>
-</div>
-{% endblock %}
+  </div>
 
-{% block extra_js %}
-<script>
-    // Auto-submit del formulario cuando cambian los filtros principales
-    document.getElementById('leagueFilter').addEventListener('change', function() {
-        document.getElementById('filterForm').submit();
-    });
-    
-    // Limpiar formulario
-    document.querySelector('a[href="{% url "football_data:matches_list" %}"]').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('filterForm').reset();
-        window.location.href = '{% url "football_data:matches_list" %}';
-    });
-</script>
+  <!-- Filtros -->
+  <form method="GET" id="filterForm" class="match-filters">
+    <div>
+      <label>Liga</label>
+      <select name="league" onchange="this.form.submit()">
+        <option value="">Todas las ligas</option>
+        {% for league in leagues %}
+          <option value="{{ league.id }}" {% if league.id|stringformat:"s" == request.GET.league %}selected{% endif %}>
+            {{ league.name }} ({{ league.match_count }})
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Desde</label>
+      <input type="date" name="date_from" value="{{ request.GET.date_from }}">
+    </div>
+    <div>
+      <label>Hasta</label>
+      <input type="date" name="date_to" value="{{ request.GET.date_to }}">
+    </div>
+    <div>
+      <label>Equipo</label>
+      <input type="text" name="search" placeholder="Nombre..." value="{{ request.GET.search }}">
+    </div>
+    <div>
+      <label>Resultado</label>
+      <select name="result">
+        <option value="">Todos</option>
+        <option value="H" {% if request.GET.result == 'H' %}selected{% endif %}>Local</option>
+        <option value="D" {% if request.GET.result == 'D' %}selected{% endif %}>Empate</option>
+        <option value="A" {% if request.GET.result == 'A' %}selected{% endif %}>Visitante</option>
+      </select>
+    </div>
+    <button type="submit" class="filter-btn">🔎 Filtrar</button>
+    <a href="{% url 'football_data:matches_list' %}" class="filter-clear">Limpiar</a>
+  </form>
+
+  <div class="match-count">
+    {% if page_obj %}
+      {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} partidos
+    {% else %}
+      Sin partidos
+    {% endif %}
+  </div>
+
+  <!-- Tabla -->
+  {% if page_obj %}
+    <div class="match-table-wrap">
+      <table class="match-table">
+        <thead>
+          <tr>
+            <th>Liga</th>
+            <th>Fecha</th>
+            <th>Local</th>
+            <th>Visitante</th>
+            <th>Result.</th>
+            <th>xG L</th>
+            <th>xG V</th>
+            <th>Tiros L</th>
+            <th>Tiros V</th>
+            <th>Puerta L</th>
+            <th>Puerta V</th>
+            <th>Córners L</th>
+            <th>Córners V</th>
+            <th>Tarj. L</th>
+            <th>Tarj. V</th>
+            <th>Faltas L</th>
+            <th>Faltas V</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for match in page_obj %}
+            <tr>
+              <td><span class="league-badge">{{ match.league.name }}</span></td>
+              <td>{{ match.date|date:"d/m/y" }}</td>
+              <td class="team-name">{{ match.home_team }}</td>
+              <td class="team-name">{{ match.away_team }}</td>
+              <td>
+                <span class="score">{{ match.fthg|default_if_none:"-" }}-{{ match.ftag|default_if_none:"-" }}</span>
+                {% if match.ftr %}
+                  <span class="result-badge result-{{ match.ftr }}">
+                    {% if match.ftr == 'H' %}L{% elif match.ftr == 'A' %}V{% else %}E{% endif %}
+                  </span>
+                {% endif %}
+              </td>
+              <td class="xg-cell {% if match.xg_home %}has-xg{% endif %}">{{ match.xg_home|default_if_none:"—" }}</td>
+              <td class="xg-cell {% if match.xg_away %}has-xg{% endif %}">{{ match.xg_away|default_if_none:"—" }}</td>
+              <td class="stat-num">{{ match.hs|default_if_none:"—" }}</td>
+              <td class="stat-num">{{ match.as_field|default_if_none:"—" }}</td>
+              <td class="stat-num">{{ match.hst|default_if_none:"—" }}</td>
+              <td class="stat-num">{{ match.ast|default_if_none:"—" }}</td>
+              <td class="stat-num">{{ match.hc|default_if_none:"—" }}</td>
+              <td class="stat-num">{{ match.ac|default_if_none:"—" }}</td>
+              <td class="stat-num">{{ match.hy|default_if_none:"—" }}</td>
+              <td class="stat-num">{{ match.ay|default_if_none:"—" }}</td>
+              <td class="stat-num">{{ match.hf|default_if_none:"—" }}</td>
+              <td class="stat-num">{{ match.af|default_if_none:"—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    <div class="pagination-wrap">
+      <div class="pagination">
+        {% if page_obj.has_previous %}
+          <a href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">‹</a>
+        {% endif %}
+        {% for i in page_obj.paginator.page_range %}
+          {% if page_obj.number == i %}
+            <span class="active">{{ i }}</span>
+          {% elif i > page_obj.number|add:"-3" and i < page_obj.number|add:"3" %}
+            <a href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ i }}">{{ i }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <a href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">›</a>
+        {% endif %}
+      </div>
+      <div class="pagination-info">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+      </div>
+    </div>
+
+  {% else %}
+    <div style="text-align: center; padding: 3rem; color: var(--text-tertiary);">
+      <p style="font-size: 1.1rem;">No hay partidos con esos criterios.</p>
+      <a href="{% url 'football_data:matches_list' %}" class="filter-clear" style="display: inline-block; margin-top: 1rem;">Limpiar filtros</a>
+    </div>
+  {% endif %}
+
+</div>
 {% endblock %}

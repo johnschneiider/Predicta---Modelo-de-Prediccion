@@ -63,6 +63,10 @@ class Match(models.Model):
     hr = models.IntegerField(null=True, blank=True, verbose_name="Home Red Cards")
     ar = models.IntegerField(null=True, blank=True, verbose_name="Away Red Cards")
     
+    # Expected Goals (xG) desde Flashscore
+    xg_home = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True, verbose_name="xG Home")
+    xg_away = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True, verbose_name="xG Away")
+    
     # Corners detallados
     corners_total = models.IntegerField(null=True, blank=True, verbose_name="Total Corners")
     corners_home = models.IntegerField(null=True, blank=True, verbose_name="Home Corners")

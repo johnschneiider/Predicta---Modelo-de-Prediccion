@@ -69,3 +69,10 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+# Sensitive / credentials — NO subir a GitHub
+SOUL.md
+*.backup_*
+*.local_backup
+data/
+edge_opportunities.json

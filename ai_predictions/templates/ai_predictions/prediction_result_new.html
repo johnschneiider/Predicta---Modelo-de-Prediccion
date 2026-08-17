@@ -1,470 +1,855 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Resultado de Predicción - IA{% endblock %}
+{% block title %}{{ prediction.home_team }} vs {{ prediction.away_team }} — Predicta{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
-    .result-header {
-        background: #2c3e50;
-        border-left: 5px solid #3498db;
-        padding: 25px 30px;
-        color: white;
-        margin-bottom: 30px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .result-header h2 {
-        font-size: 1.8rem;
-        font-weight: 600;
-        margin-bottom: 8px;
-    }
-    
-    .result-header p {
-        font-size: 0.95rem;
-        color: #ecf0f1;
-        margin: 0;
-    }
-    
-    .predictions-table {
-        background: white;
-        padding: 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border: 1px solid #e0e0e0;
-        overflow-x: auto;
-    }
-    
-    .table-predictions {
-        width: 100%;
-        min-width: 1400px;
-        margin: 0;
-        border-collapse: collapse;
-    }
-    
-    .table-predictions thead tr:first-child th {
-        background: #34495e;
-        color: white;
-        padding: 15px 12px;
-        text-align: center;
-        font-weight: 600;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border-right: 1px solid #2c3e50;
-    }
-    
-    .table-predictions thead tr:first-child th:last-child {
-        border-right: none;
-    }
-    
-    .table-predictions thead tr:nth-child(2) th {
-        background: #ecf0f1;
-        color: #2c3e50;
-        padding: 10px 8px;
-        text-align: center;
-        font-weight: 600;
-        font-size: 0.8rem;
-        border-right: 1px solid #d5d8dc;
-        border-bottom: 2px solid #34495e;
-    }
-    
-    .table-predictions thead tr:nth-child(2) th:first-child {
-        background: white;
-        border-right: 1px solid #d5d8dc;
-    }
-    
-    .table-predictions tbody td {
-        padding: 14px 12px;
-        text-align: center;
-        border-bottom: 1px solid #e8e8e8;
-        border-right: 1px solid #f0f0f0;
-        vertical-align: middle;
-        font-size: 0.95rem;
-    }
-    
-    .table-predictions tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-    
-    .table-predictions tbody tr:nth-child(even) {
-        background-color: #fafafa;
-    }
-    
-    .table-predictions tbody tr:nth-child(even):hover {
-        background-color: #f8f9fa;
-    }
-    
-    .model-name {
-        font-weight: 600;
-        color: #2c3e50;
-        text-align: left !important;
-        padding-left: 20px !important;
-        font-size: 1rem;
-        border-right: 2px solid #d5d8dc !important;
-    }
-    
-    .prediction-value {
-        font-size: 1.15rem;
-        font-weight: 600;
-        color: #2c3e50;
-    }
-    
-    .confidence-badge {
-        padding: 4px 10px;
-        border-radius: 3px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        border: 1px solid;
-    }
-    
-    .confidence-high {
-        background-color: #d4edda;
-        color: #155724;
-        border-color: #c3e6cb;
-    }
-    
-    .confidence-medium {
-        background-color: #fff3cd;
-        color: #856404;
-        border-color: #ffeaa7;
-    }
-    
-    .confidence-low {
-        background-color: #f8d7da;
-        color: #721c24;
-        border-color: #f5c6cb;
-    }
-    
-    .action-buttons {
-        text-align: center;
-        margin-top: 30px;
-        padding: 20px 0;
-    }
-    
-    .btn-action {
-        margin: 5px;
-        border-radius: 4px;
-        padding: 10px 25px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.85rem;
-        border: 1px solid;
-    }
-    
-    .btn-primary {
-        background-color: #3498db;
-        border-color: #3498db;
-        color: white;
-    }
-    
-    .btn-primary:hover {
-        background-color: #2980b9;
-        border-color: #2980b9;
-    }
-    
-    .btn-secondary {
-        background-color: #95a5a6;
-        border-color: #95a5a6;
-        color: white;
-    }
-    
-    .btn-secondary:hover {
-        background-color: #7f8c8d;
-        border-color: #7f8c8d;
-    }
-    
-    .table-title {
-        background: #f8f9fa;
-        padding: 20px;
-        border-bottom: 2px solid #34495e;
-    }
-    
-    .table-title h4 {
-        margin: 0;
-        color: #2c3e50;
-        font-weight: 600;
-        font-size: 1.3rem;
-    }
-    
-    .info-card {
-        background: white;
-        border: 1px solid #e0e0e0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    
-    .info-card .card-header {
-        background: #f8f9fa;
-        border-bottom: 2px solid #e0e0e0;
-        padding: 15px 20px;
-    }
-    
-    .info-card .card-header h5 {
-        margin: 0;
-        color: #2c3e50;
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
+/* ── Hero del partido ── */
+.result-hero {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 2.5rem 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.result-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent-primary);
+}
+.result-hero .match-title {
+    font-family: var(--font-heading);
+    font-size: clamp(1.8rem, 6vw, 2.8rem);
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+}
+.result-hero .match-title .vs {
+    color: var(--text-tertiary);
+    font-size: 0.7em;
+    margin: 0 0.5rem;
+    font-family: var(--font-body);
+    font-weight: 300;
+}
+.result-hero .league-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--accent-subtle);
+    border: 0.5px solid var(--accent-border);
+    color: var(--accent-primary);
+    padding: 0.35rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+}
+.result-hero .hero-subtitle {
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+}
+
+/* ── Resumen rápido (cards) ── */
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+.stat-card {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    padding: 1.25rem 1rem;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--accent-border); }
+.stat-card .stat-icon {
+    font-size: 1.3rem;
+    margin-bottom: 0.4rem;
+}
+.stat-card .stat-value {
+    font-family: var(--font-heading);
+    font-size: 1.8rem;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+.stat-card .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-top: 0.25rem;
+}
+.stat-value.no-data {
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+.stat-card .stat-sub {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    margin-top: 0.15rem;
+}
+.stat-card .stat-recommendation {
+    font-size: 0.65rem;
+    color: var(--accent-primary, #4f46e5);
+    margin-top: 0.15rem;
+    font-weight: 600;
+    background: rgba(79,70,229,0.08);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+/* ── Tabla principal ── */
+.models-section {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+.models-section-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 0.5px solid var(--border-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.models-section-header h3 {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: 0.03em;
+    margin: 0;
+}
+.models-section-header .section-icon {
+    font-size: 1.1rem;
+}
+
+.table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.prediction-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+/* Headers de grupo */
+.prediction-table thead th.group-header {
+    padding: 0.6rem 0.5rem;
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 2px solid;
+}
+.prediction-table thead th.group-shots    { color: #ff6b6b; border-color: #ff6b6b; }
+.prediction-table thead th.group-ontarget { color: #f093fb; border-color: #f093fb; }
+.prediction-table thead th.group-goals    { color: #ffd166; border-color: #ffd166; }
+.prediction-table thead th.group-corners  { color: #4facfe; border-color: #4facfe; }
+.prediction-table thead th.group-both     { color: #4ecdc4; border-color: #4ecdc4; }
+.prediction-table thead th.group-model    { color: var(--text-secondary); border-color: var(--border-primary); text-align: left; padding-left: 1.5rem; }
+
+/* Sub-headers */
+.prediction-table thead th.sub-header {
+    padding: 0.5rem 0.35rem;
+    text-align: center;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-overlay);
+}
+
+/* Rows */
+.prediction-table tbody td {
+    padding: 0.85rem 0.5rem;
+    text-align: center;
+    border-bottom: 0.5px solid var(--border-subtle);
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+.prediction-table tbody td.model-cell {
+    text-align: left;
+    padding-left: 1.5rem;
+    min-width: 180px;
+}
+.prediction-table .model-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+.prediction-table .model-type {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    display: block;
+}
+.prediction-table .pred-number {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+.prediction-table .pred-sub {
+    font-size: 0.65rem;
+    color: var(--text-tertiary);
+    display: block;
+}
+
+/* Fila oficial destacada */
+.prediction-table tr.row-official {
+    border-left: 3px solid var(--accent-primary);
+}
+.prediction-table tr.row-official td {
+    background: var(--accent-subtle);
+    font-weight: 600;
+}
+.prediction-table tr.row-official .pred-number {
+    color: var(--accent-primary);
+    font-size: 1.05rem;
+}
+.prediction-table tr.row-official .model-name {
+    color: var(--accent-primary);
+}
+
+/* Fila hover */
+.prediction-table tbody tr:not(.row-official) {
+    display: none;
+}
+.prediction-table tbody tr:not(.row-official).visible {
+    display: table-row;
+}
+.toggle-models-btn {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-primary);
+    color: var(--text-secondary);
+    padding: 0.4rem 1rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+}
+.toggle-models-btn:hover { color: var(--text-primary); border-color: var(--accent-primary); }
+.prediction-table tbody tr:not(.row-official):hover {
+    background: var(--bg-overlay);
+}
+
+/* ── Probabilidad ambos marcan ── */
+.both-prob {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-full);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+.both-prob.prob-high   { background: rgba(16,185,129,0.12); color: #10b981; }
+.both-prob.prob-mid    { background: rgba(255,209,102,0.12); color: #e6a800; }
+.both-prob.prob-low    { background: rgba(255,107,107,0.12); color: #ff6b6b; }
+
+/* ── Interpretación ── */
+.interpret-box {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+.interpret-box h4 {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    letter-spacing: 0.03em;
+}
+.interpret-box ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.interpret-box li {
+    padding: 0.35rem 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.interpret-box li::before {
+    content: '▸';
+    color: var(--accent-primary);
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+.interpret-box li strong {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* ── Acciones ── */
+.result-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+.result-actions .btn {
+    padding: 0.75rem 1.75rem;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+}
+.btn-primary {
+    background: var(--accent-primary);
+    color: #000;
+    border: none;
+}
+.btn-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+.btn-outline {
+    background: transparent;
+    color: var(--text-primary);
+    border: 0.5px solid var(--border-secondary);
+}
+.btn-outline:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+@media (max-width: 600px) {
+    .result-hero { padding: 1.5rem 1rem; }
+    .quick-stats { grid-template-columns: repeat(3, 1fr); }
+    .stat-card .stat-value { font-size: 1.4rem; }
+}
+
+/* ── Panel registrar apuesta ── */
+.bet-panel {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+.bet-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+.bet-panel-header h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: 0.02em;
+}
+.bet-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+}
+.bet-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.bet-field label {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.bet-field select,
+.bet-field input[type="number"] {
+    background: var(--bg-surface-alt);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 0.55rem 0.7rem;
+    font-size: 0.9rem;
+    min-width: 180px;
+}
+.bet-field select:focus,
+.bet-field input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+.bet-radio-group {
+    display: flex;
+    gap: 0.5rem;
+}
+.bet-radio {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--bg-surface-alt);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+.bet-radio input { accent-color: var(--accent-primary); }
+.existing-apuestas {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 0.5px solid var(--border-primary);
+}
+.existing-apuestas h4 {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 0.75rem;
+}
+.apuesta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    border-bottom: 0.5px solid var(--border-subtle);
+}
+.status-badge {
+    margin-left: auto;
+    font-size: 0.72rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-full);
+    letter-spacing: 0.03em;
+}
+.status-pendiente { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+.status-ganada { background: var(--accent-subtle); color: var(--accent-primary); }
+.status-perdida { background: rgba(239,68,68,0.12); color: #ef4444; }
+.status-anulada { background: rgba(255,255,255,0.04); color: var(--text-tertiary); }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="result-header">
-                <div class="text-center">
-                    <h2 class="mb-2">
-                        <i class="fas fa-futbol"></i> 
-                        {{ prediction.home_team }} vs {{ prediction.away_team }}
-                    </h2>
-                    <p class="mb-0">
-                        <i class="fas fa-trophy"></i> {{ prediction.league }}
-                    </p>
-                    <p class="mt-2 mb-0">
-                        <small>Análisis Multi-Modelo Completo</small>
-                    </p>
-                </div>
-            </div>
+
+<!-- ═══ HERO DEL PARTIDO ═══ -->
+<div class="result-hero">
+    <div class="league-badge">⚽ {{ prediction.league }}</div>
+    <h1 class="match-title">
+        {{ prediction.home_team }}
+        <span class="vs">vs</span>
+        {{ prediction.away_team }}
+    </h1>
+    <p class="hero-subtitle">Predicción oficial · Análisis multi-modelo</p>
+</div>
+
+<!-- ═══ ESTADÍSTICAS RÁPIDAS ═══ -->
+<div class="quick-stats">
+    {% for model_name in model_names %}
+    {% if model_name == "Predicción Oficial" %}
+    <!-- Goles totales -->
+    <div class="stat-card">
+        <div class="stat-icon">⚽</div>
+        {% for pred in prediction.all_predictions.goals_total %}
+            {% if pred.model_name == "Predicción Oficial" %}
+                <div class="stat-value">{{ pred.prediction|floatformat:1 }}</div>
+            {% endif %}
+        {% endfor %}
+        <div class="stat-label">Goles Totales</div>
+        <div class="stat-sub">
+            {% for pred in prediction.all_predictions.goals_home %}
+                {% if pred.model_name == "Predicción Oficial" %}L:{{ pred.prediction|floatformat:1 }}{% endif %}
+            {% endfor %}
+            ·
+            {% for pred in prediction.all_predictions.goals_away %}
+                {% if pred.model_name == "Predicción Oficial" %}V:{{ pred.prediction|floatformat:1 }}{% endif %}
+            {% endfor %}
         </div>
     </div>
 
+    <!-- Remates totales -->
+    <div class="stat-card">
+        <div class="stat-icon">🎯</div>
+        {% for pred in prediction.all_predictions.shots_total %}
+            {% if pred.model_name == "Predicción Oficial" %}
+                <div class="stat-value">{{ pred.prediction|floatformat:1 }}</div>
+            {% endif %}
+        {% endfor %}
+        <div class="stat-label">Remates</div>
+        <div class="stat-sub">
+            {% for pred in prediction.all_predictions.shots_home %}
+                {% if pred.model_name == "Predicción Oficial" %}L:{{ pred.prediction|floatformat:1 }}{% endif %}
+            {% endfor %}
+            ·
+            {% for pred in prediction.all_predictions.shots_away %}
+                {% if pred.model_name == "Predicción Oficial" %}V:{{ pred.prediction|floatformat:1 }}{% endif %}
+            {% endfor %}
+        </div>
+    </div>
 
-    <!-- Tabla de Predicciones -->
-    <div class="row">
-        <div class="col-12">
-            <div class="predictions-table">
-                <div class="table-title">
-                    <h4>
-                        <i class="fas fa-chart-line"></i> Predicciones de Modelos
-                    </h4>
-                </div>
-                
-                <div class="table-responsive">
-                    <table class="table table-predictions table-hover">
-                        <thead>
-                            <tr>
-                                <th>Modelo</th>
-                                <th colspan="3" class="category-header">Remates</th>
-                                <th class="category-header">Remates a Puerta</th>
-                                <th colspan="3" class="category-header">Goles</th>
-                                <th colspan="3" class="category-header">Corners</th>
-                                <th class="category-header">Ambos Marcan</th>
-                            </tr>
-                            <tr class="category-header">
-                                <th style="background: white !important;"></th>
-                                <th>Total</th>
-                                <th>Local</th>
-                                <th>Visit.</th>
-                                <th>Total</th>
-                                <th>Total</th>
-                                <th>Local</th>
-                                <th>Visit.</th>
-                                <th>Total</th>
-                                <th>Local</th>
-                                <th>Visit.</th>
-                                <th>Probabilidad</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for model_name in model_names %}
-                            {% if model_name == "Predicción Oficial" %}
-                            <tr>
-                                <td class="model-name">
-                                    {{ model_name }}
-                                    <br><small class="text-muted">Modelo Ensemble</small>
-                                </td>
-                                <!-- Remates -->
-                                <td>
-                                    {% if prediction.all_predictions.shots_total %}
-                                        {% for pred in prediction.all_predictions.shots_total %}
-                                            {% if pred.model_name == model_name %}
-                                                <span class="prediction-value">{{ pred.prediction|floatformat:1 }}</span>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if prediction.all_predictions.shots_home %}
-                                        {% for pred in prediction.all_predictions.shots_home %}
-                                            {% if pred.model_name == model_name %}
-                                                <span class="prediction-value">{{ pred.prediction|floatformat:1 }}</span>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if prediction.all_predictions.shots_away %}
-                                        {% for pred in prediction.all_predictions.shots_away %}
-                                            {% if pred.model_name == model_name %}
-                                                <span class="prediction-value">{{ pred.prediction|floatformat:1 }}</span>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <!-- Remates a Puerta -->
-                                <td>
-                                    {% if prediction.all_predictions.shots_on_target_total %}
-                                        {% for pred in prediction.all_predictions.shots_on_target_total %}
-                                            {% if pred.model_name == model_name %}
-                                                <span class="prediction-value">{{ pred.prediction|floatformat:1 }}</span>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <!-- Goles -->
-                                <td>
-                                    {% if prediction.all_predictions.goals_total %}
-                                        {% for pred in prediction.all_predictions.goals_total %}
-                                            {% if pred.model_name == model_name %}
-                                                <span class="prediction-value">{{ pred.prediction|floatformat:1 }}</span>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if prediction.all_predictions.goals_home %}
-                                        {% for pred in prediction.all_predictions.goals_home %}
-                                            {% if pred.model_name == model_name %}
-                                                <span class="prediction-value">{{ pred.prediction|floatformat:1 }}</span>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if prediction.all_predictions.goals_away %}
-                                        {% for pred in prediction.all_predictions.goals_away %}
-                                            {% if pred.model_name == model_name %}
-                                                <span class="prediction-value">{{ pred.prediction|floatformat:1 }}</span>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <!-- Corners -->
-                                <td>
-                                    {% if prediction.all_predictions.corners_total %}
-                                        {% for pred in prediction.all_predictions.corners_total %}
-                                            {% if pred.model_name == model_name %}
-                                                <span class="prediction-value">{{ pred.prediction|floatformat:1 }}</span>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if prediction.all_predictions.corners_home %}
-                                        {% for pred in prediction.all_predictions.corners_home %}
-                                            {% if pred.model_name == model_name %}
-                                                <span class="prediction-value">{{ pred.prediction|floatformat:1 }}</span>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if prediction.all_predictions.corners_away %}
-                                        {% for pred in prediction.all_predictions.corners_away %}
-                                            {% if pred.model_name == model_name %}
-                                                <span class="prediction-value">{{ pred.prediction|floatformat:1 }}</span>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <!-- Ambos Marcan -->
-                                <td>
-                                    {% if prediction.all_predictions.both_teams_score %}
-                                        {% for pred in prediction.all_predictions.both_teams_score %}
-                                            {% if pred.model_name == model_name %}
-                                                {% if pred.probabilities.both_score %}
-                                                    <span class="confidence-badge both-teams-score-prob {% if pred.probabilities.both_score > 0.6 %}confidence-high{% elif pred.probabilities.both_score > 0.4 %}confidence-medium{% else %}confidence-low{% endif %}" data-prob="{{ pred.probabilities.both_score }}">
-                                                        -
-                                                    </span>
-                                                {% else %}
-                                                    <span class="text-muted">-</span>
-                                                {% endif %}
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
+    <!-- Remates a puerta -->
+    <div class="stat-card">
+        <div class="stat-icon">🥅</div>
+        {% for pred in prediction.all_predictions.shots_on_target_total %}
+            {% if pred.model_name == "Predicción Oficial" %}
+                <div class="stat-value">{{ pred.prediction|floatformat:1 }}</div>
+            {% endif %}
+        {% endfor %}
+        <div class="stat-label">A Puerta</div>
+    </div>
+
+    <!-- Corners -->
+    <div class="stat-card">
+        <div class="stat-icon">🏳️</div>
+        {% for pred in prediction.all_predictions.corners_total %}
+            {% if pred.model_name == "Predicción Oficial" %}
+                <div class="stat-value">{{ pred.prediction|floatformat:1 }}</div>
+            {% endif %}
+        {% endfor %}
+        <div class="stat-label">Corners</div>
+        <div class="stat-sub">
+            {% for pred in prediction.all_predictions.corners_home %}
+                {% if pred.model_name == "Predicción Oficial" %}L:{{ pred.prediction|floatformat:1 }}{% endif %}
+            {% endfor %}
+            ·
+            {% for pred in prediction.all_predictions.corners_away %}
+                {% if pred.model_name == "Predicción Oficial" %}V:{{ pred.prediction|floatformat:1 }}{% endif %}
+            {% endfor %}
+        </div>
+        {% if corners_recommendation %}
+        <div class="stat-recommendation">
+            {{ corners_recommendation.direction }} {{ corners_recommendation.line }} — {{ corners_recommendation.probability }}%
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Ambos Marcan -->
+    <div class="stat-card">
+        <div class="stat-icon">🤝</div>
+        {% if has_goals_data %}
+            {% for pred in prediction.all_predictions.both_teams_score %}
+                {% if pred.model_name == "Predicción Oficial" %}
+                    <div class="stat-value">
+                        {% if pred.probabilities.both_score %}
+                            {% widthratio pred.probabilities.both_score 1 100 %}%
+                        {% else %}—{% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <div class="stat-value no-data">Sin datos</div>
+        {% endif %}
+        <div class="stat-label">Ambos Marcan</div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<!-- ═══ TABLA DE PREDICCIONES ═══ -->
+<div class="models-section">
+    <div class="models-section-header">
+        <span class="section-icon">📊</span>
+        <h3>Comparativa de Modelos — {{ prediction.home_team }} vs {{ prediction.away_team }}</h3>
+        <button class="toggle-models-btn" onclick="toggleModels()">📊 Mostrar todos los modelos</button>
+    </div>
+
+    <div class="table-scroll">
+        <table class="prediction-table">
+            <thead>
+                <tr>
+                    <th class="group-header group-model" rowspan="2">Modelo</th>
+                    <th class="group-header group-shots" colspan="3">Remates</th>
+                    <th class="group-header group-ontarget">A Puerta</th>
+                    <th class="group-header group-goals" colspan="3">Goles</th>
+                    <th class="group-header group-corners" colspan="3">Corners</th>
+                    <th class="group-header group-both">Ambos Marcan</th>
+                </tr>
+                <tr>
+                    <th class="sub-header">Total</th>
+                    <th class="sub-header">Local</th>
+                    <th class="sub-header">Visit.</th>
+                    <th class="sub-header">Total</th>
+                    <th class="sub-header">Total</th>
+                    <th class="sub-header">Local</th>
+                    <th class="sub-header">Visit.</th>
+                    <th class="sub-header">Total</th>
+                    <th class="sub-header">Local</th>
+                    <th class="sub-header">Visit.</th>
+                    <th class="sub-header">Prob.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for model_name in model_names %}
+                {% if model_name == "Predicción Oficial" %}
+                <tr class="row-official">
+                {% else %}
+                <tr>
+                {% endif %}
+                    <!-- Modelo -->
+                    <td class="model-cell">
+                        <span class="model-name">{{ model_name }}</span>
+                        <span class="model-type">
+                            {% if "Ensemble" in model_name or "Oficial" in model_name %}Combinación de modelos
+                            {% elif "Poisson" in model_name %}Distribución de Poisson
+                            {% elif "XG" in model_name %}Expected Goals (xG)
+                            {% elif "Shots Prediction" in model_name %}Regresión histórica
+                            {% elif "Híbrido" in model_name %}Modelo híbrido
+                            {% elif "Simple Average" in model_name %}Promedio simple
+                            {% elif "Enhanced Both" in model_name %}Modelo especializado
+                            {% elif "Dixon-Coles" in model_name %}Dixon-Coles
+                            {% else %}Modelo estadístico{% endif %}
+                        </span>
+                    </td>
+
+                    <!-- Remates Total -->
+                    <td>
+                        {% for pred in prediction.all_predictions.shots_total %}
+                            {% if pred.model_name == model_name %}
+                                <span class="pred-number">{{ pred.prediction|floatformat:1 }}</span>
                             {% endif %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+                        {% endfor %}
+                    </td>
+                    <!-- Remates Local -->
+                    <td>
+                        {% for pred in prediction.all_predictions.shots_home %}
+                            {% if pred.model_name == model_name %}
+                                <span class="pred-number">{{ pred.prediction|floatformat:1 }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <!-- Remates Visitante -->
+                    <td>
+                        {% for pred in prediction.all_predictions.shots_away %}
+                            {% if pred.model_name == model_name %}
+                                <span class="pred-number">{{ pred.prediction|floatformat:1 }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
 
-    <!-- Información adicional -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card info-card">
-                <div class="card-header">
-                    <h5><i class="fas fa-info-circle"></i> Interpretación de Resultados</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Ensemble Average:</strong></p>
-                    <ul>
-                        <li><strong>Algoritmo Avanzado:</strong> Combina múltiples modelos estadísticos para mayor precisión</li>
-                        <li><strong>Promedio Inteligente:</strong> Integra distribuciones de Poisson y promedios históricos</li>
-                        <li><strong>Mayor Confiabilidad:</strong> Reduce el sesgo individual de cada modelo</li>
-                        <li><strong>Predicción Robusta:</strong> Proporciona la estimación más precisa disponible</li>
-                    </ul>
-                    <p class="mt-3"><strong>Cómo usar las predicciones:</strong></p>
-                    <ul>
-                        <li>Los valores mostrados representan la predicción oficial del sistema</li>
-                        <li>Mayor confianza indica mayor precisión histórica del modelo</li>
-                        <li>Para "Ambos Marcan", valores >60% indican alta probabilidad</li>
-                        <li>Las predicciones se basan en análisis estadístico avanzado</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
+                    <!-- A Puerta Total -->
+                    <td>
+                        {% for pred in prediction.all_predictions.shots_on_target_total %}
+                            {% if pred.model_name == model_name %}
+                                <span class="pred-number">{{ pred.prediction|floatformat:1 }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
 
-    <!-- Acciones -->
-    <div class="action-buttons">
-        <a href="{% url 'ai_predictions:prediction_form' %}" class="btn btn-primary btn-action">
-            <i class="fas fa-plus"></i> Nueva Predicción
-        </a>
-        <a href="{% url 'ai_predictions:dashboard' %}" class="btn btn-secondary btn-action">
-            <i class="fas fa-home"></i> Dashboard
-        </a>
+                    <!-- Goles Total -->
+                    <td>
+                        {% for pred in prediction.all_predictions.goals_total %}
+                            {% if pred.model_name == model_name %}
+                                <span class="pred-number">{{ pred.prediction|floatformat:1 }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <!-- Goles Local -->
+                    <td>
+                        {% for pred in prediction.all_predictions.goals_home %}
+                            {% if pred.model_name == model_name %}
+                                <span class="pred-number">{{ pred.prediction|floatformat:1 }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <!-- Goles Visitante -->
+                    <td>
+                        {% for pred in prediction.all_predictions.goals_away %}
+                            {% if pred.model_name == model_name %}
+                                <span class="pred-number">{{ pred.prediction|floatformat:1 }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+
+                    <!-- Corners Total -->
+                    <td>
+                        {% for pred in prediction.all_predictions.corners_total %}
+                            {% if pred.model_name == model_name %}
+                                <span class="pred-number">{{ pred.prediction|floatformat:1 }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <!-- Corners Local -->
+                    <td>
+                        {% for pred in prediction.all_predictions.corners_home %}
+                            {% if pred.model_name == model_name %}
+                                <span class="pred-number">{{ pred.prediction|floatformat:1 }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <!-- Corners Visitante -->
+                    <td>
+                        {% for pred in prediction.all_predictions.corners_away %}
+                            {% if pred.model_name == model_name %}
+                                <span class="pred-number">{{ pred.prediction|floatformat:1 }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+
+                    <!-- Ambos Marcan -->
+                    <td>
+                        {% for pred in prediction.all_predictions.both_teams_score %}
+                            {% if pred.model_name == model_name %}
+                                {% if pred.probabilities.both_score %}
+                                    <span class="both-prob {% if pred.probabilities.both_score > 0.6 %}prob-high{% elif pred.probabilities.both_score > 0.4 %}prob-mid{% else %}prob-low{% endif %}">
+                                        {% widthratio pred.probabilities.both_score 1 100 %}%
+                                    </span>
+                                {% elif pred.prediction %}
+                                    <span class="both-prob {% if pred.prediction > 0.6 %}prob-high{% elif pred.prediction > 0.4 %}prob-mid{% else %}prob-low{% endif %}">
+                                        {% widthratio pred.prediction 1 100 %}%
+                                    </span>
+                                {% else %}
+                                    <span class="pred-number">—</span>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
+<!-- ═══ INTERPRETACIÓN ═══ -->
+<div class="interpret-box">
+    <h4>🧠 Cómo interpretar estos resultados</h4>
+    <ul>
+        <li><strong>Predicción Oficial:</strong> Es el consenso de todos los modelos. Es el valor más confiable del sistema.</li>
+        <li><strong>Remates:</strong> Cantidad estimada de disparos totales, al arco, por equipo local y visitante.</li>
+        <li><strong>Goles:</strong> Estimación de goles basada en distribuciones de Poisson calibradas por liga.</li>
+        <li><strong>Corners:</strong> Predicción de tiros de esquina usando promedios históricos y forma reciente.</li>
+        <li><strong>Ambos Marcan:</strong> Probabilidad de que los dos equipos anoten. &gt;60% = alta, &lt;40% = baja.</li>
+        <li><strong>Modelos adicionales:</strong> Muestran cómo diferentes enfoques estadísticos estiman el mismo partido. La dispersión entre modelos indica incertidumbre.</li>
+    </ul>
+</div>
+
+<!-- ═══ REGISTRAR APUESTA ═══ -->
+{% if prediction.saved_prediction_id %}
+<div class="bet-panel">
+    <div class="bet-panel-header">
+        <span class="section-icon">🎟️</span>
+        <h3>Registrar mi apuesta en este partido</h3>
+    </div>
+    <form method="post" action="{% url 'ai_predictions:save_apuesta' prediction.saved_prediction_id %}" class="bet-form">
+        {% csrf_token %}
+        <div class="bet-fields">
+            <div class="bet-field">
+                <label>Mercado</label>
+                <select name="market" id="bet-market">
+                    {% for m in markets %}
+                        <option value="{{ m.key }}" data-official="{{ m.official }}" data-line="{{ m.suggested_line }}" data-bts="{{ m.is_bts|yesno:'1,0' }}">{{ m.label }}{% if m.official is not None %} — pred. {{ m.official|floatformat:1 }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="bet-field" id="bet-selection-field">
+                <label>Selección</label>
+                <div class="bet-radio-group">
+                    <label class="bet-radio"><input type="radio" name="selection" value="over" checked> Over (Más)</label>
+                    <label class="bet-radio"><input type="radio" name="selection" value="under"> Under (Menos)</label>
+                </div>
+            </div>
+            <div class="bet-field" id="bet-line-field">
+                <label>Línea</label>
+                <input type="number" name="line" id="bet-line" step="0.5" min="0.5" value="">
+            </div>
+            <div class="bet-field">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-primary">💾 Guardar apuesta</button>
+            </div>
+        </div>
+    </form>
+    {% if existing_apuestas %}
+    <div class="existing-apuestas">
+        <h4>Tus apuestas en esta predicción</h4>
+        {% for a in existing_apuestas %}
+        <div class="apuesta-item">
+            <span class="badge badge-secondary">{{ a.get_market_display }}</span>
+            <span class="apuesta-sel">{{ a.selection_label }}</span>
+            <span class="status-badge status-{{ a.status }}">{{ a.get_status_display }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- ═══ ACCIONES ═══ -->
+<div class="result-actions">
+    <a href="{% url 'ai_predictions:prediction_form' %}" class="btn btn-primary">⚡ Nueva Predicción</a>
+    <a href="{% url 'ai_predictions:prediction_history' %}" class="btn btn-outline">📋 Historial</a>
+    <a href="{% url 'ai_predictions:mis_apuestas' %}" class="btn btn-outline">🎟️ Mis apuestas</a>
+    <a href="{% url 'ai_predictions:dashboard' %}" class="btn btn-outline">🏠 Dashboard</a>
+</div>
+
 <script>
-// Convertir probabilidades a porcentajes
 document.addEventListener('DOMContentLoaded', function() {
-    const probElements = document.querySelectorAll('.both-teams-score-prob');
-    probElements.forEach(element => {
-        const prob = parseFloat(element.getAttribute('data-prob'));
-        if (!isNaN(prob)) {
-            element.textContent = (prob * 100).toFixed(1) + '%';
-        }
+    // Animar cards al cargar
+    document.querySelectorAll('.stat-card').forEach((card, i) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(10px)';
+        card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, 80 * (i + 1));
     });
 });
+
+function toggleModels() {
+    const rows = document.querySelectorAll('.prediction-table tbody tr:not(.row-official)');
+    const btn = document.querySelector('.toggle-models-btn');
+    const visible = rows[0] && rows[0].classList.contains('visible');
+    rows.forEach(r => r.classList.toggle('visible', !visible));
+    btn.textContent = visible ? '📊 Mostrar todos los modelos' : '📊 Ocultar modelos';
+}
+
+// ── Selector de apuesta ──
+function updateBetForm() {
+    const marketSelect = document.getElementById('bet-market');
+    const selectionField = document.getElementById('bet-selection-field');
+    const lineField = document.getElementById('bet-line-field');
+    const lineInput = document.getElementById('bet-line');
+    if (!marketSelect || !selectionField || !lineField) return;
+
+    const opt = marketSelect.options[marketSelect.selectedIndex];
+    const isBts = opt.getAttribute('data-bts') === '1';
+
+    if (isBts) {
+        selectionField.innerHTML = '<label>Selección</label><div class="bet-radio-group"><label class="bet-radio"><input type="radio" name="selection" value="si" checked> Sí</label><label class="bet-radio"><input type="radio" name="selection" value="no"> No</label></div>';
+        lineField.style.display = 'none';
+    } else {
+        selectionField.innerHTML = '<label>Selección</label><div class="bet-radio-group"><label class="bet-radio"><input type="radio" name="selection" value="over" checked> Over (Más)</label><label class="bet-radio"><input type="radio" name="selection" value="under"> Under (Menos)</label></div>';
+        lineField.style.display = '';
+        lineInput.value = opt.getAttribute('data-line') || '';
+    }
+}
+(function() {
+    const marketSelect = document.getElementById('bet-market');
+    if (marketSelect) {
+        marketSelect.addEventListener('change', updateBetForm);
+        updateBetForm();
+    }
+})();
 </script>
 
 {% endblock %}

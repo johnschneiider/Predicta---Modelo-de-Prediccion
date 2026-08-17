@@ -1,29 +1,141 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Historial de Predicciones - IA{% endblock %}
+{% block title %}Historial de Predicciones — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+.hist-hero {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.hist-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent-primary);
+}
+.hist-hero h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(1.5rem, 5vw, 2.2rem);
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+}
+.hist-hero p {
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.hist-filters {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.hist-filters select {
+    background: var(--bg-surface-alt);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 0.5rem 0.7rem;
+    font-size: 0.85rem;
+}
+
+.hist-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.hist-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem;
+    transition: border-color 0.2s;
+}
+.hist-item:hover { border-color: var(--accent-border); }
+.hist-item .hist-main { flex: 1; min-width: 0; }
+.hist-item .hist-teams {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+.hist-item .hist-teams .vs { color: var(--text-tertiary); font-family: var(--font-body); font-weight: 300; font-size: 0.85em; }
+.hist-item .hist-meta {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    margin-top: 0.25rem;
+}
+.empty-state {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 3.5rem 2rem;
+    text-align: center;
+    color: var(--text-tertiary);
+}
+.empty-state .empty-icon { font-size: 2.5rem; display: block; margin-bottom: 1rem; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h1 class="mb-0">
-                        <i class="fas fa-history"></i> Historial de Predicciones
-                    </h1>
-                </div>
-                <div class="card-body">
-                    <div class="text-center py-5">
-                        <i class="fas fa-chart-line fa-4x text-muted mb-4"></i>
-                        <h3 class="text-muted">No hay predicciones en el historial</h3>
-                        <p class="text-muted mb-4">Las predicciones aparecerán aquí una vez que comiences a usar el sistema.</p>
-                        <a href="{% url 'ai_predictions:prediction_form' %}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-magic"></i> Hacer Primera Predicción
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="hist-hero">
+    <h1>Historial de Predicciones</h1>
+    <p>Todas las predicciones que has consultado. Entra a cada una para registrar tu apuesta.</p>
 </div>
+
+{% if page_obj %}
+<div class="hist-filters">
+    <form method="get" class="hist-filters" style="margin:0;">
+        <select name="league" onchange="this.form.submit()">
+            <option value="">Todas las ligas</option>
+            {% for l in leagues %}
+                <option value="{{ l.id }}" {% if selected_league == l.id|stringformat:"s" %}selected{% endif %}>{{ l.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+    <a href="{% url 'ai_predictions:mis_apuestas' %}" class="btn btn-outline btn-sm" style="margin-left:auto;">🎟️ Mis apuestas</a>
+</div>
+
+<div class="hist-list">
+    {% for p in page_obj %}
+    <a href="{% url 'ai_predictions:prediction_result_with_id' p.id %}" class="hist-item" style="text-decoration:none;">
+        <div class="hist-main">
+            <div class="hist-teams">{{ p.home_team }} <span class="vs">vs</span> {{ p.away_team }}</div>
+            <div class="hist-meta">{{ p.league.name }} · {{ p.created_at|date:"d/m/Y H:i" }}</div>
+        </div>
+        <span class="badge badge-primary">Ver →</span>
+    </a>
+    {% endfor %}
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination" style="display:flex; gap:0.5rem; justify-content:center; margin-top:1.5rem;">
+    {% if page_obj.has_previous %}<a class="btn btn-secondary btn-sm" href="?page={{ page_obj.previous_page_number }}{% if selected_league %}&league={{ selected_league }}{% endif %}">← Anterior</a>{% endif %}
+    <span class="badge badge-secondary" style="align-self:center;">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a class="btn btn-secondary btn-sm" href="?page={{ page_obj.next_page_number }}{% if selected_league %}&league={{ selected_league }}{% endif %}">Siguiente →</a>{% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <span class="empty-icon">🔮</span>
+    <h3 style="color:var(--text-primary); margin:0 0 0.5rem;">Aún no hay predicciones</h3>
+    <p style="margin:0 0 1.5rem;">Cuando consultes una predicción, aparecerá aquí.</p>
+    <a href="{% url 'ai_predictions:prediction_form' %}" class="btn btn-primary">⚡ Hacer primera predicción</a>
+</div>
+{% endif %}
 {% endblock %}

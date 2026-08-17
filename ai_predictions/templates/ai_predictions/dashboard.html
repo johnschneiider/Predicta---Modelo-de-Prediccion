@@ -1,217 +1,310 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Dashboard de Predicciones IA{% endblock %}
+{% block title %}Dashboard — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+/* ── Hero ── */
+.dash-hero {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 2.5rem 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.dash-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent-primary);
+}
+.dash-hero h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+.dash-hero p {
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+/* ── Stats row ── */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+@media (max-width: 700px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+
+.stat-card {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--accent-border); }
+.stat-card .stat-icon { font-size: 1.5rem; margin-bottom: 0.5rem; display: block; }
+.stat-card .stat-num {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+.stat-card .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.25rem;
+}
+
+/* ── Sections ── */
+.dash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+@media (max-width: 700px) { .dash-grid { grid-template-columns: 1fr; } }
+
+.dash-section {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+.dash-section-header {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 0.5px solid var(--border-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.dash-section-header h3 {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: 0.03em;
+}
+.dash-section-body {
+    padding: 1.5rem;
+}
+
+/* ── Empty state ── */
+.empty-state {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+.empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; display: block; }
+.empty-state h4 { font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.5rem; }
+.empty-state p { font-size: 0.82rem; color: var(--text-tertiary); margin-bottom: 1.25rem; }
+
+/* ── Quick actions ── */
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+@media (max-width: 700px) { .actions-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.action-card {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    text-decoration: none;
+    transition: border-color 0.2s, transform 0.15s;
+    display: block;
+}
+.action-card:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+}
+.action-card .action-icon { font-size: 1.8rem; margin-bottom: 0.5rem; display: block; }
+.action-card .action-title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+.action-card .action-desc {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    margin-top: 0.25rem;
+}
+
+/* ── Recent predictions list ── */
+.pred-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 0;
+    border-bottom: 0.5px solid var(--border-subtle);
+    gap: 1rem;
+}
+.pred-list-item:last-child { border-bottom: none; }
+.pred-list-item .pred-match {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    min-width: 0;
+}
+.pred-list-item .pred-league {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+}
+.pred-list-item .pred-value {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    color: var(--accent-primary);
+    white-space: nowrap;
+}
+.pred-list-item .pred-date {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card bg-primary text-white border-0 shadow-lg">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h1 class="mb-0">
-                                <i class="fas fa-brain"></i> Dashboard de Predicciones IA
-                            </h1>
-                            <p class="mb-0 mt-2 opacity-75">Sistema inteligente para predecir estadísticas de fútbol</p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <a href="{% url 'ai_predictions:prediction_form' %}" class="btn btn-outline-light btn-lg">
-                                <i class="fas fa-magic"></i> Predicción Simple
-                            </a>
-                        </div>
+
+<!-- ═══ HERO ═══ -->
+<div class="dash-hero">
+    <h1>Dashboard de Predicciones</h1>
+    <p>Predicciones inteligentes de fútbol con modelos ensemble calibrados por liga. Selecciona un partido, entrena modelos, revisa el historial.</p>
+</div>
+
+<!-- ═══ STATS ═══ -->
+<div class="stats-row">
+    <div class="stat-card">
+        <span class="stat-icon">🧠</span>
+        <div class="stat-num">{{ available_models|length|default:"0" }}</div>
+        <div class="stat-label">Modelos Activos</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon">⚽</span>
+        <div class="stat-num">{{ leagues|length|default:"21" }}</div>
+        <div class="stat-label">Ligas Disponibles</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon">📊</span>
+        <div class="stat-num">{{ recent_predictions|length|default:"0" }}</div>
+        <div class="stat-label">Predicciones</div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon">🎯</span>
+        <div class="stat-num">48</div>
+        <div class="stat-label">Modelos Combinados</div>
+    </div>
+</div>
+
+<!-- ═══ RECENT + MODELS ═══ -->
+<div class="dash-grid">
+    <!-- Predicciones Recientes -->
+    <div class="dash-section">
+        <div class="dash-section-header">
+            <span>📋</span>
+            <h3>Predicciones Recientes</h3>
+        </div>
+        <div class="dash-section-body">
+            {% if recent_predictions %}
+                {% for pred in recent_predictions|slice:":5" %}
+                <div class="pred-list-item">
+                    <div style="min-width:0;">
+                        <div class="pred-match">{{ pred.home_team }} vs {{ pred.away_team }}</div>
+                        <div class="pred-league">{{ pred.league.name }}</div>
                     </div>
+                    <div class="pred-value">{{ pred.predicted_value|floatformat:1 }}</div>
+                    <div class="pred-date">{{ pred.predicted_at|date:"d/m" }}</div>
                 </div>
-            </div>
+                {% endfor %}
+                <div style="text-align:center;margin-top:1rem;">
+                    <a href="{% url 'ai_predictions:prediction_history' %}" class="btn-outline" style="text-decoration:none;font-size:0.82rem;padding:0.5rem 1.2rem;border:0.5px solid var(--border-secondary);border-radius:var(--radius-sm);color:var(--text-secondary);">Ver todo el historial →</a>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <span class="empty-icon">📋</span>
+                    <h4>No hay predicciones aún</h4>
+                    <p>Realiza tu primera predicción para ver resultados aquí.</p>
+                    <a href="{% url 'ai_predictions:prediction_form' %}" class="btn-primary" style="text-decoration:none;display:inline-block;padding:0.6rem 1.5rem;border-radius:var(--radius-sm);background:var(--accent-primary);color:#000;font-weight:500;font-size:0.85rem;">⚡ Nueva Predicción</a>
+                </div>
+            {% endif %}
         </div>
     </div>
 
-    <!-- Estadísticas Generales -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm text-center">
-                <div class="card-body">
-                    <div class="mb-3">
-                        <i class="fas fa-robot fa-2x text-primary"></i>
+    <!-- Modelos -->
+    <div class="dash-section">
+        <div class="dash-section-header">
+            <span>🧠</span>
+            <h3>Modelos Entrenados</h3>
+        </div>
+        <div class="dash-section-body">
+            {% if available_models %}
+                {% for model in available_models|slice:":5" %}
+                <div class="pred-list-item">
+                    <div>
+                        <div class="pred-match">{{ model.league.name }}</div>
+                        <div class="pred-league">{{ model.get_prediction_type_display }}</div>
                     </div>
-                    <h3 class="text-primary">{{ available_models|length }}</h3>
-                    <p class="mb-0 text-muted">Modelos Activos</p>
+                    <div class="pred-value">R² {{ model.r2_score|floatformat:2 }}</div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm text-center">
-                <div class="card-body">
-                    <div class="mb-3">
-                        <i class="fas fa-trophy fa-2x text-success"></i>
-                    </div>
-                    <h3 class="text-success">{{ leagues|length }}</h3>
-                    <p class="mb-0 text-muted">Ligas Disponibles</p>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <span class="empty-icon">🧠</span>
+                    <h4>Sin modelos entrenados</h4>
+                    <p>Entrena modelos de ML con datos históricos para mejorar las predicciones.</p>
+                    <a href="{% url 'ai_predictions:training' %}" class="btn-primary" style="text-decoration:none;display:inline-block;padding:0.6rem 1.5rem;border-radius:var(--radius-sm);background:var(--accent-primary);color:#000;font-weight:500;font-size:0.85rem;">🔧 Entrenar Modelos</a>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm text-center">
-                <div class="card-body">
-                    <div class="mb-3">
-                        <i class="fas fa-chart-line fa-2x text-info"></i>
-                    </div>
-                    <h3 class="text-info">{{ recent_predictions|length }}</h3>
-                    <p class="mb-0 text-muted">Predicciones Recientes</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm text-center">
-                <div class="card-body">
-                    <div class="mb-3">
-                        <i class="fas fa-percentage fa-2x text-warning"></i>
-                    </div>
-                    <h3 class="text-warning">85%</h3>
-                    <p class="mb-0 text-muted">Precisión Promedio</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Predicciones Recientes -->
-        <div class="col-md-8 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0 text-primary"><i class="fas fa-history"></i> Predicciones Recientes</h5>
-                </div>
-                <div class="card-body">
-                    {% if recent_predictions %}
-                        {% for prediction in recent_predictions %}
-                        <div class="card border-0 mb-3" style="border-left: 4px solid #28a745 !important;">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col-md-6">
-                                        <h6 class="mb-1 text-primary">
-                                            {{ prediction.home_team }} vs {{ prediction.away_team }}
-                                        </h6>
-                                        <small class="text-muted">{{ prediction.league.name }}</small>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <strong class="text-success">{{ prediction.predicted_value|floatformat:1 }}</strong>
-                                        <small class="d-block text-muted">{{ prediction.model.get_prediction_type_display }}</small>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="progress mb-1" style="height: 8px;">
-                                            <div class="progress-bar bg-success" style="width: {{ prediction.confidence_score|floatformat:0 }}%"></div>
-                                        </div>
-                                        <small class="text-muted">{{ prediction.confidence_score|floatformat:1 }}% confianza</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                        
-                        <div class="text-center mt-3">
-                            <a href="{% url 'ai_predictions:prediction_history' %}" class="btn btn-outline-primary">
-                                Ver Todas las Predicciones
-                            </a>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No hay predicciones recientes</p>
-                            <a href="{% url 'ai_predictions:prediction_form' %}" class="btn btn-primary">
-                                Realizar Primera Predicción
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Modelos Disponibles -->
-        <div class="col-md-4 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0 text-primary"><i class="fas fa-robot"></i> Modelos Activos</h5>
-                </div>
-                <div class="card-body">
-                    {% if available_models %}
-                        {% for model in available_models %}
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div>
-                                <h6 class="mb-0 text-primary">{{ model.league.name }}</h6>
-                                <small class="text-muted">{{ model.get_prediction_type_display }}</small>
-                            </div>
-                            <div class="text-end">
-                                <span class="badge bg-success">{{ model.r2_score|floatformat:2 }}</span>
-                                <small class="d-block text-muted">R² Score</small>
-                            </div>
-                        </div>
-                        {% endfor %}
-                        
-                        <div class="text-center mt-3">
-                            <a href="{% url 'ai_predictions:model_performance' %}" class="btn btn-outline-primary btn-sm">
-                                Ver Rendimiento
-                            </a>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-3">
-                            <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
-                            <p class="text-muted mb-2">No hay modelos entrenados</p>
-                            <a href="{% url 'ai_predictions:training' %}" class="btn btn-warning btn-sm">
-                                Entrenar Modelos
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Acciones Rápidas -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0 text-primary"><i class="fas fa-bolt"></i> Acciones Rápidas</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <div class="text-center">
-                                <a href="{% url 'ai_predictions:prediction_form' %}" class="btn btn-primary w-100">
-                                    <i class="fas fa-magic fa-2x mb-2 d-block"></i>
-                                    Predicción Simple
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="text-center">
-                                <a href="{% url 'ai_predictions:prediction_form' %}" class="btn btn-secondary w-100">
-                                    <i class="fas fa-brain fa-2x mb-2 d-block"></i>
-                                    Predicción Avanzada
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="text-center">
-                                <a href="{% url 'ai_predictions:training' %}" class="btn btn-success w-100">
-                                    <i class="fas fa-cogs fa-2x mb-2 d-block"></i>
-                                    Entrenar Modelos
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="text-center">
-                                <a href="{% url 'ai_predictions:prediction_history' %}" class="btn btn-info w-100">
-                                    <i class="fas fa-history fa-2x mb-2 d-block"></i>
-                                    Ver Historial
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {% endif %}
         </div>
     </div>
 </div>
+
+<!-- ═══ ACCIONES RÁPIDAS ═══ -->
+<div class="dash-section" style="margin-bottom:2rem;">
+    <div class="dash-section-header">
+        <span>⚡</span>
+        <h3>Acciones Rápidas</h3>
+    </div>
+    <div class="dash-section-body">
+        <div class="actions-grid">
+            <a href="{% url 'ai_predictions:prediction_form' %}" class="action-card">
+                <span class="action-icon">🎯</span>
+                <div class="action-title">Nueva Predicción</div>
+                <div class="action-desc">Predecir stats de un partido</div>
+            </a>
+            <a href="{% url 'ai_predictions:training' %}" class="action-card">
+                <span class="action-icon">🔧</span>
+                <div class="action-title">Entrenar Modelos</div>
+                <div class="action-desc">Mejorar precisión con ML</div>
+            </a>
+            <a href="{% url 'ai_predictions:prediction_history' %}" class="action-card">
+                <span class="action-icon">📋</span>
+                <div class="action-title">Ver Historial</div>
+                <div class="action-desc">Predicciones anteriores</div>
+            </a>
+            <a href="/football_data/" class="action-card">
+                <span class="action-icon">📊</span>
+                <div class="action-title">Datos de Fútbol</div>
+                <div class="action-desc">Estadísticas históricas</div>
+            </a>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

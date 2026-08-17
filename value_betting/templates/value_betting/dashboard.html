@@ -1,0 +1,595 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Value Betting — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+/* ── Hero ── */
+.vb-hero {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 2.5rem 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.vb-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-primary), var(--warning), var(--danger));
+}
+.vb-hero h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.02em;
+}
+.vb-hero p {
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+    max-width: 560px;
+    margin: 0 auto;
+}
+
+/* ── Controls bar ── */
+.vb-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+.vb-run-btn {
+    background: var(--accent-primary);
+    color: var(--btn-primary-text);
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.vb-run-btn:hover {
+    background: var(--accent-hover);
+    box-shadow: var(--shadow-accent);
+}
+.vb-run-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.vb-run-btn.loading {
+    background: var(--text-tertiary);
+}
+.vb-run-btn .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: var(--btn-primary-text);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: none;
+}
+.vb-run-btn.loading .spinner { display: block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.vb-scan-info {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+}
+.vb-scan-info .scan-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.scan-status.running { background: rgba(38, 165, 228, 0.1); color: var(--info); }
+.scan-status.completed { background: var(--accent-subtle); color: var(--accent-primary); }
+.scan-status.failed { background: rgba(255, 107, 107, 0.1); color: var(--danger); }
+
+/* ── Stats row ── */
+.vb-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+@media (max-width: 700px) { .vb-stats { grid-template-columns: repeat(2, 1fr); } }
+
+.vb-stat-card {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    padding: 1.5rem 1rem;
+    text-align: center;
+}
+.vb-stat-card:hover { border-color: var(--accent-border); }
+.vb-stat-icon { font-size: 1.4rem; margin-bottom: 0.5rem; display: block; }
+.vb-stat-num {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+.vb-stat-label {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.25rem;
+}
+
+/* ── Table ── */
+.vb-table-wrap {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+.vb-table-header {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 0.5px solid var(--border-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.vb-table-header h3 {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+}
+.vb-table-header .badge {
+    background: var(--accent-subtle);
+    color: var(--accent-primary);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.vb-table-scroll { overflow-x: auto; }
+table.vb-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+table.vb-table th {
+    text-align: left;
+    padding: 0.8rem 1rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 0.5px solid var(--border-primary);
+    white-space: nowrap;
+}
+table.vb-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 0.5px solid var(--border-subtle);
+    color: var(--text-secondary);
+    vertical-align: middle;
+}
+table.vb-table tr:hover td { background: var(--bg-overlay); }
+table.vb-table tr:last-child td { border-bottom: none; }
+
+/* ── Highlight cells ── */
+.match-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+.league-tag {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    margin-top: 0.15rem;
+}
+.bet-cell {
+    color: var(--accent-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.odds-tag {
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    color: var(--text-primary);
+    letter-spacing: 0.02em;
+}
+.edge-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.edge-high { background: rgba(198, 241, 53, 0.15); color: var(--accent-primary); }
+.edge-medium { background: rgba(255, 209, 102, 0.15); color: var(--warning); }
+.edge-low { background: rgba(255, 107, 107, 0.1); color: var(--danger); }
+
+.prob-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+}
+.prob-high { background: rgba(198, 241, 53, 0.15); color: var(--accent-primary); }
+.prob-medium { background: rgba(255, 209, 102, 0.15); color: var(--warning); }
+.prob-low { background: rgba(255, 107, 107, 0.1); color: var(--danger); }
+
+/* ── API Health banner ── */
+.api-health {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1.2rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+}
+.api-health.ok {
+    background: rgba(198, 241, 53, 0.06);
+    border: 0.5px solid rgba(198, 241, 53, 0.2);
+    color: var(--accent-primary);
+}
+.api-health.fail {
+    background: rgba(255, 107, 107, 0.08);
+    border: 0.5px solid rgba(255, 107, 107, 0.25);
+    color: var(--danger);
+}
+.api-health .health-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.api-health.ok .health-dot { background: var(--accent-primary); animation: pulse 2s infinite; }
+.api-health.fail .health-dot { background: var(--danger); }
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-tertiary);
+}
+.empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+.empty-state p { font-size: 0.9rem; }
+
+/* ── Recent scans ── */
+.scans-list { font-size: 0.8rem; }
+.scans-list .scan-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 0.5px solid var(--border-subtle);
+}
+.scans-list .scan-row:last-child { border-bottom: none; }
+
+/* ── Loading overlay ── */
+.scan-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10, 10, 10, 0.85);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+.scan-overlay.active { display: flex; }
+.scan-overlay-content {
+    text-align: center;
+    color: var(--text-primary);
+}
+.scan-overlay-content .big-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(198, 241, 53, 0.2);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+}
+.scan-overlay-content p { font-size: 0.9rem; color: var(--text-secondary); }
+.scan-overlay-content .progress {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+
+  <!-- Hero -->
+  <div class="vb-hero">
+    <h1>VALUE BETTING · BETPLAY vs PREDICTA</h1>
+    <p>Cuotas infladas de BetPlay detectadas por Predicta. Solo oportunidades con cuota > 1.99 y edge positivo.</p>
+  </div>
+
+  <!-- API Health -->
+  <div class="api-health {% if api_health.healthy %}ok{% else %}fail{% endif %}">
+    <span class="health-dot"></span>
+    {% if api_health.healthy %}
+      API BetPlay (Kambi): Operativa · {{ api_health.matches_found }} partidos disponibles
+    {% else %}
+      ⚠ API BetPlay (Kambi): CAÍDA · {{ api_health.error|default:"Error desconocido" }}
+    {% endif %}
+  </div>
+
+  {% if last_scan and last_scan.status == 'failed' %}
+  <div class="api-health fail">
+    <span class="health-dot"></span>
+    ⚠ Último escaneo falló: {{ last_scan.errors|truncatechars:200|default:"Error desconocido" }}
+  </div>
+  {% endif %}
+
+  <!-- Controls -->
+  <div class="vb-controls">
+    <button class="vb-run-btn" id="runScanBtn" onclick="runScan()">
+      <span class="spinner"></span>
+      <span class="btn-text">⚡ Ejecutar Escaneo</span>
+    </button>
+    <button class="vb-run-btn" id="runFlashscoreBtn" style="background: var(--warning); margin-left: 0.5rem;" onclick="runFlashscore()">
+      <span class="spinner"></span>
+      <span class="btn-text">📊 Actualizar Datos Flashscore</span>
+    </button>
+    <div class="vb-scan-info" id="scanInfo">
+      {% if last_scan %}
+        Último escaneo: {{ last_scan.started_at|date:"d M Y, H:i" }}
+        <span class="scan-status {{ last_scan.status }}">{{ last_scan.get_status_display }}</span>
+        · {{ last_scan.value_bets_found }} value bets
+      {% else %}
+        Sin escaneos previos
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="vb-stats">
+    <div class="vb-stat-card">
+      <span class="vb-stat-icon">⚽</span>
+      <div class="vb-stat-num">{{ total_matches }}</div>
+      <div class="vb-stat-label">Partidos</div>
+    </div>
+    <div class="vb-stat-card">
+      <span class="vb-stat-icon">📊</span>
+      <div class="vb-stat-num">{{ total_offers }}</div>
+      <div class="vb-stat-label">Cuotas > 1.99</div>
+    </div>
+    <div class="vb-stat-card">
+      <span class="vb-stat-icon">🎯</span>
+      <div class="vb-stat-num">{{ total_value }}</div>
+      <div class="vb-stat-label">Value Bets</div>
+    </div>
+    <div class="vb-stat-card">
+      <span class="vb-stat-icon">📈</span>
+      <div class="vb-stat-num">{{ avg_edge }}%</div>
+      <div class="vb-stat-label">Edge Promedio</div>
+    </div>
+  </div>
+
+  <!-- Value Bets Table -->
+  <div class="vb-table-wrap">
+    <div class="vb-table-header">
+      <h3>🏆 Oportunidades de Value Betting</h3>
+      <span class="badge">{{ value_bets|length }} apuestas</span>
+    </div>
+    <div class="vb-table-scroll">
+      {% if value_bets %}
+      <table class="vb-table">
+        <thead>
+          <tr>
+            <th>Partido</th>
+            <th>País</th>
+            <th>Liga</th>
+            <th>Fecha</th>
+            <th>📊 Qué apostar</th>
+            <th>Cuota</th>
+            <th>Prob.</th>
+            <th>Edge</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for opp in value_bets %}
+          <tr>
+            <td>
+              <div class="match-name">{{ opp.match.home_team }} vs {{ opp.match.away_team }}</div>
+            </td>
+            <td>{{ opp.match.league_path_kambi|cut:"football/"|truncatechars:12 }}</td>
+            <td>{{ opp.match.predicta_league.name|default:"N/A" }}</td>
+            <td>{{ opp.match.start_time|date:"d M H:i" }}</td>
+            <td class="bet-cell">{{ opp.bet_instruction }}</td>
+            <td><span class="odds-tag">{{ opp.betplay_odds|floatformat:2 }}</span></td>
+            <td>
+              <span class="prob-badge {% if opp.predicta_probability > 0.50 %}prob-high{% elif opp.predicta_probability > 0.30 %}prob-medium{% else %}prob-low{% endif %}">
+                {{ opp.predicta_probability|floatformat:2 }}
+              </span>
+            </td>
+            <td>
+              <span class="edge-badge {% if opp.edge > 10 %}edge-high{% elif opp.edge > 3 %}edge-medium{% else %}edge-low{% endif %}">
+                +{{ opp.edge|floatformat:1 }}%
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <p>No hay value bets detectados. Ejecuta un escaneo para buscar oportunidades.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recent Scans -->
+  {% if recent_scans %}
+  <div class="vb-table-wrap">
+    <div class="vb-table-header">
+      <h3>📜 Escaneos Recientes</h3>
+    </div>
+    <div class="scans-list" style="padding: 1rem 1.5rem;">
+      {% for scan in recent_scans %}
+      <div class="scan-row">
+        <span>{{ scan.started_at|date:"d M Y, H:i" }}</span>
+        <span>
+          <span class="scan-status {{ scan.status }}">{{ scan.get_status_display }}</span>
+          · {{ scan.matches_fetched }} partidos · {{ scan.predictions_generated }} predicciones · {{ scan.value_bets_found }} value bets
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Loading overlay -->
+<div class="scan-overlay" id="scanOverlay">
+  <div class="scan-overlay-content">
+    <div class="big-spinner"></div>
+    <p>Escaneando cuotas de BetPlay y comparando con Predicta...</p>
+    <div class="progress" id="scanProgress">Esto puede tomar 30-60 segundos</div>
+  </div>
+</div>
+
+<script>
+function runScan() {
+  const btn = document.getElementById('runScanBtn');
+  const overlay = document.getElementById('scanOverlay');
+  const progress = document.getElementById('scanProgress');
+  
+  btn.classList.add('loading');
+  btn.disabled = true;
+  overlay.classList.add('active');
+  
+  fetch('{% url "value_betting:run_scan" %}', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+    },
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'started') {
+      progress.textContent = 'Escaneo en progreso...';
+      pollStatus();
+    } else {
+      overlay.classList.remove('active');
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      alert('Error: ' + (data.message || 'Unknown'));
+    }
+  })
+  .catch(err => {
+    overlay.classList.remove('active');
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    alert('Error: ' + err);
+  });
+}
+
+function pollStatus() {
+  const interval = setInterval(() => {
+    fetch('{% url "value_betting:scan_status" %}')
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'completed' || data.status === 'failed') {
+        clearInterval(interval);
+        location.reload();
+      } else if (data.status === 'running') {
+        const progress = document.getElementById('scanProgress');
+        progress.textContent = `Partidos: ${data.matches_fetched} | Mapeados: ${data.matches_mapped} | Predicciones: ${data.predictions_generated} | Oportunidades: ${data.opportunities_found}`;
+      }
+    })
+    .catch(() => {});
+  }, 2000);
+  
+  setTimeout(() => {
+    clearInterval(interval);
+    location.reload();
+  }, 180000);
+}
+
+// ── Scraper de Flashscore ──
+function runFlashscore() {
+  const btn = document.getElementById('runFlashscoreBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  btn.querySelector('.btn-text').textContent = '⏳ Iniciando...';
+
+  fetch('{% url "value_betting:run_flashscore" %}', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'started') {
+      btn.querySelector('.btn-text').textContent = '🔄 Scrapeando...';
+      pollFlashscore();
+    } else if (data.status === 'already_running') {
+      btn.querySelector('.btn-text').textContent = '🔄 Ya corriendo...';
+      pollFlashscore();
+    } else {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      btn.querySelector('.btn-text').textContent = '📊 Actualizar Datos Flashscore';
+      alert('Error: ' + (data.message || 'Unknown'));
+    }
+  })
+  .catch(err => {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    btn.querySelector('.btn-text').textContent = '📊 Actualizar Datos Flashscore';
+    alert('Error: ' + err);
+  });
+}
+
+function pollFlashscore() {
+  const btn = document.getElementById('runFlashscoreBtn');
+  const interval = setInterval(() => {
+    fetch('{% url "value_betting:flashscore_status" %}')
+    .then(r => r.json())
+    .then(data => {
+      if (!data.running) {
+        clearInterval(interval);
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        btn.querySelector('.btn-text').textContent = '✅ Datos actualizados';
+        setTimeout(() => {
+          btn.querySelector('.btn-text').textContent = '📊 Actualizar Datos Flashscore';
+        }, 5000);
+      } else {
+        const lines = (data.log || '').trim().split('\n');
+        const last = lines[lines.length - 1] || '...';
+        btn.querySelector('.btn-text').textContent = '🔄 ' + last.slice(0, 40);
+      }
+    })
+    .catch(() => {});
+  }, 5000);
+  setTimeout(() => { clearInterval(interval); }, 600000);
+}
+</script>
+{% endblock %}

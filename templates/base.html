@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <!-- Premium CSS -->
-    <link rel="stylesheet" href="{% static 'css/premium.css' %}">
+    <link rel="stylesheet" href="{% static 'css/premium.css' %}?v=20260816">
 
     <!-- Page-specific styles -->
     <style>
@@ -232,6 +232,73 @@
             .main-content { padding: 1.5rem 1rem 3rem; }
             .auth-form { padding: 1.5rem 1.25rem; }
         }
+        /* ── User menu dropdown (inline para evitar cache) ── */
+        .user-menu { position: relative; }
+        .user-menu-btn {
+            display: flex; align-items: center; gap: 0.5rem;
+            background: var(--bg-surface);
+            border: 0.5px solid var(--border-primary);
+            border-radius: var(--radius-full);
+            padding: 0.3rem 0.75rem 0.3rem 0.35rem;
+            cursor: pointer; color: var(--text-primary);
+            font-family: var(--font-body); font-size: 0.82rem;
+            transition: border-color 0.2s;
+        }
+        .user-menu-btn:hover { border-color: var(--accent-primary); }
+        .user-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; display: block; }
+        .user-avatar-initials {
+            width: 26px; height: 26px; border-radius: 50%;
+            background: var(--accent-primary); color: var(--btn-primary-text);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.8rem;
+        }
+        .user-name { font-weight: 500; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .user-caret { font-size: 0.7rem; color: var(--text-tertiary); transition: transform 0.2s; }
+        .user-menu-btn[aria-expanded="true"] .user-caret { transform: rotate(180deg); }
+        .user-dropdown {
+            position: absolute; top: calc(100% + 0.6rem); right: 0;
+            min-width: 230px;
+            background: var(--bg-surface);
+            border: 0.5px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.55);
+            padding: 0.45rem;
+            display: none;
+            z-index: 300;
+        }
+        .user-dropdown.open { display: block; animation: dropdownIn 0.15s ease; }
+        @keyframes dropdownIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .user-dropdown-item {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.6rem 0.8rem;
+            color: var(--text-secondary);
+            text-decoration: none; font-size: 0.85rem;
+            border-radius: var(--radius-sm);
+            transition: all 0.15s; white-space: nowrap;
+        }
+        .user-dropdown-item:hover { background: var(--bg-overlay); color: var(--text-primary); }
+        .user-dropdown-divider { height: 1px; background: var(--border-primary); margin: 0.4rem 0; }
+        .user-dropdown-item-danger { color: var(--danger); }
+        .user-dropdown-item-danger:hover { background: rgba(239,68,68,0.08); color: var(--danger); }
+        @media (max-width: 768px) {
+            nav { padding: 0.85rem 1rem; }
+            .logo { font-size: 1.35rem; }
+            .user-name { max-width: 90px; }
+            .user-dropdown {
+                position: fixed; top: 4rem; right: 0.75rem; left: 0.75rem;
+                min-width: 0;
+            }
+        }
+        @media (max-width: 480px) {
+            nav { padding: 0.75rem 0.85rem; }
+            .user-name { display: none; }
+            .user-menu-btn { padding: 0.25rem 0.6rem 0.25rem 0.3rem; }
+            .main-content { padding: 1.25rem 0.85rem 3rem; }
+            .user-dropdown-item { font-size: 0.95rem; padding: 0.75rem 0.9rem; }
+        }
     </style>
 
     {% block extra_head %}{% endblock %}
@@ -243,10 +310,31 @@
     <a href="/" class="logo">PREDIC<span>TA</span></a>
     <div class="nav-links">
         {% if user.is_authenticated %}
-            <a href="{% url 'ai_predictions:dashboard' %}" class="nav-link">Dashboard</a>
-            <a href="{% url 'ai_predictions:prediction_form' %}" class="nav-link">Predicciones</a>
-            <a href="{% url 'ai_predictions:prediction_history' %}" class="nav-link">Historial</a>
-            <a href="{% url 'cuentas:logout' %}" class="nav-link">Salir</a>
+            <div class="user-menu">
+                <button class="user-menu-btn" id="userMenuBtn" type="button" aria-haspopup="true" aria-expanded="false">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar }}" class="user-avatar" alt="Avatar">
+                    {% else %}
+                        <span class="user-avatar-initials">{{ user.get_short_name|default:user.username|slice:":1"|upper }}</span>
+                    {% endif %}
+                    <span class="user-name">{{ user.get_short_name|default:user.username }}</span>
+                    <span class="user-caret">▾</span>
+                </button>
+                <div class="user-dropdown" id="userDropdown" role="menu">
+                    <a href="{% url 'ai_predictions:dashboard' %}" class="user-dropdown-item">📊 Dashboard</a>
+                    <a href="{% url 'ai_predictions:prediction_form' %}" class="user-dropdown-item">🔮 Predicciones</a>
+                    <a href="{% url 'ai_predictions:prediction_history' %}" class="user-dropdown-item">🕘 Historial</a>
+                    <a href="{% url 'ai_predictions:mis_apuestas' %}" class="user-dropdown-item">🎟️ Mis apuestas</a>
+                    <a href="{% url 'football_data:dashboard' %}" class="user-dropdown-item">📁 Datos</a>
+                    <a href="{% url 'football_data:matches_list' %}" class="user-dropdown-item">📋 Partidos</a>
+                    <a href="{% url 'football_data:import' %}" class="user-dropdown-item">⬆️ Importar</a>
+                    <a href="{% url 'ai_predictions:scraper_corners' %}" class="user-dropdown-item">🤖 Scraper</a>
+                    <a href="{% url 'value_betting:dashboard' %}" class="user-dropdown-item">💰 Value Bets</a>
+                    <a href="{% url 'auto_betting:historial' %}" class="user-dropdown-item">🎰 Apuestas BetPlay</a>
+                    <div class="user-dropdown-divider"></div>
+                    <a href="{% url 'cuentas:logout' %}" class="user-dropdown-item user-dropdown-item-danger">⏻ Salir</a>
+                </div>
+            </div>
         {% else %}
             <a href="/" class="nav-link">Inicio</a>
             <a href="/#como" class="nav-link">Cómo funciona</a>
@@ -282,6 +370,30 @@
     <div>© 2026 Predicta.com.co · +18 · Juega con responsabilidad</div>
 </footer>
 
+<script>
+(function() {
+    var btn = document.getElementById('userMenuBtn');
+    var menu = document.getElementById('userDropdown');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var isOpen = menu.classList.toggle('open');
+        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    document.addEventListener('click', function(e) {
+        if (!menu.contains(e.target) && !btn.contains(e.target)) {
+            menu.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            menu.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+    });
+})();
+</script>
 
 </body>
 </html>

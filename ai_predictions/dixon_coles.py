@@ -91,22 +91,16 @@ class DixonColesModel:
     def calculate_lambda_parameters(self, home_team: str, away_team: str, league: League,
                                    is_goals: bool = True, original_prediction_type: str = 'goals_total') -> Tuple[float, float]:
         """
-        Calcula los parámetros lambda (tasas de Poisson) para ambos equipos usando límites basados en datos.
+        Calcula los parámetros lambda (tasas de Poisson) para ambos equipos.
         
-        Args:
-            home_team: Nombre del equipo local
-            away_team: Nombre del equipo visitante
-            league: Liga del partido
-            is_goals: True para goles, False para otros eventos
-        
-        Returns:
-            Tupla (lambda_home, lambda_away)
+        Mejoras aplicadas:
+        1. Piso de λ por liga: si el λ calculado es menor que el promedio real de la liga, usa el promedio.
+        2. Mínimo de partidos por equipo: si un equipo tiene <10 partidos, usa el promedio de la liga.
+        3. Fix bug defense: home_defense ahora usa goles RECIBIDOS como local, no goles marcados.
         """
         try:
-            # Importar función de límites dinámicos
             from .simple_models import get_league_realistic_limits, analyze_team_statistics
             
-            # Determinar tipo de predicción
             if is_goals:
                 prediction_type = 'goals'
             elif 'corners' in original_prediction_type:
@@ -114,22 +108,18 @@ class DixonColesModel:
             else:
                 prediction_type = 'shots'
             
-            # Obtener límites realistas de la liga
             lambda_min, lambda_max = get_league_realistic_limits(league, prediction_type)
             
-            # Obtener estadísticas de los equipos
             home_stats = analyze_team_statistics(home_team, league, prediction_type)
             away_stats = analyze_team_statistics(away_team, league, prediction_type)
             
-            # Calcular lambda usando enfoque Dixon-Coles mejorado
-            cutoff_date = timezone.now().date() - timedelta(days=365)
-            
-            # Estadísticas de la liga para normalización
+            cutoff_date = timezone.now().date() - timedelta(days=730)
             league_matches = Match.objects.filter(
                 league=league,
                 date__gte=cutoff_date
             ).order_by('-date')[:200]
             
+            # ── Estadísticas de la liga ──
             if is_goals:
                 league_home_avg = np.mean([m.fthg for m in league_matches if m.fthg is not None]) or 1.5
                 league_away_avg = np.mean([m.ftag for m in league_matches if m.ftag is not None]) or 1.2
@@ -137,11 +127,46 @@ class DixonColesModel:
                 league_home_avg = np.mean([m.hs for m in league_matches if m.hs is not None]) or 12.0
                 league_away_avg = np.mean([m.as_field for m in league_matches if m.as_field is not None]) or 11.0
             
-            # Calcular tasas de ataque y defensa
-            home_attack = home_stats['home_avg'] if home_stats['home_avg'] > 0 else league_home_avg
-            away_defense = away_stats['away_avg'] if away_stats['away_avg'] > 0 else league_away_avg
-            away_attack = away_stats['away_avg'] if away_stats['away_avg'] > 0 else league_away_avg
-            home_defense = home_stats['home_avg'] if home_stats['home_avg'] > 0 else league_home_avg
+            # ── FIX 2: Mínimo de partidos por equipo ──
+            # Si un equipo tiene <10 partidos en la BD, usar directamente el promedio de la liga
+            MIN_MATCHES = 10
+            
+            if home_stats['home_matches'] >= MIN_MATCHES:
+                home_attack = home_stats['home_avg']  # goles marcados como local
+            else:
+                home_attack = league_home_avg
+                logger.info(f"[DC] {home_team}: solo {home_stats['home_matches']} partidos home (<{MIN_MATCHES}), usando liga avg={home_attack:.2f}")
+            
+            if away_stats['away_matches'] >= MIN_MATCHES:
+                away_attack = away_stats['away_avg']  # goles marcados como visitante
+            else:
+                away_attack = league_away_avg
+                logger.info(f"[DC] {away_team}: solo {away_stats['away_matches']} partidos away (<{MIN_MATCHES}), usando liga avg={away_attack:.2f}")
+            
+            # ── FIX 3: home_defense y away_defense deben ser goles RECIBIDOS, no marcados ──
+            # home_defense = promedio de goles que el equipo local recibe cuando juega de local
+            #   = ftag (goles del visitante) en partidos donde home_team es local
+            # away_defense = promedio de goles que el equipo visitante recibe cuando juega de visitante  
+            #   = fthg (goles del local) en partidos donde away_team es visitante
+            
+            # Calcular defense stats separadamente
+            home_defense_matches = Match.objects.filter(
+                league=league, home_team=home_team, date__gte=cutoff_date
+            ).order_by('-date')[:30]
+            away_defense_matches = Match.objects.filter(
+                league=league, away_team=away_team, date__gte=cutoff_date
+            ).order_by('-date')[:30]
+            
+            if is_goals:
+                # Goles recibidos: local recibe goles del visitante (ftag), visitante recibe goles del local (fthg)
+                home_defense_data = [m.ftag for m in home_defense_matches if m.ftag is not None]
+                away_defense_data = [m.fthg for m in away_defense_matches if m.fthg is not None]
+            else:
+                home_defense_data = [m.as_field for m in home_defense_matches if m.as_field is not None]
+                away_defense_data = [m.hs for m in away_defense_matches if m.hs is not None]
+            
+            home_defense = np.mean(home_defense_data) if home_defense_data and len(home_defense_data) >= MIN_MATCHES else league_away_avg
+            away_defense = np.mean(away_defense_data) if away_defense_data and len(away_defense_data) >= MIN_MATCHES else league_home_avg
             
             # Calcular lambda usando el enfoque Dixon-Coles
             # lambda_home = (ataque_local / media_liga) * (defensa_visitante / media_liga) * media_liga
@@ -152,11 +177,22 @@ class DixonColesModel:
             raw_lambda_home *= 1.15  # ~15% ventaja local
             raw_lambda_away *= 0.95  # ~5% desventaja visitante
             
+            # ── FIX 1: Piso de λ por liga ──
+            # Si el λ calculado es menor que el promedio real de la liga, usar el promedio de liga como piso
+            # (evita que equipos con pocos datos arrastren el λ a valores irreales)
+            if is_goals:
+                league_total_avg = league_home_avg + league_away_avg
+                if raw_lambda_home + raw_lambda_away < league_total_avg:
+                    # Si el total está por debajo del promedio de liga, escalar ambos proporcionalmente al promedio
+                    scale = league_total_avg / (raw_lambda_home + raw_lambda_away) if (raw_lambda_home + raw_lambda_away) > 0 else 1.0
+                    raw_lambda_home *= scale
+                    raw_lambda_away *= scale
+                    logger.info(f"[DC] Piso de liga aplicado: total {raw_lambda_home + raw_lambda_away:.2f} < {league_total_avg:.2f}, escalado")
+            
             # Aplicar límites calculados dinámicamente
             lambda_home = max(lambda_min, min(lambda_max, raw_lambda_home))
             lambda_away = max(lambda_min, min(lambda_max, raw_lambda_away))
             
-            # Log para debugging
             logger.info(f"Dixon-Coles Lambda {home_team}: {raw_lambda_home:.2f} → {lambda_home:.2f} "
                        f"(límites: {lambda_min:.2f}-{lambda_max:.2f})")
             logger.info(f"Dixon-Coles Lambda {away_team}: {raw_lambda_away:.2f} → {lambda_away:.2f} "
@@ -167,9 +203,9 @@ class DixonColesModel:
         except Exception as e:
             logger.error(f"Error calculando parámetros lambda Dixon-Coles: {e}")
             if is_goals:
-                return 1.5, 1.2  # Valores por defecto para goles
+                return 1.5, 1.2
             else:
-                return 12.0, 11.0  # Valores por defecto para remates
+                return 12.0, 11.0
     
     def optimize_rho(self, matches: List[Match], is_goals: bool = True, max_iter: int = 100) -> float:
         """
@@ -329,7 +365,7 @@ class DixonColesModel:
             match_outcome = self._calculate_match_outcome(lambda_home, lambda_away)
             
             # Confianza basada en cantidad de datos
-            cutoff_date = timezone.now().date() - timedelta(days=365)
+            cutoff_date = timezone.now().date() - timedelta(days=730)
             home_matches_count = Match.objects.filter(
                 league=league, home_team=home_team, date__gte=cutoff_date
             ).count()

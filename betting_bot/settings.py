@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'betting',
     'football_data',
     'ai_predictions',
+    'value_betting',
+    'auto_betting',
 ]
 
 MIDDLEWARE = [

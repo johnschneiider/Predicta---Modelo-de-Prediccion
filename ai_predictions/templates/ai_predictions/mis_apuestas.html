@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis Apuestas — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+.apu-hero {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.apu-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent-primary);
+}
+.apu-hero h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(1.5rem, 5vw, 2.2rem);
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+}
+.apu-hero p { color: var(--text-tertiary); font-size: 0.9rem; margin: 0; }
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+@media (max-width: 700px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+.stat-card {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    padding: 1.25rem 1rem;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--accent-border); }
+.stat-card .stat-num {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+.stat-card .stat-num.green { color: var(--accent-primary); }
+.stat-card .stat-num.red { color: #ef4444; }
+.stat-card .stat-label {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.3rem;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+@media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
+.chart-card {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+}
+.chart-card h3 {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0 0 1rem;
+    letter-spacing: 0.03em;
+}
+.chart-wrap { position: relative; height: 260px; }
+
+.apu-filters {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+.apu-filters a {
+    text-decoration: none;
+}
+.filter-pill {
+    font-size: 0.78rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: var(--radius-full);
+    border: 0.5px solid var(--border-primary);
+    color: var(--text-secondary);
+    background: transparent;
+    cursor: pointer;
+}
+.filter-pill.active { background: var(--accent-subtle); border-color: var(--accent-border); color: var(--accent-primary); }
+
+.apu-table {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+.apu-table table { width: 100%; border-collapse: collapse; }
+.apu-table th, .apu-table td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    font-size: 0.85rem;
+    border-bottom: 0.5px solid var(--border-subtle);
+}
+.apu-table th {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+    background: var(--bg-surface-alt);
+}
+.apu-table tr:last-child td { border-bottom: none; }
+.apu-table td { color: var(--text-secondary); }
+
+.resolve-btn {
+    background: transparent;
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.25rem 0.45rem;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+}
+.resolve-btn:hover { border-color: var(--accent-border); }
+.resolve-btn.active-win { background: var(--accent-subtle); border-color: var(--accent-primary); color: var(--accent-primary); }
+.resolve-btn.active-lose { background: rgba(239,68,68,0.15); border-color: #ef4444; color: #ef4444; }
+.resolve-btn.active-void { background: rgba(255,255,255,0.06); border-color: var(--border-secondary); color: var(--text-tertiary); }
+.resolve-btn.active-pend { background: rgba(255,255,255,0.06); border-color: var(--border-secondary); color: var(--text-secondary); }
+
+.status-badge {
+    font-size: 0.72rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-full);
+    letter-spacing: 0.03em;
+}
+.status-pendiente { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+.status-ganada { background: var(--accent-subtle); color: var(--accent-primary); }
+.status-perdida { background: rgba(239,68,68,0.12); color: #ef4444; }
+.status-anulada { background: rgba(255,255,255,0.04); color: var(--text-tertiary); }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{{ by_market|json_script:"byMarketData" }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof Chart === 'undefined') return;
+
+    // ── Donut: resultados ──
+    const resultsCtx = document.getElementById('resultsChart');
+    if (resultsCtx) {
+        new Chart(resultsCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Ganadas', 'Perdidas', 'Pendientes', 'Anuladas'],
+                datasets: [{
+                    data: [{{ ganadas }}, {{ perdidas }}, {{ pendientes }}, {{ anuladas }}],
+                    backgroundColor: ['#c6f135', '#ef4444', 'rgba(255,255,255,0.15)', 'rgba(255,255,255,0.05)'],
+                    borderColor: '#0a0a0a',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '62%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#b5b5b5', boxWidth: 12, padding: 12 } }
+                }
+            }
+        });
+    }
+
+    // ── Bar: acierto por mercado ──
+    const marketCtx = document.getElementById('marketChart');
+    const byMarketData = JSON.parse(document.getElementById('byMarketData').textContent);
+    const withBets = byMarketData.filter(m => m.total > 0);
+    if (marketCtx && withBets.length) {
+        new Chart(marketCtx, {
+            type: 'bar',
+            data: {
+                labels: withBets.map(m => m.label),
+                datasets: [{
+                    label: '% acierto',
+                    data: withBets.map(m => m.acierto !== null ? m.acierto : 0),
+                    backgroundColor: '#c6f135',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: { beginAtZero: true, max: 100, ticks: { color: '#b5b5b5' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { ticks: { color: '#d5d5d5' }, grid: { display: false } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function(c) { return c.parsed.x.toFixed(1) + '% acierto'; } } }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="apu-hero">
+    <h1>Mis Apuestas</h1>
+    <p>Tu desempeño en las apuestas registradas desde tus predicciones.</p>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-num">{{ total }}</div>
+        <div class="stat-label">Total apuestas</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num green">{{ ganadas }}</div>
+        <div class="stat-label">Ganadas</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num red">{{ perdidas }}</div>
+        <div class="stat-label">Perdidas</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num">{{ pendientes }}</div>
+        <div class="stat-label">Pendientes</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num">{{ acierto|floatformat:1 }}%</div>
+        <div class="stat-label">Acierto</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num">{% if racha.n %}{{ racha.n }}{% if racha.type == 'W' %} ✅{% else %} ❌{% endif %}{% else %}—{% endif %}</div>
+        <div class="stat-label">Racha actual</div>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-card">
+        <h3>Resultados</h3>
+        <div class="chart-wrap"><canvas id="resultsChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+        <h3>Acierto por mercado</h3>
+        <div class="chart-wrap"><canvas id="marketChart"></canvas></div>
+    </div>
+</div>
+
+<div class="apu-filters">
+    <a href="{% url 'ai_predictions:mis_apuestas' %}"><span class="filter-pill {% if not selected_status %}active{% endif %}">Todas</span></a>
+    {% for key, label in status_choices %}
+    <a href="?estado={{ key }}"><span class="filter-pill {% if selected_status == key %}active{% endif %}">{{ label }}</span></a>
+    {% endfor %}
+</div>
+
+<div class="apu-table">
+    <table>
+        <thead>
+            <tr>
+                <th>Partido</th>
+                <th>Mercado</th>
+                <th>Selección</th>
+                <th>Pred. oficial</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Resolver</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in page_obj %}
+            <tr>
+                <td>{{ a.home_team }} vs {{ a.away_team }}</td>
+                <td>{{ a.get_market_display }}</td>
+                <td>{{ a.selection_label }}</td>
+                <td>{% if a.predicted_value is not None %}{{ a.predicted_value|floatformat:1 }}{% else %}—{% endif %}</td>
+                <td>{{ a.created_at|date:"d/m/Y H:i" }}</td>
+                <td><span class="status-badge status-{{ a.status }}">{{ a.get_status_display }}</span></td>
+                <td>
+                    <form method="post" action="{% url 'ai_predictions:resolver_apuesta' a.id %}" style="display:inline-flex; gap:0.35rem;">
+                        {% csrf_token %}
+                        <button type="submit" name="status" value="ganada" class="resolve-btn {% if a.status == 'ganada' %}active-win{% endif %}" title="Ganada">✅</button>
+                        <button type="submit" name="status" value="perdida" class="resolve-btn {% if a.status == 'perdida' %}active-lose{% endif %}" title="Perdida">❌</button>
+                        <button type="submit" name="status" value="anulada" class="resolve-btn {% if a.status == 'anulada' %}active-void{% endif %}" title="Anulada">⊘</button>
+                        <button type="submit" name="status" value="pendiente" class="resolve-btn {% if a.status == 'pendiente' %}active-pend{% endif %}" title="Pendiente">⏳</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align:center; padding:2.5rem; color:var(--text-tertiary);">
+                    No hay apuestas{% if selected_status %} con estado "{{ selected_status }}"{% endif %}.
+                    <br><br><a href="{% url 'ai_predictions:prediction_form' %}" class="btn btn-primary btn-sm">⚡ Hacer predicción</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination" style="display:flex; gap:0.5rem; justify-content:center; margin-top:1.5rem;">
+    {% if page_obj.has_previous %}<a class="btn btn-secondary btn-sm" href="?page={{ page_obj.previous_page_number }}{% if selected_status %}&estado={{ selected_status }}{% endif %}">← Anterior</a>{% endif %}
+    <span class="badge badge-secondary" style="align-self:center;">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a class="btn btn-secondary btn-sm" href="?page={{ page_obj.next_page_number }}{% if selected_status %}&estado={{ selected_status }}{% endif %}">Siguiente →</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -53,13 +53,36 @@ class PredictionForm(forms.Form):
                 pass
     
     def _get_teams_for_league(self, league):
-        """Obtiene equipos únicos de una liga"""
+        """Obtiene equipos únicos de una liga (Django + SQLite fallback)."""
         from football_data.models import Match
         
         home_teams = Match.objects.filter(league=league).values_list('home_team', flat=True).distinct()
         away_teams = Match.objects.filter(league=league).values_list('away_team', flat=True).distinct()
-        
         all_teams = sorted(list(set(list(home_teams) + list(away_teams))))
+        
+        # Si no hay equipos en Django, buscar en SQLite
+        if not all_teams:
+            try:
+                import sqlite3
+                LEAGUE_MAP = {'Serie A (Brasil)': 'Serie A', 'Serie B (Brasil)': 'Serie B',
+        'Primera A (Colombia)': 'Primera A', 'Primera Division (Argentina)': 'Primera Division',
+        'Liga MX (Mexico)': 'Liga MX',
+        'US MLS (USA)': 'US MLS'}
+                sqlite_league = LEAGUE_MAP.get(league.name, league.name)
+                conn = sqlite3.connect('/var/www/predicta.com.co/data/corners_scraped.db')
+                home = conn.execute(
+                    "SELECT DISTINCT home_team FROM corners_matches WHERE league=?",
+                    (sqlite_league,)
+                ).fetchall()
+                away = conn.execute(
+                    "SELECT DISTINCT away_team FROM corners_matches WHERE league=?",
+                    (sqlite_league,)
+                ).fetchall()
+                conn.close()
+                all_teams = sorted(set([r[0] for r in home] + [r[0] for r in away]))
+            except Exception:
+                pass
+        
         return [(team, team) for team in all_teams]
     
     def clean(self):

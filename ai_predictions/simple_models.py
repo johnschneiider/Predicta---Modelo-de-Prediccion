@@ -155,7 +155,7 @@ def analyze_team_statistics(team_name: str, league: League, prediction_type: str
         Diccionario con estadísticas del equipo
     """
     try:
-        cutoff_date = timezone.now().date() - timedelta(days=365)  # 1 año
+        cutoff_date = timezone.now().date() - timedelta(days=730)  # 2 años
         
         # Partidos como local
         home_matches = Match.objects.filter(
@@ -173,19 +173,31 @@ def analyze_team_statistics(team_name: str, league: League, prediction_type: str
         
         # Extraer datos según el tipo de predicción
         if 'goals' in prediction_type:
+            # Goles marcados
             home_data = [m.fthg for m in home_matches if m.fthg is not None]
             away_data = [m.ftag for m in away_matches if m.ftag is not None]
+            # Goles recibidos (para defense)
+            home_conceded = [m.ftag for m in home_matches if m.ftag is not None]
+            away_conceded = [m.fthg for m in away_matches if m.fthg is not None]
         elif 'corners' in prediction_type:
             home_data = [m.hc for m in home_matches if m.hc is not None]
             away_data = [m.ac for m in away_matches if m.ac is not None]
+            home_conceded = [m.ac for m in home_matches if m.ac is not None]
+            away_conceded = [m.hc for m in away_matches if m.hc is not None]
         else:  # shots
             home_data = [m.hs for m in home_matches if m.hs is not None]
             away_data = [m.as_field for m in away_matches if m.as_field is not None]
+            home_conceded = [m.as_field for m in home_matches if m.as_field is not None]
+            away_conceded = [m.hs for m in away_matches if m.hs is not None]
         
         # Calcular promedios
         home_avg = np.mean(home_data) if home_data else 0
         away_avg = np.mean(away_data) if away_data else 0
         overall_avg = (home_avg + away_avg) / 2 if (home_data or away_data) else 0
+        
+        # Promedios de goles recibidos (defense)
+        home_conceded_avg = np.mean(home_conceded) if home_conceded else 0
+        away_conceded_avg = np.mean(away_conceded) if away_conceded else 0
         
         return {
             'home_avg': home_avg,
@@ -195,7 +207,9 @@ def analyze_team_statistics(team_name: str, league: League, prediction_type: str
             'away_matches': len(away_data),
             'total_matches': len(home_data) + len(away_data),
             'home_data': home_data,
-            'away_data': away_data
+            'away_data': away_data,
+            'home_conceded_avg': home_conceded_avg,
+            'away_conceded_avg': away_conceded_avg,
         }
         
     except Exception as e:
@@ -208,7 +222,9 @@ def analyze_team_statistics(team_name: str, league: League, prediction_type: str
             'away_matches': 0,
             'total_matches': 0,
             'home_data': [],
-            'away_data': []
+            'away_data': [],
+            'home_conceded_avg': 0,
+            'away_conceded_avg': 0,
         }
 
 

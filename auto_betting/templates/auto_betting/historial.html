@@ -1,0 +1,465 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Historial de Apuestas — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+  .hist-container {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem 4rem;
+  }
+
+  /* ── Encabezado ── */
+  .hist-header {
+    text-align: center;
+    margin-bottom: 1.8rem;
+  }
+  .hist-header h2 {
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.01em;
+  }
+  .hist-header .subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+  }
+  .hist-header .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    box-shadow: 0 0 8px var(--accent-primary);
+    display: inline-block;
+  }
+  .sync-btn {
+    margin-top: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: var(--accent-primary);
+    color: #0a0a0a;
+    border: none;
+    border-radius: var(--radius-full);
+    padding: 0.55rem 1.15rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .18s ease, transform .18s ease, opacity .18s ease;
+  }
+  .sync-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .sync-btn:disabled { opacity: 0.55; cursor: wait; transform: none; }
+  .sync-btn .spin { display: inline-block; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Tarjetas de resumen ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.8rem;
+    margin-bottom: 1.6rem;
+  }
+  .stat-card {
+    background: var(--bg-surface);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.1rem;
+    text-align: center;
+    transition: border-color .18s ease, transform .18s ease;
+  }
+  .stat-card:hover {
+    border-color: var(--accent-border);
+    transform: translateY(-1px);
+  }
+  .stat-card .label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    margin-bottom: 0.45rem;
+  }
+  .stat-card .value {
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-card .value.pos { color: var(--verde-lima, #5CFF5C); }
+  .stat-card .value.neg { color: #ff5c5c; }
+  .stat-card .value.warn { color: #ffc107; }
+  .stat-card .value.accent { color: var(--accent-primary); }
+
+  /* ── Contenedor de tabla con altura máxima y scroll ── */
+  .table-scroll {
+    max-height: 68vh;
+    overflow: auto;
+    border-radius: var(--radius-lg);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    background: var(--bg-surface);
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-primary) transparent;
+  }
+  .table-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+  .table-scroll::-webkit-scrollbar-thumb {
+    background: rgba(198,241,53,0.35);
+    border-radius: 999px;
+  }
+  .table-scroll::-webkit-scrollbar-track { background: transparent; }
+
+  table.hist {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+    min-width: 980px;
+  }
+
+  /* Cabecera fija */
+  table.hist thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg-surface-alt);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.07em;
+    padding: 0.8rem 0.85rem;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--accent-border);
+  }
+  table.hist thead th.num { text-align: right; }
+  table.hist thead th.ctr { text-align: center; }
+
+  /* Cuerpo */
+  table.hist tbody td {
+    padding: 0.72rem 0.85rem;
+    border-top: 0.5px solid rgba(255,255,255,0.045);
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  table.hist tbody tr:nth-child(even) { background: rgba(255,255,255,0.015); }
+  table.hist tbody tr:hover { background: var(--accent-subtle); }
+
+  .cell-date { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+  .cell-match { color: var(--text-primary); font-weight: 600; }
+  .cell-match .vs { color: var(--text-secondary); font-weight: 400; }
+  .cell-league, .cell-market { color: var(--text-secondary); font-size: 0.8rem; }
+  .cell-selection { color: var(--text-primary); }
+  .cell-selection .line { color: var(--text-secondary); font-size: 0.78rem; }
+  .cell-num { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+
+  .pnl-pos { color: var(--verde-lima, #5CFF5C); font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+  .pnl-neg { color: #ff5c5c; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+  .pnl-muted { color: var(--text-tertiary); text-align: right; }
+
+  /* Badges de estado */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem 0.6rem;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .badge-won { background: rgba(92,255,92,0.1); color: #5CFF5C; border: 0.5px solid rgba(92,255,92,0.28); }
+  .badge-lost { background: rgba(255,92,92,0.1); color: #ff5c5c; border: 0.5px solid rgba(255,92,92,0.28); }
+  .badge-open { background: rgba(255,193,7,0.1); color: #ffc107; border: 0.5px solid rgba(255,193,7,0.28); }
+  .badge-void { background: rgba(136,136,128,0.12); color: #888880; border: 0.5px solid rgba(136,136,128,0.28); }
+
+  .td-status { text-align: center; }
+  .empty-row { text-align: center; color: var(--text-secondary); padding: 3rem !important; }
+
+  /* ── Gráficas de rendimiento ── */
+  .charts-section { margin: 0.4rem 0 1.8rem; }
+  .charts-section h3 {
+    font-size: 1.05rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .chart-card {
+    background: var(--bg-surface);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg);
+    padding: 1.1rem 1.2rem;
+  }
+  .chart-card h4 {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    margin-bottom: 0.8rem;
+    font-weight: 600;
+  }
+  .chart-card .chart-wrap { position: relative; height: 260px; }
+  .chart-card.tall .chart-wrap { height: 240px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="hist-container">
+  <div class="hist-header">
+    <h2>Historial de Apuestas</h2>
+    <div class="subtitle">
+      <span class="dot"></span>
+      Sincronizado desde BetPlay · coupon/history.json
+    </div>
+    <button id="syncBtn" class="sync-btn" type="button">⟳ Actualizar datos</button>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="label">Apuestas</div>
+      <div class="value accent">{{ stats.total }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Ganadas</div>
+      <div class="value pos">{{ stats.won }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Perdidas</div>
+      <div class="value neg">{{ stats.lost }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Abiertas</div>
+      <div class="value warn">{{ stats.opened }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Win Rate</div>
+      <div class="value {% if stats.win_rate >= 50 %}pos{% else %}neg{% endif %}">{{ stats.win_rate }}%</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">P&L (asentado)</div>
+      <div class="value {% if stats.realized_pnl >= 0 %}pos{% else %}neg{% endif %}">${{ stats.realized_pnl }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">ROI</div>
+      <div class="value {% if stats.roi >= 0 %}pos{% else %}neg{% endif %}">{{ stats.roi }}%</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Total apostado</div>
+      <div class="value">${{ stats.stake_cop }}</div>
+    </div>
+  </div>
+
+  <div class="charts-section">
+    <h3>📈 Rendimiento por mercado</h3>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h4>P&L por mercado (COP)</h4>
+        <div class="chart-wrap"><canvas id="chartPnl"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>Win rate por mercado (%)</h4>
+        <div class="chart-wrap"><canvas id="chartWinrate"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-card tall" style="margin-bottom:1rem;">
+      <h4>P&L acumulado (COP)</h4>
+      <div class="chart-wrap"><canvas id="chartTimeline"></canvas></div>
+    </div>
+
+    <div class="table-scroll" style="max-height:none;">
+      <table class="hist">
+        <thead>
+          <tr>
+            <th>Mercado</th>
+            <th class="num">Apuestas</th>
+            <th class="num">W</th>
+            <th class="num">L</th>
+            <th class="num">WR</th>
+            <th class="num">Stake</th>
+            <th class="num">P&L</th>
+            <th class="num">ROI</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in stats.por_mercado %}
+          <tr>
+            <td class="cell-market">{{ m.mercado }}</td>
+            <td class="cell-num">{{ m.n }}</td>
+            <td class="cell-num" style="color:var(--verde-lima,#5CFF5C);">{{ m.won }}</td>
+            <td class="cell-num" style="color:#ff5c5c;">{{ m.lost }}</td>
+            <td class="cell-num">{{ m.win_rate }}%</td>
+            <td class="cell-num">${{ m.stake_cop|floatformat:0 }}</td>
+            <td class="{% if m.pnl >= 0 %}pnl-pos{% else %}pnl-neg{% endif %}">{% if m.pnl >= 0 %}+{% endif %}${{ m.pnl|floatformat:0 }}</td>
+            <td class="{% if m.roi >= 0 %}pnl-pos{% else %}pnl-neg{% endif %}">{{ m.roi }}%</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="empty-row">Sin datos asentados todavía.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="table-scroll">
+    <table class="hist">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Partido</th>
+          <th>Liga</th>
+          <th>Mercado</th>
+          <th>Selección</th>
+          <th class="num">Cuota</th>
+          <th class="num">Stake</th>
+          <th class="num">Payout</th>
+          <th class="num">P&L</th>
+          <th class="ctr">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in apuestas %}
+        <tr>
+          <td class="cell-date">{{ a.placed_date|date:"d/m H:i" }}</td>
+          <td class="cell-match">{{ a.home_team }} <span class="vs">vs</span> {{ a.away_team }}</td>
+          <td class="cell-league">{{ a.liga }}</td>
+          <td class="cell-market">{{ a.mercado }}</td>
+          <td class="cell-selection">{{ a.seleccion }}{% if a.linea %} <span class="line">({{ a.linea }})</span>{% endif %}</td>
+          <td class="cell-num">{{ a.played_odds|floatformat:2 }}</td>
+          <td class="cell-num">${{ a.stake_cop|floatformat:0 }}</td>
+          <td class="cell-num">{% if a.bet_status == 'OPEN' %}<span class="pnl-muted">—</span>{% else %}${{ a.payout_cop|floatformat:0 }}{% endif %}</td>
+          <td class="{% if a.bet_status == 'OPEN' %}pnl-muted{% elif a.profit_cop >= 0 %}pnl-pos{% else %}pnl-neg{% endif %}">
+            {% if a.bet_status == 'OPEN' %}—{% else %}{% if a.profit_cop >= 0 %}+{% endif %}${{ a.profit_cop|floatformat:0 }}{% endif %}
+          </td>
+          <td class="td-status">
+            {% if a.bet_status == 'WON' %}<span class="badge badge-won">WON</span>
+            {% elif a.bet_status == 'LOST' %}<span class="badge badge-lost">LOST</span>
+            {% elif a.bet_status == 'OPEN' %}<span class="badge badge-open">OPEN</span>
+            {% else %}<span class="badge badge-void">{{ a.bet_status }}</span>{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" class="empty-row">Sin apuestas. Ejecuta <code>manage.py sync_bet_history</code>.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{{ stats.por_mercado|json_script:"mercadoData" }}
+{{ stats.pnl_timeline|json_script:"timelineData" }}
+
+<script>
+(function () {
+  if (typeof Chart === 'undefined') return;
+  function load(id) { var el = document.getElementById(id); return el ? JSON.parse(el.textContent) : []; }
+  var mercado = load('mercadoData');
+  var timeline = load('timelineData');
+
+  Chart.defaults.color = '#888880';
+  Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+  Chart.defaults.font.family = "'DM Sans', sans-serif";
+  var green = '#5CFF5C', red = '#ff5c5c', accent = '#c6f135';
+
+  new Chart(document.getElementById('chartPnl'), {
+    type: 'bar',
+    data: {
+      labels: mercado.map(function(m){ return m.mercado; }),
+      datasets: [{
+        label: 'P&L (COP)',
+        data: mercado.map(function(m){ return m.pnl; }),
+        backgroundColor: mercado.map(function(m){ return m.pnl >= 0 ? 'rgba(92,255,92,0.45)' : 'rgba(255,92,92,0.45)'; }),
+        borderColor: mercado.map(function(m){ return m.pnl >= 0 ? green : red; }),
+        borderWidth: 1, borderRadius: 5
+      }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.06)' } },
+        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('chartWinrate'), {
+    type: 'bar',
+    data: {
+      labels: mercado.map(function(m){ return m.mercado; }),
+      datasets: [{
+        label: 'Win rate (%)',
+        data: mercado.map(function(m){ return m.win_rate; }),
+        backgroundColor: mercado.map(function(m){ return m.win_rate >= 50 ? 'rgba(198,241,53,0.45)' : 'rgba(255,92,92,0.45)'; }),
+        borderColor: mercado.map(function(m){ return m.win_rate >= 50 ? accent : red; }),
+        borderWidth: 1, borderRadius: 5
+      }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.06)' }, suggestedMax: 100 },
+        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('chartTimeline'), {
+    type: 'line',
+    data: {
+      labels: timeline.map(function(t){ return t.label; }),
+      datasets: [{
+        label: 'P&L acumulado (COP)',
+        data: timeline.map(function(t){ return t.cum; }),
+        borderColor: accent,
+        backgroundColor: 'rgba(198,241,53,0.12)',
+        fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 12, font: { size: 10 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.06)' } }
+      }
+    }
+  });
+})();
+</script>
+
+<script>
+(function () {
+  var btn = document.getElementById('syncBtn');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin">⟳</span> Actualizando...';
+    fetch('/auto-betting/historial/sync/', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data && data.ok) {
+          location.reload();
+        } else {
+          alert('Error al actualizar: ' + ((data && data.error) || 'desconocido'));
+          btn.disabled = false;
+          btn.innerHTML = '⟳ Actualizar datos';
+        }
+      })
+      .catch(function (e) {
+        alert('Error de red: ' + e);
+        btn.disabled = false;
+        btn.innerHTML = '⟳ Actualizar datos';
+      });
+  });
+})();
+</script>
+{% endblock %}

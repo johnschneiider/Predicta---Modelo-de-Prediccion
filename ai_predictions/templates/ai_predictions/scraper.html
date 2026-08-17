@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Scraper de Corners — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+.scraper-container { max-width: 800px; margin: 0 auto; }
+.scraper-card {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+}
+.scraper-card h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+.scraper-card p { color: var(--text-secondary); margin-bottom: 1.5rem; }
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; font-weight: 600; margin-bottom: 0.3rem; }
+.form-group select, .form-group input {
+    width: 100%; padding: 0.6rem; border-radius: var(--radius-sm);
+    border: 0.5px solid var(--border-primary);
+    background: var(--bg-primary); color: var(--text-primary);
+}
+.btn-scrape {
+    background: var(--accent-primary, #4f46e5);
+    color: #fff; border: none; padding: 0.75rem 2rem;
+    border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;
+    width: 100%;
+}
+.btn-scrape:hover { opacity: 0.9; }
+.btn-scrape:disabled { opacity: 0.5; cursor: not-allowed; }
+.result-box {
+    background: var(--bg-primary); border-radius: var(--radius-sm);
+    padding: 1rem; margin-top: 1rem; max-height: 400px; overflow-y: auto;
+    font-family: monospace; font-size: 0.85rem; white-space: pre-wrap;
+}
+.status-ok { color: #10b981; }
+.status-err { color: #ef4444; }
+.spinner {
+    display: inline-block; width: 1rem; height: 1rem;
+    border: 2px solid transparent; border-top-color: currentColor;
+    border-radius: 50%; animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.db-stats { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+.stat-card {
+    background: var(--bg-primary); border-radius: var(--radius-sm);
+    padding: 1rem; text-align: center; flex: 1; min-width: 120px;
+}
+.stat-card .value { font-size: 1.5rem; font-weight: 700; }
+.stat-card .label { font-size: 0.8rem; color: var(--text-secondary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="scraper-container">
+    <div class="scraper-card">
+        <h1>🔍 Scraper de Corners</h1>
+        <p>Extrae datos de corners desde adamchoi.co.uk y los guarda en la base de datos SQLite para alimentar el modelo de predicción.</p>
+
+        <form id="scrapeForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="country">País</label>
+                <select id="country" name="country" required>
+                    <option value="">Seleccionar país...</option>
+                    <option value="Brazil">Brazil</option>
+                    <option value="Argentina">Argentina</option>
+                    <option value="Colombia">Colombia</option>
+                    <option value="Chile">Chile</option>
+                    <option value="Uruguay">Uruguay</option>
+                    <option value="Paraguay">Paraguay</option>
+                    <option value="Peru">Peru</option>
+                    <option value="Ecuador">Ecuador</option>
+                    <option value="Bolivia">Bolivia</option>
+                    <option value="Venezuela">Venezuela</option>
+                    <option value="England">England</option>
+                    <option value="Spain">Spain</option>
+                    <option value="Germany">Germany</option>
+                    <option value="Italy">Italy</option>
+                    <option value="France">France</option>
+                    <option value="Portugal">Portugal</option>
+                    <option value="Netherlands">Netherlands</option>
+                    <option value="Belgium">Belgium</option>
+                    <option value="Turkey">Turkey</option>
+                    <option value="Scotland">Scotland</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="league">Liga</label>
+                <select id="league" name="league" required disabled>
+                    <option value="">Seleccionar país primero...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="season">Temporada</label>
+                <input type="text" id="season" name="season" placeholder="Ej: 2026" value="2026" required>
+            </div>
+            <button type="submit" class="btn-scrape" id="scrapeBtn">
+                🚀 Ejecutar Scraping
+            </button>
+        </form>
+
+        <div id="result" class="result-box" style="display:none;"></div>
+    </div>
+
+    <div class="scraper-card">
+        <h1>📊 Estado de la Base de Datos</h1>
+        <div class="db-stats" id="dbStats">
+            <div class="stat-card"><div class="value">—</div><div class="label">Partidos</div></div>
+            <div class="stat-card"><div class="value">—</div><div class="label">Ligas</div></div>
+            <div class="stat-card"><div class="value">—</div><div class="label">Equipos</div></div>
+        </div>
+        <div id="leaguesList" style="margin-top:1rem;"></div>
+    </div>
+</div>
+
+<script>
+// Mapeo país → ligas disponibles en adamchoi.co.uk
+const LEAGUES_BY_COUNTRY = {
+    'Brazil': ['Serie A', 'Serie B', 'Serie C', 'Serie D'],
+    'Argentina': ['Liga Profesional', 'Primera Nacional', 'Primera B', 'Primera C'],
+    'Colombia': ['Primera A', 'Primera B', 'Copa Colombia'],
+    'Chile': ['Primera Division', 'Primera B'],
+    'Uruguay': ['Primera Division', 'Segunda Division'],
+    'Paraguay': ['Primera Division', 'Segunda Division'],
+    'Peru': ['Liga 1', 'Liga 2'],
+    'Ecuador': ['Serie A', 'Serie B'],
+    'Bolivia': ['Primera Division'],
+    'Venezuela': ['Primera Division'],
+    'England': ['Premier League', 'Championship', 'League One', 'League Two', 'National League'],
+    'Spain': ['La Liga', 'La Liga 2', 'Primera RFEF'],
+    'Germany': ['Bundesliga', '2. Bundesliga', '3. Liga'],
+    'Italy': ['Serie A', 'Serie B', 'Serie C'],
+    'France': ['Ligue 1', 'Ligue 2', 'National'],
+    'Portugal': ['Primeira Liga', 'Liga Portugal 2'],
+    'Netherlands': ['Eredivisie', 'Eerste Divisie'],
+    'Belgium': ['Jupiler Pro League'],
+    'Turkey': ['Super Lig', '1. Lig'],
+    'Scotland': ['Premiership', 'Championship', 'League One', 'League Two'],
+};
+
+// Llenar dropdown de liga según país
+document.getElementById('country').addEventListener('change', function() {
+    const leagueSelect = document.getElementById('league');
+    const country = this.value;
+    leagueSelect.innerHTML = '';
+    if (!country || !LEAGUES_BY_COUNTRY[country]) {
+        leagueSelect.disabled = true;
+        leagueSelect.innerHTML = '<option value="">Seleccionar país primero...</option>';
+        return;
+    }
+    leagueSelect.disabled = false;
+    leagueSelect.innerHTML = '<option value="">Seleccionar liga...</option>';
+    LEAGUES_BY_COUNTRY[country].forEach(l => {
+        const opt = document.createElement('option');
+        opt.value = l;
+        opt.textContent = l;
+        leagueSelect.appendChild(opt);
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadDbStats();
+
+    document.getElementById('scrapeForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('scrapeBtn');
+        const result = document.getElementById('result');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Ejecutando...';
+        result.style.display = 'block';
+        result.textContent = '⏳ Iniciando scraping...\n';
+
+        const formData = new FormData(this);
+
+        try {
+            const resp = await fetch('/ai/api/scrape-corners/', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await resp.json();
+            if (data.success) {
+                result.innerHTML = '<span class="status-ok">✅ ' + data.message + '</span>\n\n' + (data.output || '');
+                loadDbStats();
+            } else {
+                result.innerHTML = '<span class="status-err">❌ Error:</span> ' + (data.error || 'Unknown');
+            }
+        } catch(err) {
+            result.innerHTML = '<span class="status-err">❌ Error de conexión:</span> ' + err.message;
+        }
+        btn.disabled = false;
+        btn.innerHTML = '🚀 Ejecutar Scraping';
+    });
+});
+
+async function loadDbStats() {
+    try {
+        const resp = await fetch('/ai/api/scrape-corners/?action=stats');
+        const data = await resp.json();
+        document.getElementById('dbStats').innerHTML = `
+            <div class="stat-card"><div class="value">${data.total_matches || 0}</div><div class="label">Partidos</div></div>
+            <div class="stat-card"><div class="value">${data.total_leagues || 0}</div><div class="label">Ligas</div></div>
+            <div class="stat-card"><div class="value">${data.total_teams || 0}</div><div class="label">Equipos</div></div>
+        `;
+        if (data.leagues) {
+            document.getElementById('leaguesList').innerHTML = '<h5 style="margin-top:1rem;">Ligas disponibles:</h5>' +
+                data.leagues.map(l => `<div style="margin:0.25rem 0;">🏆 ${l[0]} (${l[1]}): ${l[2]} partidos</div>`).join('');
+        }
+    } catch(e) {
+        console.error('Stats error:', e);
+    }
+}
+</script>
+{% endblock %}

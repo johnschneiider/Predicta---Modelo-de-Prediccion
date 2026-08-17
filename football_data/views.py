@@ -160,7 +160,7 @@ class MatchesListView(View):
             matches = matches.filter(ftr=result_filter)
         
         # Paginación
-        paginator = Paginator(matches, 25)
+        paginator = Paginator(matches, 50)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
         

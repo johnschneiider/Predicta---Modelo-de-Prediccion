@@ -317,6 +317,36 @@
     flex-wrap: wrap;
 }
 </style>
+
+<script src="{% static 'js/ai_predictions/league_chart.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.prob-pct').forEach(el => {
+        var v = parseFloat(el.textContent);
+        if (!isNaN(v) && v <= 1) el.textContent = (v * 100).toFixed(1);
+    });
+    document.querySelectorAll('.prob-bar-fill').forEach(bar => {
+        var w = parseFloat(bar.getAttribute('data-width'));
+        if (!isNaN(w)) {
+            if (w <= 1) w = w * 100;
+            bar.style.width = w + '%';
+        }
+    });
+    setTimeout(function() {
+        document.querySelectorAll('.prob-bar-fill').forEach(bar => {
+            var w = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(function(){ bar.style.width = w; }, 80);
+        });
+    }, 400);
+    {% if prediction.league.id %}
+    fetch('/ai/api/league-historical-data/{{ prediction.league.id }}/')
+        .then(r => r.json())
+        .then(data => console.log('Histórico:', data.success ? 'OK' : 'ERROR', data))
+        .catch(e => console.error('Error histórico:', e));
+    {% endif %}
+});
+</script>
 {% endblock %}
 
 {% block content %}
@@ -535,41 +565,4 @@
     <a href="{% url 'ai_predictions:prediction_history' %}" class="btn btn-secondary" style="border-color:var(--accent-border);color:var(--accent-primary);">Historial</a>
     <a href="{% url 'ai_predictions:dashboard' %}" class="btn btn-secondary">Dashboard</a>
 </div>
-{% endblock %}
-
-{% block extra_head_js %}
-<script src="{% static 'js/ai_predictions/league_chart.js' %}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Convertir probabilidades a porcentajes
-    document.querySelectorAll('.prob-pct').forEach(el => {
-        var v = parseFloat(el.textContent);
-        if (!isNaN(v) && v <= 1) el.textContent = (v * 100).toFixed(1);
-    });
-    // Animar barras
-    document.querySelectorAll('.prob-bar-fill').forEach(bar => {
-        var w = parseFloat(bar.getAttribute('data-width'));
-        if (!isNaN(w)) {
-            if (w <= 1) w = w * 100;
-            bar.style.width = w + '%';
-        }
-    });
-    // Animación
-    setTimeout(function() {
-        document.querySelectorAll('.prob-bar-fill').forEach(bar => {
-            var w = bar.style.width;
-            bar.style.width = '0%';
-            setTimeout(function(){ bar.style.width = w; }, 80);
-        });
-    }, 400);
-
-    {% if prediction.league.id %}
-    console.log('Liga ID:', {{ prediction.league.id }}, '| chart:', typeof initLeagueChart);
-    fetch('/ai/api/league-historical-data/{{ prediction.league.id }}/')
-        .then(r => r.json())
-        .then(data => console.log('Histórico:', data.success ? 'OK' : 'ERROR', data))
-        .catch(e => console.error('Error histórico:', e));
-    {% endif %}
-});
-</script>
 {% endblock %}

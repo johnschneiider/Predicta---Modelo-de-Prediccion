@@ -34,4 +34,4 @@ certfile = None
 
 # Configuración de Django
 import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "betting_bot.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "betting_bot.settings_production")

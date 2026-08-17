@@ -5,7 +5,7 @@ app_name = 'cuentas'
 
 urlpatterns = [
     path('login/', views.VistaLogin.as_view(), name='login'),
-    path('registro/', views.VistaRegistro.as_view(), name='registro'),
+    # path('registro/', views.VistaRegistro.as_view(), name='registro'),  # DESHABILITADO - sin registro público
     path('dashboard/', views.VistaDashboard.as_view(), name='dashboard'),
     path('logout/', views.vista_logout, name='logout'),
     

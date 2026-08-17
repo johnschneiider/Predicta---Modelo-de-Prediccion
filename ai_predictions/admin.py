@@ -3,7 +3,7 @@ Admin para predicciones de IA
 """
 
 from django.contrib import admin
-from .models import PredictionModel, PredictionResult, TeamStats
+from .models import PredictionModel, PredictionResult, TeamStats, SavedPrediction, Apuesta
 
 
 @admin.register(PredictionModel)
@@ -31,3 +31,21 @@ class TeamStatsAdmin(admin.ModelAdmin):
     search_fields = ['team_name', 'league__name']
     readonly_fields = ['updated_at']
     ordering = ['team_name']
+
+
+@admin.register(SavedPrediction)
+class SavedPredictionAdmin(admin.ModelAdmin):
+    list_display = ['home_team', 'away_team', 'league', 'user', 'created_at']
+    list_filter = ['league', 'created_at']
+    search_fields = ['home_team', 'away_team', 'league__name', 'user__email']
+    readonly_fields = ['created_at']
+    ordering = ['-created_at']
+
+
+@admin.register(Apuesta)
+class ApuestaAdmin(admin.ModelAdmin):
+    list_display = ['user', 'home_team', 'away_team', 'market', 'selection', 'line', 'status', 'created_at']
+    list_filter = ['market', 'selection', 'status', 'created_at']
+    search_fields = ['home_team', 'away_team', 'league_name', 'user__email']
+    readonly_fields = ['created_at']
+    ordering = ['-created_at']

@@ -7,12 +7,13 @@ from .models import Usuario
 class FormularioLogin(AuthenticationForm):
     """
     Formulario personalizado para el login
+    Acepta username o email como identificador.
     """
-    username = forms.EmailField(
-        label="Correo electrónico",
-        widget=forms.EmailInput(attrs={
+    username = forms.CharField(
+        label="Usuario o correo electrónico",
+        widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'tu@email.com',
+            'placeholder': 'usuario o tu@email.com',
             'autofocus': True
         })
     )
@@ -25,27 +26,29 @@ class FormularioLogin(AuthenticationForm):
     )
 
     def clean(self):
-        email = self.cleaned_data.get('username')
+        identifier = self.cleaned_data.get('username')
         password = self.cleaned_data.get('password')
 
-        if email and password:
-            # Buscar usuario por email
+        if identifier and password:
+            # Buscar usuario por email o username
             try:
-                user = Usuario.objects.get(email=email)
-                # Usar email para autenticación ya que USERNAME_FIELD = 'email'
+                if '@' in identifier:
+                    user = Usuario.objects.get(email=identifier)
+                else:
+                    user = Usuario.objects.get(username=identifier)
                 self.user_cache = authenticate(
                     self.request,
-                    username=user.email,  # Usar email en lugar de username
+                    username=user.email,
                     password=password
                 )
                 if self.user_cache is None:
                     raise forms.ValidationError(
-                        "Credenciales inválidas. Verifica tu correo y contraseña.",
+                        "Credenciales inválidas. Verifica tus datos.",
                         code='invalid_login',
                     )
             except Usuario.DoesNotExist:
                 raise forms.ValidationError(
-                    "Credenciales inválidas. Verifica tu correo y contraseña.",
+                    "Credenciales inválidas. Verifica tus datos.",
                     code='invalid_login',
                 )
         return self.cleaned_data

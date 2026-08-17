@@ -55,8 +55,7 @@ class BetfairAPIService:
                     username=self.username,
                     password=self.password,
                     app_key=self.app_key,
-                    locale='es',
-                    light_weight=True
+                    certs=None,
                 )
                 logger.info("Configurado cliente Betfair para SANDBOX")
                 
@@ -74,9 +73,7 @@ class BetfairAPIService:
                         username=self.username,
                         password=self.password,
                         app_key=self.app_key,
-                        cert_files=cert_files,  # Tupla (cert_path, key_path)
-                        locale='es',
-                        light_weight=True
+                        cert_files=cert_files,
                     )
                 elif os.path.exists(cert_dir):
                     # Usar directorio de certificados
@@ -85,9 +82,7 @@ class BetfairAPIService:
                         username=self.username,
                         password=self.password,
                         app_key=self.app_key,
-                        certs=cert_dir,  # Directorio con certificados
-                        locale='es',
-                        light_weight=True
+                        certs=cert_dir,
                     )
                 else:
                     logger.error(f"No se encontraron certificados SSL en {cert_dir}")

@@ -53,17 +53,26 @@ class LeagueCalibrationService:
             both_score_matches = matches.filter(fthg__gt=0, ftag__gt=0).count()
             both_score_rate = both_score_matches / matches.count() if matches.count() > 0 else 0
             
-            # Factores de calibración (valores objetivo basados en datos reales)
-            target_goals = 2.5  # Objetivo realista para goles
-            target_shots = 22.0  # Objetivo realista para shots (más preciso)
-            target_corners = 9.0  # Objetivo realista para corners
-            target_both_score = 0.45  # Objetivo realista para ambos marcan
+            # Factores de calibración basados en promedios reales de la liga
+            # FIX 5: Usar el promedio real de la liga como target, no un valor fijo de 2.5
+            # Esto permite que cada liga tenga su propio calibrado correcto
             
-            # Calcular factores de reducción
-            goals_factor = min(1.0, target_goals / max(avg_goals_total, 1.0))
-            shots_factor = min(1.0, target_shots / max(avg_shots_total, 1.0))
-            corners_factor = min(1.0, target_corners / max(avg_corners_total, 1.0))
-            both_score_factor = min(1.0, target_both_score / max(both_score_rate, 0.1))
+            # Para goles: target = promedio real de la liga (con piso de 2.2 para ligas defensivas)
+            target_goals = max(2.2, avg_goals_total) if avg_goals_total > 0 else 2.5
+            # Para shots: target = promedio real (con piso de 18)
+            target_shots = max(18.0, avg_shots_total) if avg_shots_total > 0 else 22.0
+            # Para corners: target = promedio real (con piso de 8.5)
+            target_corners = max(8.5, avg_corners_total) if avg_corners_total > 0 else 9.0
+            # Para ambos marcan: target = tasa real (con piso de 0.40)
+            target_both_score = max(0.40, both_score_rate) if both_score_rate > 0 else 0.45
+            
+            # Factores de calibración: ajustar predicción hacia el promedio real de la liga
+            # Si el modelo predice menos que el promedio real, el factor > 1 lo sube
+            # Si el modelo predice más que el promedio real, el factor < 1 lo baja
+            goals_factor = min(1.0, target_goals / max(avg_goals_total, 1.0)) if avg_goals_total > 0 else 1.0
+            shots_factor = min(1.0, target_shots / max(avg_shots_total, 1.0)) if avg_shots_total > 0 else 1.0
+            corners_factor = min(1.0, target_corners / max(avg_corners_total, 1.0)) if avg_corners_total > 0 else 1.0
+            both_score_factor = min(1.0, target_both_score / max(both_score_rate, 0.1)) if both_score_rate > 0 else 1.0
             
             self.calibration_factors[league.name] = {
                 'goals': goals_factor,

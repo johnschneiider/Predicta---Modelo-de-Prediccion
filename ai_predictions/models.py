@@ -159,3 +159,87 @@ class SavedPrediction(models.Model):
 
     def __str__(self):
         return f"{self.home_team} vs {self.away_team} - {self.league.name}"
+
+
+class Apuesta(models.Model):
+    """
+    Apuesta registrada por el usuario a partir de una predicción consultada.
+    Guarda el mercado y la selección que el usuario apostó, para luego
+    resolverla (ganada/perdida) cuando se alimenten los resultados.
+    """
+
+    MARKET_CHOICES = [
+        ('shots_total', 'Remates Totales'),
+        ('shots_home', 'Remates Local'),
+        ('shots_away', 'Remates Visitante'),
+        ('shots_on_target_total', 'Remates a Puerta'),
+        ('goals_total', 'Goles Totales'),
+        ('goals_home', 'Goles Local'),
+        ('goals_away', 'Goles Visitante'),
+        ('corners_total', 'Córners Totales'),
+        ('corners_home', 'Córners Local'),
+        ('corners_away', 'Córners Visitante'),
+        ('both_teams_score', 'Ambos Marcan'),
+    ]
+
+    SELECTION_CHOICES = [
+        ('over', 'Over (Más)'),
+        ('under', 'Under (Menos)'),
+        ('si', 'Sí'),
+        ('no', 'No'),
+    ]
+
+    STATUS_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('ganada', 'Ganada'),
+        ('perdida', 'Perdida'),
+        ('anulada', 'Anulada'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='apuestas',
+        verbose_name="Usuario",
+    )
+    prediction = models.ForeignKey(
+        SavedPrediction,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='apuestas',
+        verbose_name="Predicción",
+    )
+
+    # Snapshot desnormalizado del partido (sobrevive si se borra la predicción)
+    home_team = models.CharField(max_length=100, verbose_name="Equipo Local")
+    away_team = models.CharField(max_length=100, verbose_name="Equipo Visitante")
+    league_name = models.CharField(max_length=200, verbose_name="Liga")
+
+    market = models.CharField(max_length=50, choices=MARKET_CHOICES, verbose_name="Mercado")
+    selection = models.CharField(max_length=10, choices=SELECTION_CHOICES, verbose_name="Selección")
+    line = models.DecimalField(max_digits=6, decimal_places=1, null=True, blank=True, verbose_name="Línea")
+    predicted_value = models.FloatField(null=True, blank=True, verbose_name="Valor predicho (oficial)")
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendiente', verbose_name="Estado")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Registrada el")
+    resolved_at = models.DateTimeField(null=True, blank=True, verbose_name="Resuelta el")
+
+    class Meta:
+        verbose_name = "Apuesta"
+        verbose_name_plural = "Apuestas"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.home_team} vs {self.away_team} — {self.get_market_display()} ({self.selection_label})"
+
+    @property
+    def selection_label(self):
+        """Etiqueta legible de la selección (incluye línea para over/under)."""
+        if self.selection in ('over', 'under') and self.line is not None:
+            return f"{self.get_selection_display()} {self.line}"
+        return self.get_selection_display()
+
+    @property
+    def is_resolved(self):
+        return self.status in ('ganada', 'perdida', 'anulada')

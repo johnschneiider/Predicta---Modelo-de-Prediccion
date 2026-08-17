@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum, Count
 from django.db.models.functions import TruncDate
+from decimal import Decimal, InvalidOperation
 import json
 import logging
 import threading
@@ -19,16 +20,68 @@ from collections import defaultdict
 from django.utils import timezone
 
 from football_data.models import League, Match
-from .models import PredictionModel, PredictionResult, TeamStats, SavedPrediction
+from .models import PredictionModel, PredictionResult, TeamStats, SavedPrediction, Apuesta
 from .services import PredictionService
 from .multi_models import MultiModelPredictionService
 from .advanced_models import AdvancedStatisticalModels
 from .model_validation import ModelValidator
 from .simple_models import SimplePredictionService, ModeloHibridoCorners, ModeloHibridoGeneral
+from .corners_model import corners_model
 from .model_trainer import ModelTrainer
 from .forms import PredictionForm
 
 logger = logging.getLogger('ai_predictions')
+
+
+# ── Mercados disponibles (los mismos que muestra Predicta) ──
+def build_markets_summary(all_predictions):
+    """
+    Extrae la predicción oficial de cada mercado para ofrecerla en el
+    selector de apuestas. Devuelve una lista de dicts con clave, etiqueta,
+    valor oficial y línea sugerida (Over/Under).
+    """
+    markets = []
+    for key, label in Apuesta.MARKET_CHOICES:
+        preds = all_predictions.get(key, []) or []
+        official = None
+        for p in preds:
+            if isinstance(p, dict) and p.get('model_name') in ('Predicción Oficial', 'Predicción oficial'):
+                official = p.get('prediction')
+                break
+
+        suggested_line = None
+        if key != 'both_teams_score' and official is not None:
+            try:
+                suggested_line = max(0.5, round(float(official) * 2) / 2)
+            except (TypeError, ValueError):
+                suggested_line = None
+
+        markets.append({
+            'key': key,
+            'label': label,
+            'official': official,
+            'suggested_line': suggested_line,
+            'is_bts': key == 'both_teams_score',
+        })
+    return markets
+
+
+def compute_streak(apuestas):
+    """Calcula la racha actual de resultados resueltos (W/L) en orden cronológico."""
+    resueltas = apuestas.filter(status__in=('ganada', 'perdida')).order_by('resolved_at', 'created_at')
+    n = 0
+    tipo = None
+    for a in resueltas:
+        t = 'W' if a.status == 'ganada' else 'L'
+        if tipo is None:
+            tipo = t
+            n = 1
+        elif t == tipo:
+            n += 1
+        else:
+            tipo = t
+            n = 1
+    return {'n': n, 'type': tipo}
 
 
 def convert_numpy_to_native(obj):
@@ -169,6 +222,21 @@ def process_predictions_background(session_key, home_team, away_team, league_id,
                     
                     logger.info(f"🎯 TOTAL MODELOS DE REMATES para {pred_type}: {len(predictions)} modelos")
                     logger.info(f"🎯 PREDICCIONES GENERADAS: {predictions}")
+                elif 'corners' in pred_type:
+                    # ── MODELO INDEPENDIENTE DE CORNERS (40/30/15/15) ──
+                    try:
+                        corner_pred = corners_model.predecir(home_team, away_team, league, pred_type)
+                        predictions = [corner_pred]
+                        logger.info(f"[CORNERS] Nuevo modelo para {pred_type}: {corner_pred['prediction']:.2f}")
+                    except Exception as e:
+                        logger.error(f"[CORNERS] Error en nuevo modelo para {pred_type}: {e}")
+                        predictions = [{
+                            'model_name': 'Corners Avanzado (Fallback)',
+                            'prediction': 10.0,
+                            'confidence': 0.3,
+                            'probabilities': {'over_10': 0.5},
+                            'total_matches': 0
+                        }]
                 else:
                     try:
                         predictions = simple_service.get_all_simple_predictions(home_team, away_team, league, pred_type)
@@ -216,27 +284,9 @@ def process_predictions_background(session_key, home_team, away_team, league_id,
                         predictions.append(enhanced_fallback)
                         logger.info(f"Fallback ambos marcan agregado: {fallback_prob}")
                 
-                # Agregar modelo híbrido como modelo adicional para otros tipos
+                # Los corners ya se procesaron con el modelo independiente arriba
                 elif 'corners' in pred_type:
-                    try:
-                        # Usar modelo híbrido especializado para corners
-                        hybrid_model = ModeloHibridoCorners()
-                        hybrid_prediction = hybrid_model.predecir(home_team, away_team, league, pred_type)
-                        predictions.append(hybrid_prediction)
-                        logger.info(f"Modelo Híbrido Corners agregado para {pred_type}")
-                    except Exception as e:
-                        logger.error(f"Error agregando modelo híbrido corners para {pred_type}: {e}")
-                        # Crear modelo híbrido de fallback
-                        hybrid_fallback = {
-                            'model_name': 'Modelo Híbrido Corners',
-                            'prediction': 10.0,
-                            'confidence': 0.6,
-                            'probabilities': {'over_10': 0.5, 'over_15': 0.3, 'over_20': 0.1},
-                            'total_matches': 0,
-                            'component_predictions': {}
-                        }
-                        predictions.append(hybrid_fallback)
-                        logger.info(f"Modelo híbrido corners fallback agregado para {pred_type}")
+                    pass
                 else:
                     try:
                         # Usar modelo híbrido general para otros tipos
@@ -399,6 +449,7 @@ class PredictionFormView(View):
                 logger.info("🔄 PROCESANDO DIRECTAMENTE - sin threading")
                 
                 from .simple_models import SimplePredictionService, ModeloHibridoCorners, ModeloHibridoGeneral
+                from .corners_model import corners_model
                 from .league_calibration import league_calibration
                 from .enhanced_both_teams_score import enhanced_both_teams_score_model
                 
@@ -482,19 +533,19 @@ class PredictionFormView(View):
                             
                             logger.info(f"🎯 [BACKGROUND] TOTAL MODELOS DE REMATES para {pred_type}: {len(predictions)} modelos")
                             logger.info(f"🎯 [BACKGROUND] PREDICCIONES GENERADAS: {predictions}")
+                        elif 'corners' in pred_type:
+                            # ── MODELO INDEPENDIENTE DE CORNERS (40/30/15/15) ──
+                            corner_pred = corners_model.predecir(home_team, away_team, league, pred_type)
+                            predictions = [corner_pred]
+                            logger.info(f"[CORNERS] Nuevo modelo inline para {pred_type}: {corner_pred['prediction']:.2f}")
                         else:
                             # Obtener predicciones simples para otros mercados
                             predictions = simple_service.get_all_simple_predictions(home_team, away_team, league, pred_type)
                             
                             # Agregar modelo híbrido solo para mercados no-shots
-                            if 'corners' in pred_type:
-                                hybrid_model = ModeloHibridoCorners()
-                                hybrid_prediction = hybrid_model.predecir(home_team, away_team, league, pred_type)
-                                predictions.append(hybrid_prediction)
-                            else:
-                                hybrid_model = ModeloHibridoGeneral()
-                                hybrid_prediction = hybrid_model.predecir(home_team, away_team, league, pred_type)
-                                predictions.append(hybrid_prediction)
+                            hybrid_model = ModeloHibridoGeneral()
+                            hybrid_prediction = hybrid_model.predecir(home_team, away_team, league, pred_type)
+                            predictions.append(hybrid_prediction)
                         
                         # APLICAR CALIBRACIÓN POR LIGA
                         calibrated_predictions = []
@@ -719,11 +770,208 @@ class PredictionResultView(View):
         else:
             logger.info(f"[OK] Se encontraron {len(model_names)} modelos únicos correctamente")
         
+        # Calcular recomendación de corners (línea Poisson + UNDER/OVER)
+        corners_recommendation = None
+        try:
+            if 'all_predictions' in prediction_payload:
+                corners_preds = prediction_payload['all_predictions'].get('corners_total', [])
+                for cp in corners_preds:
+                    if cp.get('model_name') == 'Predicción Oficial':
+                        total = cp.get('prediction', 0)
+                        if total > 0:
+                            # Encontrar la línea más cercana
+                            lines = [5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5, 13.5, 14.5, 15.5, 16.5, 17.5, 18.5]
+                            closest = min(lines, key=lambda x: abs(x - total))
+                            # Calcular Poisson
+                            from scipy.stats import poisson
+                            k = int(closest)
+                            p_over = 1.0 - poisson.cdf(k, total)
+                            p_under = 1.0 - p_over
+                            # Determinar la recomendación
+                            if p_over > p_under:
+                                direction = 'OVER'
+                                prob = p_over
+                            else:
+                                direction = 'UNDER'
+                                prob = p_under
+                            corners_recommendation = {
+                                'line': closest,
+                                'direction': direction,
+                                'probability': round(prob * 100, 1),
+                                'cuota_justa': round(1.0 / prob, 2),
+                            }
+                        break
+        except Exception as e:
+            logger.warning(f"No se pudo calcular recomendación de corners: {e}")
+        
+        # Verificar si la liga tiene datos de goles (para Ambos Marcan)
+        has_goals_data = True
+        try:
+            from football_data.models import Match, League
+            league_name = prediction_payload.get('league', '')
+            league_obj = League.objects.filter(name=league_name).first()
+            if league_obj:
+                goal_matches = Match.objects.filter(league=league_obj, fthg__isnull=False).count()
+                has_goals_data = goal_matches >= 10
+        except Exception:
+            pass
+        
+        # ── Mercados disponibles para registrar apuesta (mismos que Predicta) ──
+        all_preds = prediction_payload.get('all_predictions', {}) or {}
+        markets = build_markets_summary(all_preds)
+
+        # Apuestas ya registradas por el usuario sobre esta predicción
+        existing_apuestas = []
+        saved_id = prediction_payload.get('saved_prediction_id')
+        if saved_id and request.user.is_authenticated:
+            existing_apuestas = Apuesta.objects.filter(
+                prediction_id=saved_id, user=request.user
+            ).order_by('-created_at')
+
         context = {
             'prediction': prediction_payload,
-            'model_names': model_names
+            'model_names': model_names,
+            'corners_recommendation': corners_recommendation,
+            'has_goals_data': has_goals_data,
+            'markets': markets,
+            'markets_json': json.dumps(markets),
+            'existing_apuestas': existing_apuestas,
         }
         return render(request, 'ai_predictions/prediction_result_new.html', context)
+
+
+@method_decorator(login_required, name='dispatch')
+class SaveApuestaView(View):
+    """Registra la apuesta seleccionada desde la página de predicción."""
+
+    def post(self, request, prediction_id=None):
+        saved_prediction = get_object_or_404(SavedPrediction, id=prediction_id)
+        if saved_prediction.user and saved_prediction.user != request.user and not request.user.is_staff:
+            messages.error(request, "No tienes permiso para registrar apuestas sobre esta predicción.")
+            return redirect('ai_predictions:prediction_form')
+
+        market = request.POST.get('market')
+        selection = request.POST.get('selection')
+        line = request.POST.get('line') or None
+
+        valid_markets = dict(Apuesta.MARKET_CHOICES)
+        if market not in valid_markets:
+            messages.error(request, "Mercado inválido.")
+            return redirect('ai_predictions:prediction_result_with_id', prediction_id=prediction_id)
+
+        if market == 'both_teams_score':
+            if selection not in ('si', 'no'):
+                messages.error(request, "Selección inválida para Ambos Marcan.")
+                return redirect('ai_predictions:prediction_result_with_id', prediction_id=prediction_id)
+        else:
+            if selection not in ('over', 'under'):
+                messages.error(request, "Selección inválida.")
+                return redirect('ai_predictions:prediction_result_with_id', prediction_id=prediction_id)
+
+        # Valor oficial de la predicción para este mercado (snapshot)
+        predicted_value = None
+        all_preds = saved_prediction.all_predictions or {}
+        for p in all_preds.get(market, []) or []:
+            if isinstance(p, dict) and p.get('model_name') in ('Predicción Oficial', 'Predicción oficial'):
+                predicted_value = p.get('prediction')
+                break
+
+        try:
+            line_dec = Decimal(str(line)) if line else None
+        except (InvalidOperation, ValueError):
+            line_dec = None
+
+        Apuesta.objects.create(
+            user=request.user,
+            prediction=saved_prediction,
+            home_team=saved_prediction.home_team,
+            away_team=saved_prediction.away_team,
+            league_name=saved_prediction.league.name if saved_prediction.league else '',
+            market=market,
+            selection=selection,
+            line=line_dec,
+            predicted_value=predicted_value,
+            status='pendiente',
+        )
+        messages.success(request, "Apuesta registrada correctamente.")
+        return redirect('ai_predictions:prediction_result_with_id', prediction_id=prediction_id)
+
+
+@method_decorator(login_required, name='dispatch')
+class ResolveApuestaView(View):
+    """Marca una apuesta como ganada / perdida / anulada (solo el dueño)."""
+
+    def post(self, request, pk):
+        apuesta = get_object_or_404(Apuesta, pk=pk, user=request.user)
+        new_status = request.POST.get('status')
+        if new_status not in dict(Apuesta.STATUS_CHOICES):
+            messages.error(request, "Estado inválido.")
+            return redirect('ai_predictions:mis_apuestas')
+
+        apuesta.status = new_status
+        apuesta.resolved_at = timezone.now() if new_status in ('ganada', 'perdida', 'anulada') else None
+        apuesta.save()
+        messages.success(request, f"Apuesta marcada como {apuesta.get_status_display().lower()}.")
+        return redirect('ai_predictions:mis_apuestas')
+
+
+@method_decorator(login_required, name='dispatch')
+class MisApuestasView(View):
+    """Historial de apuestas del usuario + métricas de desempeño."""
+
+    template_name = 'ai_predictions/mis_apuestas.html'
+
+    def get(self, request):
+        apuestas = Apuesta.objects.filter(user=request.user).select_related('prediction').order_by('-created_at')
+
+        status_filter = request.GET.get('estado')
+        if status_filter in dict(Apuesta.STATUS_CHOICES):
+            apuestas = apuestas.filter(status=status_filter)
+
+        total = apuestas.count()
+        ganadas = apuestas.filter(status='ganada').count()
+        perdidas = apuestas.filter(status='perdida').count()
+        pendientes = apuestas.filter(status='pendiente').count()
+        anuladas = apuestas.filter(status='anulada').count()
+        resueltas = ganadas + perdidas
+        acierto = round((ganadas / resueltas) * 100, 1) if resueltas else 0
+
+        racha = compute_streak(apuestas)
+
+        by_market = []
+        for key, label in Apuesta.MARKET_CHOICES:
+            qs = apuestas.filter(market=key)
+            m_total = qs.count()
+            m_gan = qs.filter(status='ganada').count()
+            m_per = qs.filter(status='perdida').count()
+            m_res = m_gan + m_per
+            by_market.append({
+                'key': key,
+                'label': label,
+                'total': m_total,
+                'ganadas': m_gan,
+                'perdidas': m_per,
+                'pendientes': qs.filter(status='pendiente').count(),
+                'acierto': round((m_gan / m_res) * 100, 1) if m_res else None,
+            })
+
+        paginator = Paginator(apuestas, 25)
+        page_obj = paginator.get_page(request.GET.get('page'))
+
+        context = {
+            'page_obj': page_obj,
+            'total': total,
+            'ganadas': ganadas,
+            'perdidas': perdidas,
+            'pendientes': pendientes,
+            'anuladas': anuladas,
+            'acierto': acierto,
+            'racha': racha,
+            'by_market': by_market,
+            'status_choices': Apuesta.STATUS_CHOICES,
+            'selected_status': status_filter or '',
+        }
+        return render(request, self.template_name, context)
 
 
 # @method_decorator(login_required, name='dispatch')  # Temporalmente deshabilitado
@@ -772,21 +1020,44 @@ class TrainingView(View):
 # @method_decorator(login_required, name='dispatch')  # Temporalmente deshabilitado
 @method_decorator(login_required, name='dispatch')
 class GetTeamsView(View):
-    """API para obtener equipos de una liga"""
+    """API para obtener equipos de una liga (Django + SQLite fallback)."""
     
     def get(self, request, league_id):
         try:
             league = League.objects.get(id=league_id)
             
-            # Obtener equipos únicos de la liga
+            # Obtener equipos únicos de Django
             home_teams = Match.objects.filter(league=league).values_list('home_team', flat=True).distinct()
             away_teams = Match.objects.filter(league=league).values_list('away_team', flat=True).distinct()
-            
             all_teams = sorted(list(set(list(home_teams) + list(away_teams))))
+            logger.info(f"[TEAMS] Django teams for {league.name} (id={league.id}): {len(all_teams)}")
             
-            return JsonResponse({
-                'teams': all_teams
-            })
+            # Si no hay equipos en Django, buscar en SQLite
+            if not all_teams:
+                try:
+                    import sqlite3
+                    # Mapear nombre Django → nombre SQLite
+                    LEAGUE_MAP = {'Serie A (Brasil)': 'Serie A', 'Serie B (Brasil)': 'Serie B',
+        'Primera A (Colombia)': 'Primera A', 'Primera Division (Argentina)': 'Primera Division',
+        'Liga MX (Mexico)': 'Liga MX',
+        'US MLS (USA)': 'US MLS'}
+                    sqlite_league = LEAGUE_MAP.get(league.name, league.name)
+                    conn = sqlite3.connect('/var/www/predicta.com.co/data/corners_scraped.db')
+                    home = conn.execute(
+                        "SELECT DISTINCT home_team FROM corners_matches WHERE league=?",
+                        (sqlite_league,)
+                    ).fetchall()
+                    away = conn.execute(
+                        "SELECT DISTINCT away_team FROM corners_matches WHERE league=?",
+                        (sqlite_league,)
+                    ).fetchall()
+                    conn.close()
+                    all_teams = sorted(set([r[0] for r in home] + [r[0] for r in away]))
+                    logger.info(f"[TEAMS] SQLite teams for {sqlite_league}: {len(all_teams)}")
+                except Exception as e:
+                    logger.error(f"[TEAMS] SQLite fallback failed: {e}")
+            
+            return JsonResponse({'teams': all_teams})
             
         except League.DoesNotExist:
             return JsonResponse({'error': 'Liga no encontrada'}, status=404)
@@ -819,24 +1090,23 @@ class PredictionProgressView(View):
 # @method_decorator(login_required, name='dispatch')  # Temporalmente deshabilitado
 @method_decorator(login_required, name='dispatch')
 class PredictionHistoryView(View):
-    """Vista para historial de predicciones"""
-    
+    """Historial de predicciones consultadas por el usuario (privadas)."""
+
+    @method_decorator(login_required)
     def get(self, request):
-        # Usar lista vacía para evitar errores de DB
-        predictions = []
-        
-        # Filtros
+        predictions = SavedPrediction.objects.filter(user=request.user).select_related('league').order_by('-created_at')
+
         league_filter = request.GET.get('league')
-        
-        # Paginación (con lista vacía)
+        if league_filter:
+            predictions = predictions.filter(league_id=league_filter)
+
         paginator = Paginator(predictions, 20)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        
+        page_obj = paginator.get_page(request.GET.get('page'))
+
         context = {
             'page_obj': page_obj,
             'leagues': League.objects.all(),
-            'selected_league': league_filter,
+            'selected_league': league_filter or '',
         }
         return render(request, 'ai_predictions/prediction_history.html', context)
 
@@ -987,3 +1257,75 @@ class LeagueHistoricalDataView(View):
         except Exception as e:
             logger.error(f"Error obteniendo datos históricos: {e}")
             return JsonResponse({'error': str(e)}, status=500)
+
+
+# ── SCRAPER UI ──
+
+import subprocess, sqlite3
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+
+class ScraperCornersView(LoginRequiredMixin, View):
+    """Vista para la UI del scraper de corners."""
+    def get(self, request):
+        return render(request, 'ai_predictions/scraper.html')
+
+
+class ScraperCornersAPIView(LoginRequiredMixin, View):
+    """API endpoint para ejecutar scraping o consultar stats."""
+
+    DB_PATH = '/var/www/predicta.com.co/data/corners_scraped.db'
+
+    def get(self, request):
+        """Devuelve estadísticas de la DB SQLite."""
+        try:
+            conn = sqlite3.connect(self.DB_PATH)
+            conn.row_factory = sqlite3.Row
+            total = conn.execute("SELECT COUNT(*) FROM corners_matches").fetchone()[0]
+            teams = conn.execute("SELECT COUNT(DISTINCT home_team) FROM corners_matches").fetchone()[0]
+            leagues = conn.execute(
+                "SELECT league, country, COUNT(*) as n FROM corners_matches GROUP BY league, country ORDER BY n DESC"
+            ).fetchall()
+            conn.close()
+            return JsonResponse({
+                'total_matches': total,
+                'total_teams': teams,
+                'total_leagues': len(leagues),
+                'leagues': [[l[0], l[1], l[2]] for l in leagues],
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e), 'total_matches': 0, 'total_teams': 0, 'total_leagues': 0})
+
+    def post(self, request):
+        """Ejecuta el scraper."""
+        country = request.POST.get('country', 'Brazil')
+        league = request.POST.get('league', 'Serie A')
+        season = request.POST.get('season', '2026')
+
+        script = '/var/www/predicta.com.co/scripts/scrape_corners.py'
+        venv_python = '/var/www/predicta.com.co/venv/bin/python3'
+
+        try:
+            result = subprocess.run(
+                [venv_python, script,
+                 '--country', country,
+                 '--league', league,
+                 '--season', season,
+                 '--db', self.DB_PATH],
+                capture_output=True, text=True, timeout=120
+            )
+            if result.returncode == 0:
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Scraping completado para {country} / {league} / {season}',
+                    'output': result.stdout[-2000:],
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': result.stderr[-500:] or result.stdout[-500:],
+                })
+        except subprocess.TimeoutExpired:
+            return JsonResponse({'success': False, 'error': 'Timeout (120s). La página tardó demasiado.'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})

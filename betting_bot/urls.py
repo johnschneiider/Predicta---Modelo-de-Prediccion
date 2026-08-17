@@ -34,6 +34,8 @@ urlpatterns = [
     path('odds/', include(('odds.urls', 'odds'), namespace='odds')),
     path('football_data/', include(('football_data.urls', 'football_data'), namespace='football_data')),
     path('ai/', include(('ai_predictions.urls', 'ai_predictions'), namespace='ai_predictions')),
+    path('value-betting/', include(('value_betting.urls', 'value_betting'), namespace='value_betting')),
+    path('auto-betting/', include(('auto_betting.urls', 'auto_betting'), namespace='auto_betting')),
 ]
 
 # Eliminado: rutas de basketball_data
