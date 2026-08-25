@@ -7,9 +7,33 @@ from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.utils import timezone
+from datetime import timedelta
 
 from .forms import FormularioLogin, FormularioRegistro, FormularioCrearUsuario, FormularioEditarUsuario, FormularioCambiarContraseña
-from .models import Usuario
+from .models import Usuario, LoginAttempt
+
+# ── Rate limit de login (anti fuerza bruta) ──
+MAX_LOGIN_ATTEMPTS = 5        # intentos fallidos permitidos
+LOGIN_WINDOW_MINUTES = 15     # ventana de tiempo en minutos
+LOGIN_BLOCK_MINUTES = 15      # tiempo de bloqueo en minutos
+
+
+def get_client_ip(request):
+    """Obtiene la IP real del cliente, considerando el proxy de nginx (X-Forwarded-For)."""
+    xff = request.META.get('HTTP_X_FORWARDED_FOR')
+    if xff:
+        return xff.split(',')[0].strip()
+    return request.META.get('HTTP_X_REAL_IP') or request.META.get('REMOTE_ADDR', '0.0.0.0')
+
+
+def _ip_bloqueada(ip):
+    """True si la IP superó el límite de intentos fallidos en la ventana."""
+    cutoff = timezone.now() - timedelta(minutes=LOGIN_WINDOW_MINUTES)
+    fallidos = LoginAttempt.objects.filter(
+        ip_address=ip, success=False, timestamp__gte=cutoff
+    ).count()
+    return fallidos >= MAX_LOGIN_ATTEMPTS
 
 class VistaLogin(View):
     """
@@ -23,13 +47,29 @@ class VistaLogin(View):
         return render(request, 'cuentas/login.html', {'form': form})
     
     def post(self, request):
+        ip = get_client_ip(request)
+
+        # 1. Rate limit: bloquear IP con demasiados intentos fallidos
+        if _ip_bloqueada(ip):
+            messages.error(
+                request,
+                f'Demasiados intentos fallidos desde tu IP. Intenta de nuevo en {LOGIN_BLOCK_MINUTES} minutos.'
+            )
+            form = FormularioLogin()
+            return render(request, 'cuentas/login.html', {'form': form}, status=429)
+
         form = FormularioLogin(data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            # Registrar intento exitoso (y limpiar fallidos de esta IP)
+            LoginAttempt.objects.create(ip_address=ip, username=request.POST.get('username', ''), success=True)
+            LoginAttempt.objects.filter(ip_address=ip, success=False).delete()
             messages.success(request, f'¡Bienvenido, {user.get_full_name()}!')
             return redirect('cuentas:dashboard')
         else:
+            # Registrar intento fallido
+            LoginAttempt.objects.create(ip_address=ip, username=request.POST.get('username', ''), success=False)
             messages.error(request, 'Credenciales inválidas. Intenta de nuevo.')
         
         return render(request, 'cuentas/login.html', {'form': form})

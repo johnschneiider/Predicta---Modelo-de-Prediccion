@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Umbrales por Submercado — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cfg-container { max-width: 780px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .cfg-header { text-align: center; margin-bottom: 1.6rem; }
+  .cfg-header h2 { margin-bottom: 0.4rem; letter-spacing: -0.01em; }
+  .cfg-header .subtitle {
+    color: var(--text-secondary); font-size: 0.9rem;
+    display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+  }
+  .cfg-header .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-primary); box-shadow: 0 0 8px var(--accent-primary);
+    display: inline-block;
+  }
+  .cfg-form {
+    background: var(--bg-surface);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem 1.6rem;
+    display: flex; flex-direction: column; gap: 1.4rem;
+  }
+  .cfg-group { border-top: 0.5px solid rgba(255,255,255,0.08); padding-top: 1rem; }
+  .cfg-group:first-child { border-top: none; padding-top: 0; }
+  .cfg-group h3 { font-size: 0.95rem; margin-bottom: 0.7rem; color: var(--text-primary); }
+  .cfg-row { display: grid; grid-template-columns: 48px 52px 1fr 1fr 1fr 1fr; gap: 0.5rem; align-items: end; margin-bottom: 0.6rem; }
+  .cfg-row .lado-label { font-weight: 700; font-size: 0.82rem; color: var(--accent-primary); padding-bottom: 0.55rem; }
+  .cfg-row .enabled-cell { display: flex; align-items: center; justify-content: center; padding-bottom: 0.55rem; }
+  .cfg-check { width: 18px; height: 18px; accent-color: var(--accent-primary); cursor: pointer; }
+  .cfg-suboff { opacity: 0.45; }
+  .cfg-global-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 0.8rem; }
+  .cfg-global-item { display: flex; flex-direction: column; gap: 0.3rem; }
+  .cfg-global-item .g-label { font-weight: 600; font-size: 0.78rem; color: var(--text-primary); }
+  .cfg-global-item .g-help { font-size: 0.72rem; color: var(--text-secondary); line-height: 1.35; }
+  .cfg-field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .cfg-field label { font-weight: 600; font-size: 0.75rem; color: var(--text-secondary); }
+  .cfg-input {
+    background: var(--bg-overlay);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-md, 8px);
+    color: var(--text-primary);
+    padding: 0.5rem 0.7rem;
+    font-size: 0.88rem;
+    width: 100%;
+    font-family: inherit;
+  }
+  .cfg-input:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 2px rgba(0,229,255,0.12); }
+  .cfg-error { color: var(--danger); font-size: 0.78rem; font-weight: 600; }
+  .cfg-save {
+    margin-top: 0.4rem;
+    background: var(--accent-primary); color: #0a0a0a; border: none;
+    border-radius: var(--radius-full); padding: 0.7rem 1.3rem;
+    font-size: 0.9rem; font-weight: 700; cursor: pointer;
+  }
+  .cfg-save:hover { background: var(--accent-hover); }
+  .cfg-meta { color: var(--text-secondary); font-size: 0.78rem; margin-top: 0.4rem; }
+  .cfg-note {
+    margin-top: 1.2rem;
+    background: rgba(0,229,255,0.06);
+    border: 0.5px solid rgba(0,229,255,0.25);
+    border-radius: var(--radius-md, 8px);
+    padding: 0.8rem 1rem;
+    color: var(--text-secondary); font-size: 0.82rem; line-height: 1.5;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cfg-container">
+  <div class="cfg-header">
+    <h2>Umbrales por Submercado (Global)</h2>
+    <div class="subtitle">
+      <span class="dot"></span>
+      Activo, P mínima, confianza, EV mínimo y cuota mínima por mercado + lado
+    </div>
+  </div>
+
+  <form method="post" class="cfg-form" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="cfg-error">{{ form.non_field_errors }}</div>{% endif %}
+
+    {% for grupo in filas %}
+      <div class="cfg-group">
+        <h3>{{ grupo.titulo }}</h3>
+        {% for sf in grupo.subfilas %}
+          <div class="cfg-row{% if not sf.enabled.value %} cfg-suboff{% endif %}">
+            <div class="lado-label">{{ sf.lado }}</div>
+            <div class="enabled-cell" title="Activo">
+              {{ sf.enabled }}
+              {% if sf.enabled.errors %}<div class="cfg-error">{{ sf.enabled.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="cfg-field">
+              <label for="{{ sf.p.id_for_label }}">P mín</label>
+              {{ sf.p }}
+              {% if sf.p.errors %}<div class="cfg-error">{{ sf.p.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="cfg-field">
+              <label for="{{ sf.conf.id_for_label }}">Conf. mín</label>
+              {{ sf.conf }}
+              {% if sf.conf.errors %}<div class="cfg-error">{{ sf.conf.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="cfg-field">
+              <label for="{{ sf.ev.id_for_label }}">EV mín</label>
+              {{ sf.ev }}
+              {% if sf.ev.errors %}<div class="cfg-error">{{ sf.ev.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="cfg-field">
+              <label for="{{ sf.cuota.id_for_label }}">Cuota mín</label>
+              {{ sf.cuota }}
+              {% if sf.cuota.errors %}<div class="cfg-error">{{ sf.cuota.errors|striptags }}</div>{% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <div class="cfg-group">
+      <h3>🌐 Controles globales</h3>
+      <div class="cfg-global-row">
+        {% for g in globales %}
+          <div class="cfg-global-item">
+            <div class="g-label">{{ g.label }}</div>
+            {{ g.field }}
+            {% if g.field.errors %}<div class="cfg-error">{{ g.field.errors|striptags }}</div>{% endif %}
+            <div class="g-help">{{ g.help }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <button type="submit" class="cfg-save">💾 Guardar umbrales</button>
+    <div class="cfg-meta">
+      Última actualización: {{ cfg.actualizado|date:"d/m/Y H:i" }}{% if cfg.actualizado_por %} por {{ cfg.actualizado_por }}{% endif %}.
+    </div>
+  </form>
+
+  <div class="cfg-note">
+    <strong>ℹ️ Nota:</strong> esta configuración es <strong>global</strong> — aplica igual a todas
+    las cuentas del auto-betting (admin y admin2). Solo el administrador principal puede editarla.
+    El próximo ciclo del cron ya usará los valores guardados aquí.
+  </div>
+</div>
+{% endblock %}

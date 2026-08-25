@@ -23,6 +23,28 @@ class Usuario(AbstractUser):
     
     def __str__(self):
         return f"{self.get_full_name()} ({self.email})"
+
+
+class LoginAttempt(models.Model):
+    """
+    Registro de intentos de inicio de sesión para protección contra fuerza bruta.
+    """
+    ip_address = models.GenericIPAddressField(verbose_name="Dirección IP")
+    username = models.CharField(max_length=150, blank=True, default="", verbose_name="Identificador usado")
+    success = models.BooleanField(default=False, verbose_name="Éxito")
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name="Fecha")
+
+    class Meta:
+        verbose_name = "Intento de login"
+        verbose_name_plural = "Intentos de login"
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['ip_address', '-timestamp']),
+        ]
+
+    def __str__(self):
+        estado = "OK" if self.success else "FALLÓ"
+        return f"{self.ip_address} - {estado} ({self.timestamp:%Y-%m-%d %H:%M})"
     
     def get_full_name(self):
         """Retorna el nombre completo del usuario"""

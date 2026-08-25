@@ -27,11 +27,27 @@
             {% endfor %}
         </div>
 
-        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:0.5rem;">Iniciar Sesión</button>
+        <button type="submit" class="btn btn-primary" id="btn-login" style="width:100%;margin-top:0.5rem;">Iniciar Sesión</button>
 
         <div style="text-align:center;margin-top:1.5rem;font-size:0.88rem;color:var(--text-secondary);">
             Acceso restringido — Solo usuarios autorizados
         </div>
     </form>
 </div>
+
+<script>
+// Prevenir doble submit (CSRF 403 en segundo POST)
+(function() {
+    var form = document.querySelector('form[method="post"]');
+    if (!form) return;
+    var btn = document.getElementById('btn-login');
+    form.addEventListener('submit', function() {
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Ingresando...';
+            btn.style.opacity = '0.7';
+        }
+    });
+})();
+</script>
 {% endblock %}

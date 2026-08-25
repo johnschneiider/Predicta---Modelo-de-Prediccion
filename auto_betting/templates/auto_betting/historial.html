@@ -5,49 +5,80 @@
 
 {% block extra_head %}
 <style>
-  .hist-container {
-    max-width: 1240px;
-    margin: 0 auto;
-    padding: 1rem 1.5rem 4rem;
-  }
-
-  /* ── Encabezado ── */
-  .hist-header {
-    text-align: center;
-    margin-bottom: 1.8rem;
-  }
-  .hist-header h2 {
-    margin-bottom: 0.4rem;
-    letter-spacing: -0.01em;
-  }
+  .hist-container { max-width: 1240px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .hist-header { text-align: center; margin-bottom: 1.4rem; }
+  .hist-header h2 { margin-bottom: 0.4rem; letter-spacing: -0.01em; }
   .hist-header .subtitle {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.45rem;
+    color: var(--text-secondary); font-size: 0.9rem;
+    display: flex; align-items: center; justify-content: center; gap: 0.45rem;
   }
   .hist-header .dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--accent-primary);
-    box-shadow: 0 0 8px var(--accent-primary);
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-primary); box-shadow: 0 0 8px var(--accent-primary);
     display: inline-block;
   }
+
+  /* ── Tabs de filtro ── */
+  .filter-tabs {
+    display: flex; justify-content: center; gap: 0.5rem; margin: 1rem 0;
+  }
+  .filter-tab {
+    padding: 0.5rem 1.2rem; border-radius: var(--radius-full);
+    font-size: 0.82rem; font-weight: 700; cursor: pointer;
+    border: 0.5px solid rgba(255,255,255,0.12); background: transparent;
+    color: var(--text-secondary); transition: all .18s ease;
+    text-decoration: none;
+  }
+  .filter-tab:hover { border-color: var(--accent-border); color: var(--text-primary); }
+  .filter-tab.active {
+    background: var(--accent-primary); color: #0a0a0a; border-color: var(--accent-primary);
+  }
+
+  /* ── Filtro de fechas ── */
+  .date-filters {
+    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+    margin: 0.8rem 0 0; flex-wrap: wrap;
+  }
+  .date-filters label {
+    font-size: 0.78rem; color: var(--text-secondary); font-weight: 600;
+  }
+  .date-filters input[type="date"] {
+    background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-full); color: var(--text-primary);
+    padding: 0.4rem 0.8rem; font-size: 0.82rem; font-family: inherit;
+    color-scheme: dark;
+  }
+  .date-filters input[type="date"]:focus {
+    outline: none; border-color: var(--accent-primary);
+  }
+  .date-filters .date-btn {
+    background: var(--accent-primary); color: #0a0a0a; border: none;
+    border-radius: var(--radius-full); padding: 0.4rem 0.9rem;
+    font-size: 0.78rem; font-weight: 700; cursor: pointer;
+    transition: background .18s ease;
+  }
+  .date-filters .date-btn:hover { background: var(--accent-hover); }
+  .date-filters .date-link {
+    font-size: 0.72rem; color: var(--text-secondary); text-decoration: none;
+    padding: 0.3rem 0.6rem; border-radius: var(--radius-full); cursor: pointer;
+  }
+  .date-filters .date-link:hover { color: var(--accent-primary); }
+  .date-filters .date-clear {
+    font-size: 0.72rem; color: var(--text-tertiary); text-decoration: none;
+    padding: 0.3rem 0.6rem; cursor: pointer;
+  }
+  .date-filters .date-clear:hover { color: #ff5c5c; }
+  .date-active-badge {
+    display: inline-block; font-size: 0.7rem; color: var(--accent-primary);
+    background: rgba(198,241,53,0.1); border: 0.5px solid rgba(198,241,53,0.25);
+    border-radius: var(--radius-full); padding: 0.2rem 0.6rem; margin-left: 0.4rem;
+  }
+
   .sync-btn {
-    margin-top: 1rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    background: var(--accent-primary);
-    color: #0a0a0a;
-    border: none;
-    border-radius: var(--radius-full);
-    padding: 0.55rem 1.15rem;
-    font-size: 0.85rem;
-    font-weight: 700;
-    cursor: pointer;
+    margin-top: 0.8rem; display: inline-flex; align-items: center; gap: 0.45rem;
+    background: var(--accent-primary); color: #0a0a0a; border: none;
+    border-radius: var(--radius-full); padding: 0.55rem 1.15rem;
+    font-size: 0.85rem; font-weight: 700; cursor: pointer;
     transition: background .18s ease, transform .18s ease, opacity .18s ease;
   }
   .sync-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
@@ -57,94 +88,52 @@
 
   /* ── Tarjetas de resumen ── */
   .stat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 0.8rem;
-    margin-bottom: 1.6rem;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.8rem; margin-bottom: 1.4rem;
   }
   .stat-card {
-    background: var(--bg-surface);
-    border: 0.5px solid rgba(255,255,255,0.07);
-    border-radius: var(--radius-lg);
-    padding: 1rem 1.1rem;
-    text-align: center;
+    background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg); padding: 0.9rem 1rem; text-align: center;
     transition: border-color .18s ease, transform .18s ease;
   }
-  .stat-card:hover {
-    border-color: var(--accent-border);
-    transform: translateY(-1px);
-  }
+  .stat-card:hover { border-color: var(--accent-border); transform: translateY(-1px); }
   .stat-card .label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-secondary);
-    margin-bottom: 0.45rem;
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-secondary); margin-bottom: 0.4rem;
   }
   .stat-card .value {
-    font-size: 1.65rem;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--text-primary);
-    font-variant-numeric: tabular-nums;
+    font-size: 1.5rem; font-weight: 700; line-height: 1;
+    color: var(--text-primary); font-variant-numeric: tabular-nums;
   }
   .stat-card .value.pos { color: var(--verde-lima, #5CFF5C); }
   .stat-card .value.neg { color: #ff5c5c; }
   .stat-card .value.warn { color: #ffc107; }
   .stat-card .value.accent { color: var(--accent-primary); }
 
-  /* ── Contenedor de tabla con altura máxima y scroll ── */
+  /* ── Tabla ── */
   .table-scroll {
-    max-height: 68vh;
-    overflow: auto;
-    border-radius: var(--radius-lg);
-    border: 0.5px solid rgba(255,255,255,0.08);
-    background: var(--bg-surface);
-    scrollbar-width: thin;
-    scrollbar-color: var(--accent-primary) transparent;
+    max-height: 68vh; overflow: auto; border-radius: var(--radius-lg);
+    border: 0.5px solid rgba(255,255,255,0.08); background: var(--bg-surface);
+    scrollbar-width: thin; scrollbar-color: var(--accent-primary) transparent;
   }
   .table-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
-  .table-scroll::-webkit-scrollbar-thumb {
-    background: rgba(198,241,53,0.35);
-    border-radius: 999px;
-  }
+  .table-scroll::-webkit-scrollbar-thumb { background: rgba(198,241,53,0.35); border-radius: 999px; }
   .table-scroll::-webkit-scrollbar-track { background: transparent; }
-
-  table.hist {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.86rem;
-    min-width: 980px;
-  }
-
-  /* Cabecera fija */
+  table.hist { width: 100%; border-collapse: collapse; font-size: 0.84rem; min-width: 1040px; }
   table.hist thead th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background: var(--bg-surface-alt);
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    font-size: 0.68rem;
-    letter-spacing: 0.07em;
-    padding: 0.8rem 0.85rem;
-    text-align: left;
-    white-space: nowrap;
-    border-bottom: 1px solid var(--accent-border);
+    position: sticky; top: 0; z-index: 2; background: var(--bg-surface-alt);
+    color: var(--text-secondary); text-transform: uppercase; font-size: 0.66rem;
+    letter-spacing: 0.07em; padding: 0.75rem 0.8rem; text-align: left;
+    white-space: nowrap; border-bottom: 1px solid var(--accent-border);
   }
   table.hist thead th.num { text-align: right; }
   table.hist thead th.ctr { text-align: center; }
-
-  /* Cuerpo */
   table.hist tbody td {
-    padding: 0.72rem 0.85rem;
-    border-top: 0.5px solid rgba(255,255,255,0.045);
-    white-space: nowrap;
-    vertical-align: middle;
+    padding: 0.68rem 0.8rem; border-top: 0.5px solid rgba(255,255,255,0.045);
+    white-space: nowrap; vertical-align: middle;
   }
   table.hist tbody tr:nth-child(even) { background: rgba(255,255,255,0.015); }
   table.hist tbody tr:hover { background: var(--accent-subtle); }
-
   .cell-date { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
   .cell-match { color: var(--text-primary); font-weight: 600; }
   .cell-match .vs { color: var(--text-secondary); font-weight: 400; }
@@ -152,61 +141,54 @@
   .cell-selection { color: var(--text-primary); }
   .cell-selection .line { color: var(--text-secondary); font-size: 0.78rem; }
   .cell-num { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-primary); }
-
   .pnl-pos { color: var(--verde-lima, #5CFF5C); font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
   .pnl-neg { color: #ff5c5c; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
   .pnl-muted { color: var(--text-tertiary); text-align: right; }
-
-  /* Badges de estado */
   .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.28rem 0.6rem;
-    border-radius: var(--radius-full);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.26rem 0.55rem; border-radius: var(--radius-full);
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
   }
   .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   .badge-won { background: rgba(92,255,92,0.1); color: #5CFF5C; border: 0.5px solid rgba(92,255,92,0.28); }
   .badge-lost { background: rgba(255,92,92,0.1); color: #ff5c5c; border: 0.5px solid rgba(255,92,92,0.28); }
   .badge-open { background: rgba(255,193,7,0.1); color: #ffc107; border: 0.5px solid rgba(255,193,7,0.28); }
   .badge-void { background: rgba(136,136,128,0.12); color: #888880; border: 0.5px solid rgba(136,136,128,0.28); }
-
+  .badge-sys { background: rgba(198,241,53,0.08); color: var(--accent-primary); border: 0.5px solid rgba(198,241,53,0.25); font-size: 0.62rem; }
+  .badge-man { background: rgba(136,136,128,0.08); color: var(--text-secondary); border: 0.5px solid rgba(136,136,128,0.2); font-size: 0.62rem; }
+  .side-over { background: rgba(198,241,53,0.12); color: var(--accent-primary); border: 0.5px solid rgba(198,241,53,0.32); font-size: 0.62rem; }
+  .side-under { background: rgba(80,200,255,0.12); color: #50c8ff; border: 0.5px solid rgba(80,200,255,0.32); font-size: 0.62rem; }
+  .side-si { background: rgba(92,255,92,0.1); color: #5CFF5C; border: 0.5px solid rgba(92,255,92,0.28); font-size: 0.62rem; }
+  .side-no { background: rgba(255,92,92,0.1); color: #ff5c5c; border: 0.5px solid rgba(255,92,92,0.28); font-size: 0.62rem; }
+  .side-otros { background: rgba(136,136,128,0.12); color: #888880; border: 0.5px solid rgba(136,136,128,0.28); font-size: 0.62rem; }
   .td-status { text-align: center; }
   .empty-row { text-align: center; color: var(--text-secondary); padding: 3rem !important; }
 
-  /* ── Gráficas de rendimiento ── */
-  .charts-section { margin: 0.4rem 0 1.8rem; }
+  /* ── Charts ── */
+  .charts-section { margin: 0.4rem 0 1.6rem; }
   .charts-section h3 {
-    font-size: 1.05rem;
-    margin-bottom: 1rem;
-    color: var(--text-primary);
+    font-size: 1.05rem; margin-bottom: 1rem; color: var(--text-primary);
     display: flex; align-items: center; gap: 0.5rem;
   }
   .charts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1rem;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem; margin-bottom: 1rem;
   }
   .chart-card {
-    background: var(--bg-surface);
-    border: 0.5px solid rgba(255,255,255,0.07);
-    border-radius: var(--radius-lg);
-    padding: 1.1rem 1.2rem;
+    background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg); padding: 1.1rem 1.2rem;
   }
   .chart-card h4 {
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-secondary);
-    margin-bottom: 0.8rem;
-    font-weight: 600;
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-secondary); margin-bottom: 0.8rem; font-weight: 600;
   }
   .chart-card .chart-wrap { position: relative; height: 260px; }
   .chart-card.tall .chart-wrap { height: 240px; }
+
+  /* ── CLV badge ── */
+  .clv-pos { color: var(--verde-lima, #5CFF5C); font-weight: 700; }
+  .clv-neg { color: #ff5c5c; font-weight: 700; }
+  .clv-na { color: var(--text-tertiary); }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 {% endblock %}
@@ -219,43 +201,102 @@
       <span class="dot"></span>
       Sincronizado desde BetPlay · coupon/history.json
     </div>
+    <div class="filter-tabs">
+      <a class="filter-tab {% if filtro == 'todos' %}active{% endif %}" href="?filtro=todos{% if desde %}&desde={{ desde }}{% endif %}{% if hasta %}&hasta={{ hasta }}{% endif %}">📊 Todos ({{ stats.todos.total }})</a>
+      <a class="filter-tab {% if filtro == 'sistema' %}active{% endif %}" href="?filtro=sistema{% if desde %}&desde={{ desde }}{% endif %}{% if hasta %}&hasta={{ hasta }}{% endif %}">🤖 Sistema ({{ stats.sistema.total }})</a>
+      <a class="filter-tab {% if filtro == 'manual' %}active{% endif %}" href="?filtro=manual{% if desde %}&desde={{ desde }}{% endif %}{% if hasta %}&hasta={{ hasta }}{% endif %}">✋ Manual ({{ stats.manual.total }})</a>
+    </div>
+
+    <form class="date-filters" method="get" id="dateForm">
+      <label for="desdeInput">📅 Desde</label>
+      <input type="date" id="desdeInput" name="desde" value="{{ desde }}" max="{{ hasta }}">
+      <label for="hastaInput">Hasta</label>
+      <input type="date" id="hastaInput" name="hasta" value="{{ hasta }}" min="{{ desde }}">
+      <input type="hidden" name="filtro" value="{{ filtro }}">
+      <button type="submit" class="date-btn">Filtrar</button>
+      {% if desde or hasta %}
+        <a class="date-clear" href="?filtro={{ filtro }}">✕ Quitar fechas</a>
+        <span class="date-active-badge">{{ desde|default:'' }} → {{ hasta|default:'hoy' }}</span>
+      {% endif %}
+    </form>
+
     <button id="syncBtn" class="sync-btn" type="button">⟳ Actualizar datos</button>
   </div>
 
   <div class="stat-grid">
     <div class="stat-card">
-      <div class="label">Apuestas</div>
-      <div class="value accent">{{ stats.total }}</div>
+      <div class="label">Total apuestas</div>
+      <div class="value accent">{{ stats_active.total }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Asentadas</div>
+      <div class="value {% if stats_active.settled > 0 %}accent{% endif %}">{{ stats_active.settled }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Pendientes (OPEN)</div>
+      <div class="value warn">{{ stats_active.opened }}</div>
     </div>
     <div class="stat-card">
       <div class="label">Ganadas</div>
-      <div class="value pos">{{ stats.won }}</div>
+      <div class="value pos">{{ stats_active.won }}</div>
     </div>
     <div class="stat-card">
       <div class="label">Perdidas</div>
-      <div class="value neg">{{ stats.lost }}</div>
+      <div class="value neg">{{ stats_active.lost }}</div>
     </div>
     <div class="stat-card">
-      <div class="label">Abiertas</div>
-      <div class="value warn">{{ stats.opened }}</div>
+      <div class="label">Win Rate (asent.)</div>
+      <div class="value {% if stats_active.win_rate >= 50 %}pos{% else %}neg{% endif %}">{{ stats_active.win_rate }}%</div>
     </div>
     <div class="stat-card">
-      <div class="label">Win Rate</div>
-      <div class="value {% if stats.win_rate >= 50 %}pos{% else %}neg{% endif %}">{{ stats.win_rate }}%</div>
+      <div class="label">P&L asentado</div>
+      <div class="value {% if stats_active.realized_pnl >= 0 %}pos{% else %}neg{% endif %}">${{ stats_active.realized_pnl }}</div>
     </div>
     <div class="stat-card">
-      <div class="label">P&L (asentado)</div>
-      <div class="value {% if stats.realized_pnl >= 0 %}pos{% else %}neg{% endif %}">${{ stats.realized_pnl }}</div>
+      <div class="label">ROI (asent.)</div>
+      <div class="value {% if stats_active.roi >= 0 %}pos{% else %}neg{% endif %}">{{ stats_active.roi }}%</div>
     </div>
     <div class="stat-card">
-      <div class="label">ROI</div>
-      <div class="value {% if stats.roi >= 0 %}pos{% else %}neg{% endif %}">{{ stats.roi }}%</div>
+      <div class="label">En juego (OPEN)</div>
+      <div class="value warn">${{ stats_active.stake_open_cop|floatformat:0 }}</div>
     </div>
     <div class="stat-card">
-      <div class="label">Total apostado</div>
-      <div class="value">${{ stats.stake_cop }}</div>
+      <div class="label">Cuota prom.</div>
+      <div class="value accent">{{ stats_active.cuota_promedio }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Void</div>
+      <div class="value" style="color:var(--text-tertiary)">{{ stats_active.void }}</div>
     </div>
   </div>
+
+  <!-- Sección CLV compacta -->
+  {% if stats_active.clv_count %}
+  <div class="charts-section">
+    <h3>📏 CLV (Closing Line Value) — {{ stats_active.clv_count }} apuestas con CLV</h3>
+    <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 1rem;">
+      <div class="stat-card">
+        <div class="label">CLV promedio</div>
+        <div class="value {% if stats_active.clv_avg >= 0 %}pos{% else %}neg{% endif %}">{{ stats_active.clv_avg }}%</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">% CLV positivo</div>
+        <div class="value accent">{{ stats_active.clv_pos_pct }}%</div>
+      </div>
+    </div>
+    <div class="chart-card" style="margin-bottom:1rem;">
+      <h4>CLV promedio por mercado (%)</h4>
+      <div class="chart-wrap" style="height:200px;"><canvas id="chartClvMarket"></canvas></div>
+    </div>
+  </div>
+  {% else %}
+  <div class="chart-card" style="margin-bottom:1.4rem; text-align:center; padding:1.2rem;">
+    <h4 style="margin-bottom:0.3rem;">📏 CLV — Sin datos aún</h4>
+    <p style="color:var(--text-secondary); font-size:0.82rem;">
+      El CLV se calcula automáticamente capturando cuotas de cierre antes del kickoff.
+    </p>
+  </div>
+  {% endif %}
 
   <div class="charts-section">
     <h3>📈 Rendimiento por mercado</h3>
@@ -273,12 +314,12 @@
       <h4>P&L acumulado (COP)</h4>
       <div class="chart-wrap"><canvas id="chartTimeline"></canvas></div>
     </div>
-
     <div class="table-scroll" style="max-height:none;">
       <table class="hist">
         <thead>
           <tr>
             <th>Mercado</th>
+            <th>Lado</th>
             <th class="num">Apuestas</th>
             <th class="num">W</th>
             <th class="num">L</th>
@@ -289,9 +330,10 @@
           </tr>
         </thead>
         <tbody>
-          {% for m in stats.por_mercado %}
+          {% for m in stats_active.por_mercado %}
           <tr>
             <td class="cell-market">{{ m.mercado }}</td>
+            <td><span class="badge side-{{ m.side_class }}">{{ m.lado }}</span></td>
             <td class="cell-num">{{ m.n }}</td>
             <td class="cell-num" style="color:var(--verde-lima,#5CFF5C);">{{ m.won }}</td>
             <td class="cell-num" style="color:#ff5c5c;">{{ m.lost }}</td>
@@ -301,7 +343,7 @@
             <td class="{% if m.roi >= 0 %}pnl-pos{% else %}pnl-neg{% endif %}">{{ m.roi }}%</td>
           </tr>
           {% empty %}
-          <tr><td colspan="8" class="empty-row">Sin datos asentados todavía.</td></tr>
+          <tr><td colspan="9" class="empty-row">Sin datos asentados todavía.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -313,13 +355,14 @@
       <thead>
         <tr>
           <th>Fecha</th>
+          <th>Tipo</th>
           <th>Partido</th>
           <th>Liga</th>
           <th>Mercado</th>
           <th>Selección</th>
           <th class="num">Cuota</th>
+          <th class="num">CLV</th>
           <th class="num">Stake</th>
-          <th class="num">Payout</th>
           <th class="num">P&L</th>
           <th class="ctr">Estado</th>
         </tr>
@@ -328,13 +371,20 @@
         {% for a in apuestas %}
         <tr>
           <td class="cell-date">{{ a.placed_date|date:"d/m H:i" }}</td>
+          <td>{% if a.is_system %}<span class="badge badge-sys">SYS</span>{% else %}<span class="badge badge-man">MAN</span>{% endif %}</td>
           <td class="cell-match">{{ a.home_team }} <span class="vs">vs</span> {{ a.away_team }}</td>
           <td class="cell-league">{{ a.liga }}</td>
           <td class="cell-market">{{ a.mercado }}</td>
           <td class="cell-selection">{{ a.seleccion }}{% if a.linea %} <span class="line">({{ a.linea }})</span>{% endif %}</td>
           <td class="cell-num">{{ a.played_odds|floatformat:2 }}</td>
+          <td class="cell-num">
+            {% if a.clv is not None %}
+              <span class="{% if a.clv >= 0 %}clv-pos{% else %}clv-neg{% endif %}">{{ a.clv }}%</span>
+            {% else %}
+              <span class="clv-na">—</span>
+            {% endif %}
+          </td>
           <td class="cell-num">${{ a.stake_cop|floatformat:0 }}</td>
-          <td class="cell-num">{% if a.bet_status == 'OPEN' %}<span class="pnl-muted">—</span>{% else %}${{ a.payout_cop|floatformat:0 }}{% endif %}</td>
           <td class="{% if a.bet_status == 'OPEN' %}pnl-muted{% elif a.profit_cop >= 0 %}pnl-pos{% else %}pnl-neg{% endif %}">
             {% if a.bet_status == 'OPEN' %}—{% else %}{% if a.profit_cop >= 0 %}+{% endif %}${{ a.profit_cop|floatformat:0 }}{% endif %}
           </td>
@@ -346,15 +396,16 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="10" class="empty-row">Sin apuestas. Ejecuta <code>manage.py sync_bet_history</code>.</td></tr>
+        <tr><td colspan="11" class="empty-row">Sin apuestas. Ejecuta <code>manage.py sync_bet_history</code>.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
 
-{{ stats.por_mercado|json_script:"mercadoData" }}
-{{ stats.pnl_timeline|json_script:"timelineData" }}
+{{ stats_active.por_mercado|json_script:"mercadoData" }}
+{{ stats_active.pnl_timeline|json_script:"timelineData" }}
+{{ stats_active.clv_por_mercado|json_script:"clvMercadoData" }}
 
 <script>
 (function () {
@@ -362,18 +413,19 @@
   function load(id) { var el = document.getElementById(id); return el ? JSON.parse(el.textContent) : []; }
   var mercado = load('mercadoData');
   var timeline = load('timelineData');
+  var clvMercado = load('clvMercadoData');
 
   Chart.defaults.color = '#888880';
   Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
   Chart.defaults.font.family = "'DM Sans', sans-serif";
   var green = '#5CFF5C', red = '#ff5c5c', accent = '#c6f135';
 
+  // P&L por mercado
   new Chart(document.getElementById('chartPnl'), {
     type: 'bar',
     data: {
-      labels: mercado.map(function(m){ return m.mercado; }),
+      labels: mercado.map(function(m){ return m.label; }),
       datasets: [{
-        label: 'P&L (COP)',
         data: mercado.map(function(m){ return m.pnl; }),
         backgroundColor: mercado.map(function(m){ return m.pnl >= 0 ? 'rgba(92,255,92,0.45)' : 'rgba(255,92,92,0.45)'; }),
         borderColor: mercado.map(function(m){ return m.pnl >= 0 ? green : red; }),
@@ -383,19 +435,16 @@
     options: {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.06)' } },
-        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
-      }
+      scales: { x: { grid: { color: 'rgba(255,255,255,0.06)' } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
     }
   });
 
+  // Win rate por mercado
   new Chart(document.getElementById('chartWinrate'), {
     type: 'bar',
     data: {
-      labels: mercado.map(function(m){ return m.mercado; }),
+      labels: mercado.map(function(m){ return m.label; }),
       datasets: [{
-        label: 'Win rate (%)',
         data: mercado.map(function(m){ return m.win_rate; }),
         backgroundColor: mercado.map(function(m){ return m.win_rate >= 50 ? 'rgba(198,241,53,0.45)' : 'rgba(255,92,92,0.45)'; }),
         borderColor: mercado.map(function(m){ return m.win_rate >= 50 ? accent : red; }),
@@ -405,34 +454,49 @@
     options: {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.06)' }, suggestedMax: 100 },
-        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
-      }
+      scales: { x: { grid: { color: 'rgba(255,255,255,0.06)' }, suggestedMax: 100 }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
     }
   });
 
+  // P&L timeline
   new Chart(document.getElementById('chartTimeline'), {
     type: 'line',
     data: {
       labels: timeline.map(function(t){ return t.label; }),
       datasets: [{
-        label: 'P&L acumulado (COP)',
         data: timeline.map(function(t){ return t.cum; }),
-        borderColor: accent,
-        backgroundColor: 'rgba(198,241,53,0.12)',
+        borderColor: accent, backgroundColor: 'rgba(198,241,53,0.12)',
         fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2
       }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { maxTicksLimit: 12, font: { size: 10 } } },
-        y: { grid: { color: 'rgba(255,255,255,0.06)' } }
-      }
+      scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 12, font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,0.06)' } } }
     }
   });
+
+  // CLV por mercado (si existe)
+  var clvCanvas = document.getElementById('chartClvMarket');
+  if (clvCanvas && clvMercado.length) {
+    new Chart(clvCanvas, {
+      type: 'bar',
+      data: {
+        labels: clvMercado.map(function(c){ return c.label; }),
+        datasets: [{
+          data: clvMercado.map(function(c){ return c.clv_avg; }),
+          backgroundColor: clvMercado.map(function(c){ return c.clv_avg >= 0 ? 'rgba(92,255,92,0.45)' : 'rgba(255,92,92,0.45)'; }),
+          borderColor: clvMercado.map(function(c){ return c.clv_avg >= 0 ? green : red; }),
+          borderWidth: 1, borderRadius: 5
+        }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { grid: { color: 'rgba(255,255,255,0.06)' } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
+      }
+    });
+  }
 })();
 </script>
 
@@ -446,19 +510,10 @@
     fetch('/auto-betting/historial/sync/', { method: 'POST' })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        if (data && data.ok) {
-          location.reload();
-        } else {
-          alert('Error al actualizar: ' + ((data && data.error) || 'desconocido'));
-          btn.disabled = false;
-          btn.innerHTML = '⟳ Actualizar datos';
-        }
+        if (data && data.ok) { location.reload(); }
+        else { alert('Error al actualizar: ' + ((data && data.error) || 'desconocido')); btn.disabled = false; btn.innerHTML = '⟳ Actualizar datos'; }
       })
-      .catch(function (e) {
-        alert('Error de red: ' + e);
-        btn.disabled = false;
-        btn.innerHTML = '⟳ Actualizar datos';
-      });
+      .catch(function (e) { alert('Error de red: ' + e); btn.disabled = false; btn.innerHTML = '⟳ Actualizar datos'; });
   });
 })();
 </script>

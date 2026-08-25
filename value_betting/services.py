@@ -17,6 +17,7 @@ from django.utils import timezone as django_timezone
 from django.db import transaction
 
 from football_data.models import League, Match
+from auto_betting.strategy import validate_market_data, calibrate_probability, _get_tier_thresholds
 from .models import KambiMatch, KambiBetOffer, ValueOpportunity, ScanRun
 from .mapping import map_league, normalize_team_name, fuzzy_match_team
 
@@ -503,29 +504,64 @@ def build_bet_instruction(bet_offer: KambiBetOffer) -> str:
 # ════════════════════════════════════════════════════════════
 
 def compute_value_bet(bet_offer: KambiBetOffer, full_prediction: Dict) -> Optional[ValueOpportunity]:
-    """Compara la cuota de BetPlay con la predicción de Predicta."""
-    betplay_prob = 1.0 / bet_offer.odds_decimal if bet_offer.odds_decimal > 0 else 0
+    """Compara la cuota de BetPlay con la predicción de Predicta.
     
-    predicta_prob = extract_probability_from_prediction(bet_offer, full_prediction)
-    
-    if predicta_prob is None or predicta_prob <= 0:
+    Aplica los mismos filtros que auto_betting (select_bets/_add_candidate):
+    - Cuota >= 2.0 (MIN_ODDS)
+    - Calibración de probabilidad (shrinkage)
+    - P >= 50% (hard floor)
+    - Tiers por cuota: confidence mínima y EV mínimo escalonados
+    - EV > 0
+    """
+    cuota = bet_offer.odds_decimal
+    if cuota <= 0 or cuota < MIN_ODDS:
         return None
     
-    edge = (predicta_prob - betplay_prob) * 100
-    ev = (predicta_prob * bet_offer.odds_decimal) - 1
+    betplay_prob = 1.0 / cuota if cuota > 0 else 0
     
-    is_value = edge > 0 and bet_offer.odds_decimal >= MIN_ODDS
+    raw_prob = extract_probability_from_prediction(bet_offer, full_prediction)
+    
+    if raw_prob is None or raw_prob <= 0:
+        return None
+    
+    # ── Calibrar probabilidad (shrinkage, igual que auto_betting) ──
+    predicta_prob = calibrate_probability(raw_prob)
+    
+    # ── Hard floor: P >= 50% ──
+    if predicta_prob < 0.50:
+        return None
+    
+    # ── Tiers por cuota (solo agregan requisitos) ──
+    tier_min_p, tier_min_conf, tier_min_ev = _get_tier_thresholds(cuota)
+    effective_min_p = max(0.50, tier_min_p)
+    if predicta_prob < effective_min_p:
+        return None
+    
+    # ── EV mínimo del tier ──
+    ev = (predicta_prob * cuota) - 1.0
+    if ev <= tier_min_ev:
+        return None
+    
+    # ── Confidence mínima del tier ──
+    confidence = full_prediction.get('confidence', 0)
+    effective_min_conf = max(0.35, tier_min_conf)
+    if confidence < effective_min_conf:
+        return None
+    
+    # ── Edge para display ──
+    edge = (predicta_prob - betplay_prob) * 100
+    is_value = True  # Si pasó todos los filtros, es value
     
     opp = ValueOpportunity(
         match=bet_offer.match,
         market=bet_offer.criterion_label,
         selection=bet_offer.outcome_label,
         bet_instruction=build_bet_instruction(bet_offer),
-        betplay_odds=bet_offer.odds_decimal,
+        betplay_odds=cuota,
         betplay_implied_prob=betplay_prob,
         predicta_probability=predicta_prob,
         predicta_prediction=full_prediction.get('lambda_total'),
-        predicta_confidence=full_prediction.get('confidence', 0),
+        predicta_confidence=confidence,
         predicta_model=full_prediction.get('model_name', ''),
         edge=round(edge, 2),
         ev=round(ev, 4),
@@ -813,6 +849,37 @@ def run_scan() -> ScanRun:
             if not bet_offers:
                 continue
             
+            # ── Validar cobertura de datos (alineado con auto_betting) ──
+            # Exige ≥10 partidos por equipo con datos NO NULL en cada campo
+            coverage = validate_market_data(
+                km.mapped_home_team, km.mapped_away_team, km.predicta_league
+            )
+            
+            # Mapear mercados de Kambi a claves de coverage
+            # Si un mercado no tiene datos suficientes, filtrar sus bet_offers
+            market_coverage_map = {
+                'Total de goles': 'goals_total',
+                'Total de Tiros de Esquina': 'corners_total',
+                'Total de tiros a puerta': 'shots_total',
+                'Ambos Equipos Marcarán': 'both_teams_score',
+                'Resultado Final': 'goals_total',  # 1X2 usa datos de goles
+                'Doble Oportunidad': 'goals_total',
+                'Apuesta sin empate': 'goals_total',
+            }
+            
+            # Filtrar bet_offers: solo incluir mercados con datos suficientes
+            filtered_offers = []
+            for bo in bet_offers:
+                market_key = market_coverage_map.get(bo.criterion_label)
+                if market_key and not coverage.get(market_key, False):
+                    continue  # Saltar este mercado por datos insuficientes
+                filtered_offers.append(bo)
+            
+            if not filtered_offers:
+                # Todos los mercados saltados por datos insuficientes
+                continue
+            
+            bet_offers = filtered_offers
             is_sa_league = km.league_path_kambi in CORNERS_DB_LEAGUE_MAPPING
             
             # Generar predicción completa usando el mismo motor que la app original

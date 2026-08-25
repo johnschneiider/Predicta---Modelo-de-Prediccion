@@ -44,6 +44,7 @@ LEAGUE_MAPPING = {
     'football/greece/super_league': 'SuperLiga (Grecia)',
     # México
     'football/mexico/liga_mx': 'Liga MX (Mexico)',
+    'football/mexico/liga_de_expansion_mx': 'Liga de Expansion MX (Mexico)',
     # USA
     'football/usa/mls': 'US MLS (USA)',
     # Brasil
@@ -53,8 +54,10 @@ LEAGUE_MAPPING = {
     'football/argentina/liga_profesional_argentina': 'Primera Division (Argentina)',
     # Colombia
     'football/colombia/primera_a': 'Primera A (Colombia)',
+    'football/colombia/torneo_betplay_dimayor': 'Primera B (Colombia)',
     # ── 14 ligas nuevas (2026-08-17) ──
     'football/ecuador/liga_pro': 'Liga Pro (Ecuador)',
+    'football/ecuador/serie_b': 'Serie B (Ecuador)',
     'football/chile/primera_chile': 'Primera Division (Chile)',
     'football/denmark/superligaen': 'Superligaen (Dinamarca)',
     'football/sweden/allsvenskan': 'Allsvenskan (Suecia)',
@@ -354,6 +357,138 @@ TEAM_NAME_REPLACEMENTS = {
     'OFI': 'OFI',
     'Lamia': 'Lamia',
     'Asteras Tripolis': 'Asteras Tripolis',
+    
+    # ── MLS — Kambi usa nombres largos, DB usa cortos ──
+    'Atlanta United FC': 'Atlanta Utd',
+    'CF Montréal': 'CF Montreal',
+    'D.C. United': 'DC United',
+    'Los Ángeles Galaxy': 'Los Angeles Galaxy',
+    'Inter Miami CF': 'Inter Miami',
+    'St. Louis City SC': 'St. Louis City',
+    'Minnesota United FC': 'Minnesota United',
+    'New York City FC': 'New York City',
+    'San Jose Earthquakes': 'San Jose Earthquakes',
+    
+    # ── Liga MX ──
+    'Club Atlas': 'Atlas',
+    'Deportivo Toluca FC': 'Toluca',
+    'CF Monterrey': 'Monterrey',
+    'FC Juárez': 'Juarez',
+    'Pumas UNAM': 'UNAM Pumas',
+    'Querétaro FC': 'Queretaro',
+    'Club América': 'Club America',
+    'Atlético San Luis': 'Atl. San Luis',
+    'Club León': 'Club Leon',
+    'Club Necaxa': 'Necaxa',
+    'CF Pachuca': 'Pachuca',
+    'Puebla FC': 'Puebla',
+    
+    # ── Liga de Expansion MX ──
+    'Tepatitlán de Morelos': 'Tepatitlan de Morelos',
+    'Coyotes de Tlaxcala': 'Tlaxcala',
+    'Correcaminos UAT': 'Correcaminos',
+    'Club Atlético La Paz': 'Atletico La Paz',
+    'Venados FC': 'Venados',
+    
+    # ── Brasil Serie A — Kambi usa acentos, DB no ──
+    'Atlético Mineiro-MG': 'Atletico-MG',
+    'Grêmio-RS': 'Gremio',
+    'São Paulo-SP': 'Sao Paulo',
+    'Vitória-BA': 'Vitoria',
+    'Botafogo-RJ': 'Botafogo RJ',
+    'Flamengo-RJ': 'Flamengo RJ',
+    'Corinthians-SP': 'Corinthians',
+    'Cruzeiro-MG': 'Cruzeiro',
+    'Internacional P. A.': 'Internacional',
+    'Remo-PA': 'Remo',
+    'Mirassol-SP': 'Mirassol',
+    
+    # ── Brasil Serie B ──
+    'Criciúma-SC': 'Criciuma',
+    'Goiás-GO': 'Goias',
+    'Ceará-CE': 'Ceara',
+    'Cuiabá-MT': 'Cuiaba',
+    'Atlético-GO': 'Atletico GO',
+    'Vila Nova-GO': 'Vila Nova FC',
+    'Juventude-RS': 'Juventude',
+    'Fortaleza-CE': 'Fortaleza',
+    'Operário-PR': 'Operario-PR',
+    'Avaí-SC': 'Avai',
+    'América-MG': 'America MG',
+    'Athletic Club-MG': 'Athletic Club',
+    'CRB-AL': 'CRB',
+    'Novorizontino-SP': 'Novorizontino',
+    'Náutico-PE': 'Nautico',
+    'Botafogo-SP': 'Botafogo SP',
+    'Sport Recife-PE': 'Sport Recife',
+    'FC São Bernardo-SP': 'Sao Bernardo',
+    'Ponte Preta-SP': 'Ponte Preta',
+    'Londrina-PR': 'Londrina',
+    
+    # ── Argentina ──
+    'Unión de Santa Fe': 'Union de Santa Fe',
+    'Estudiantes de La Plata': 'Estudiantes L.P.',
+    'Gimnasia de La Plata': 'Gimnasia L.P.',
+    'Gimnasia y Esgrima de Mendoza': 'Gimnasia Mendoza',
+    'Club Atlético Tucumán': 'Atl. Tucuman',
+    'Club Atlético Vélez Sarsfield': 'Velez Sarsfield',
+    'Estudiantes de Río Cuarto': 'Estudiantes Rio Cuarto',
+    'Central Córdoba': 'Central Cordoba',
+    'Huracán': 'Huracan',
+    'Lanús': 'Lanus',
+    'Deportivo Riestra': 'Dep. Riestra',
+    'Club Atletico Guemes': 'Club A. Guemes',
+    'Deportivo Morón': 'Deportivo Moron',
+    
+    # ── Eredivisie ──
+    'Excelsior Rotterdam': 'Excelsior',
+    'Cambuur Leeuwarden': 'Cambuur',
+    'ADO Den Haag': 'Den Haag',
+    
+    # ── Jupiler Pro League ──
+    'SK Beveren': 'Beveren',
+    'Standard de Lieja': 'Standard',
+    'Sporting de Charleroi': 'Charleroi',
+    
+    # ── La Liga ──
+    'Deportivo La Coruña': 'La Coruna',
+    'Málaga': 'Malaga',
+    
+    # ── La Liga 2 ──
+    'Sporting de Gijón': 'Sporting Gijon',
+    
+    # ── League Two ──
+    'Salford City FC': 'Salford',
+    
+    # ── Liga I (Rumania) ──
+    'Universitatea Cluj': 'U. Cluj',
+    
+    # ── Primeira Liga ──
+    'Marítimo Funchal': 'Maritimo',
+    'S.C. Braga': 'Sp Braga',
+    
+    # ── Serie B Ecuador ──
+    'El Nacional (ECU)': 'EL Nacional',
+    
+    # ── Süper Lig ──
+    'İstanbul Başakşehir': 'Basaksehir',
+    'Gençlerbirliği SK': 'Genclerbirligi',
+    
+    # ── The Championship ──
+    'Cardiff City': 'Cardiff',
+    
+    # ── Costa Rica ──
+    'Municipal Pérez Zeledón': 'Municipal Perez Zeledon',
+    
+    # ── Veikkausliiga ──
+    'SJK Seinäjoki': 'SJK',
+    
+    # ── Úrvalsdeild ──
+    'Stjarnan Gardabae': 'Stjarnan',
+    
+    # ── Ligue 2 ──
+    'Dunkerque': 'Dunkerque',
+    'Pau FC': 'Pau FC',
 }
 
 

@@ -331,6 +331,10 @@
                     <a href="{% url 'ai_predictions:scraper_corners' %}" class="user-dropdown-item">🤖 Scraper</a>
                     <a href="{% url 'value_betting:dashboard' %}" class="user-dropdown-item">💰 Value Bets</a>
                     <a href="{% url 'auto_betting:historial' %}" class="user-dropdown-item">🎰 Apuestas BetPlay</a>
+                    <a href="{% url 'auto_betting:configuracion' %}" class="user-dropdown-item">⚙️ Config BetPlay</a>
+                    {% if user.is_superuser %}
+                    <a href="{% url 'auto_betting:configuracion_umbrales' %}" class="user-dropdown-item">🎯 Umbrales (Global)</a>
+                    {% endif %}
                     <div class="user-dropdown-divider"></div>
                     <a href="{% url 'cuentas:logout' %}" class="user-dropdown-item user-dropdown-item-danger">⏻ Salir</a>
                 </div>

@@ -47,8 +47,32 @@ def _req(url, method="GET", body=None, extra_headers=None):
 #  AUTENTICACIÓN
 # ════════════════════════════════════════════
 
+# ════════════════════════════════════════════
+#  CACHE DE TOKEN (evita logins excesivos)
+# ════════════════════════════════════════════
+
+_cached_token = None
+_cached_routing_key = None
+_cached_ticket = None
+_cached_punter_id = None
+_token_expires_at = 0  # epoch seconds
+
+
 def login(ticket, punter_id="2585240"):
-    """Login por ticket → devuelve (token, routing_key) o None."""
+    """Login por ticket → devuelve (token, routing_key) o None.
+    Usa cache: si hay un token válido (>5 min restantes) para el mismo ticket+punter_id,
+    lo reutiliza sin llamar al API."""
+    import time
+    global _cached_token, _cached_routing_key, _cached_ticket, _cached_punter_id, _token_expires_at
+
+    # Reutilizar token cacheado si es para la misma cuenta y no expira pronto
+    if (_cached_token
+            and _cached_ticket == ticket
+            and _cached_punter_id == punter_id
+            and time.time() < _token_expires_at - 300):  # >5 min de validez
+        logger.info(f"Login BetPlay OK (cached) | token={_cached_token[:8]}...")
+        return _cached_token, _cached_routing_key
+
     body = {
         "punterId": punter_id,
         "ticket": ticket,
@@ -60,8 +84,18 @@ def login(ticket, punter_id="2585240"):
     status, data = _req(f"{AUTH_BASE}/punter/login?lang=es_CO&market=CO", "POST", body)
     if status == 200 and "token" in data:
         logger.info(f"Login BetPlay OK | token={data['token'][:8]}... | currency={data.get('currency')}")
+        # Cache por 55 min (token dura 60 min, dejamos 5 min de margen)
+        _cached_token = data["token"]
+        _cached_routing_key = data.get("routingKey", "")
+        _cached_ticket = ticket
+        _cached_punter_id = punter_id
+        _token_expires_at = time.time() + 3300  # 55 minutos
         return data["token"], data.get("routingKey", "")
     logger.error(f"Login BetPlay falló: {status} {data}")
+    # Limpiar cache si el login falla
+    _cached_token = None
+    _cached_ticket = None
+    _token_expires_at = 0
     return None, None
 
 
@@ -400,38 +434,136 @@ def _parse_coupon(c):
         'away_team': ev.get('awayName', ''),
         'event_start_date': _parse_iso(ev.get('eventStartDate')),
         'seleccion': o.get('label', ''),
-        'mercado': bo.get('criterion', ''),
+        'mercado': (bo.get('criterion') or {}).get('label', '') if isinstance(bo.get('criterion'), dict) else (bo.get('criterion') or ''),
         'linea': linea,
         'sport': ev.get('sport', ''),
         'liga': liga,
     }
 
 
-def sync_historial(since_str='2026-08-01'):
+def _capture_snapshot_for_apuesta(ap, now=None):
+    """
+    Captura un OddsSnapshot para una apuesta cuyo partido aún no ha empezado.
+    Esto asegura que tengamos cuotas pre-partido para calcular CLV después.
+    """
+    from django.utils import timezone
+    from auto_betting.models import OddsSnapshot
+
+    if now is None:
+        now = timezone.now()
+
+    if not ap.event_start_date or ap.event_start_date <= now:
+        return False  # Partido ya empezó o no tiene fecha
+    if not ap.outcome_id or ap.outcome_id == 0:
+        return False  # Sin outcome_id para buscar
+    # Si ya hay snapshot para este outcome, no duplicar
+    if OddsSnapshot.objects.filter(outcome_id=ap.outcome_id).exists():
+        return False
+
+    # Mapear el mercado del historial al label de Kambi
+    mercado_label = None
+    mercado_str = (ap.mercado or '').lower()
+    for mp in [
+        'Total de Tiros de Esquina',
+        'Total de goles',
+        'Total de tiros a puerta',
+        'Resultado Final',
+        'Ambos Equipos Marcarán',
+    ]:
+        if mp.lower() in mercado_str or mercado_str in mp.lower():
+            mercado_label = mp
+            break
+    if not mercado_label:
+        mercado_label = 'Total de Tiros de Esquina'  # fallback
+
+    # Para mercados de tiros a puerta, probar la variante Opta
+    if mercado_label == 'Total de tiros a puerta':
+        for label in [
+            'Total de tiros a puerta (Resuelta usando Opta Data)',
+            'Total de tiros a puerta',
+        ]:
+            try:
+                offers = fetch_market_odds(ap.event_id, label)
+            except Exception as e:
+                logger.warning(f'Error fetching odds event={ap.event_id} market={label}: {e}')
+                continue
+            for offer in offers:
+                if offer.get('outcome_id') == ap.outcome_id:
+                    OddsSnapshot.objects.update_or_create(
+                        outcome_id=offer['outcome_id'],
+                        captured_at=now,
+                        defaults={
+                            'event_id': ap.event_id,
+                            'market': label,
+                            'seleccion': offer.get('label', ''),
+                            'linea': offer.get('line'),
+                            'side': '',
+                            'odds_decimal': offer.get('odds_decimal', 0),
+                        },
+                    )
+                    return True
+        return False
+
+    try:
+        offers = fetch_market_odds(ap.event_id, mercado_label)
+    except Exception as e:
+        logger.warning(f'Error fetching odds event={ap.event_id} market={mercado_label}: {e}')
+        return False
+
+    for offer in offers:
+        if offer.get('outcome_id') == ap.outcome_id:
+            OddsSnapshot.objects.update_or_create(
+                outcome_id=offer['outcome_id'],
+                captured_at=now,
+                defaults={
+                    'event_id': ap.event_id,
+                    'market': mercado_label,
+                    'seleccion': offer.get('label', ''),
+                    'linea': offer.get('line'),
+                    'side': '',
+                    'odds_decimal': offer.get('odds_decimal', 0),
+                },
+            )
+            return True
+    return False
+
+
+def sync_historial(since_str='2026-08-01', usuario=None):
     """
     Sincroniza el historial de apuestas desde `since_str` (YYYY-MM-DD).
     - Borra registros previos al corte.
     - Importa/actualiza cupones desde el corte.
+    - Marca is_system según si el coupon_ref existe en AutoBet.
+    - Captura snapshots de cuotas para apuestas con partido no iniciado (CLV).
     Devuelve dict con conteos.
     """
     from datetime import datetime
     from django.utils import timezone
-    from auto_betting.models import AutoBetConfig, HistorialApuesta
+    from auto_betting.models import AutoBetConfig, AutoBet, HistorialApuesta
 
     since = timezone.make_aware(datetime.strptime(since_str, '%Y-%m-%d'))
+    now = timezone.now()
 
-    config = AutoBetConfig.objects.first()
+    qs_cfg = AutoBetConfig.objects.all()
+    if usuario is not None:
+        qs_cfg = qs_cfg.filter(usuario=usuario)
+    config = qs_cfg.first()
     if not config:
         return {'error': 'No hay AutoBetConfig'}
+    owner = config.usuario
 
-    borrados, _ = HistorialApuesta.objects.filter(placed_date__lt=since).delete()
+    borrados, _ = HistorialApuesta.objects.filter(usuario=owner, placed_date__lt=since).delete()
 
     token, _ = login(config.ticket, config.punter_id)
     if not token:
-        return {'error': 'Login BetPlay falló'}
+        return {'error': 'Ticket BetPlay inválido o expirado. Actualízalo en ⚙️ Config BetPlay del menú.'}
 
     cups = fetch_bet_history(token)
-    creados = actualizados = omitidos = 0
+    # Set de coupon_refs del sistema (AutoBet) para marcar is_system
+    system_refs = set(AutoBet.objects.filter(usuario=owner).exclude(coupon_ref__isnull=True)
+                      .values_list('coupon_ref', flat=True))
+
+    creados = actualizados = omitidos = snapshots = 0
     for c in cups:
         data = _parse_coupon(c)
         if not data.get('coupon_ref'):
@@ -439,7 +571,10 @@ def sync_historial(since_str='2026-08-01'):
         if data.get('placed_date') and data['placed_date'] < since:
             omitidos += 1
             continue
-        _, created = HistorialApuesta.objects.update_or_create(
+        # Marcar si es del sistema o manual
+        data['is_system'] = data['coupon_ref'] in system_refs
+        ap, created = HistorialApuesta.objects.update_or_create(
+            usuario=owner,
             coupon_ref=data['coupon_ref'],
             defaults=data,
         )
@@ -448,11 +583,20 @@ def sync_historial(since_str='2026-08-01'):
         else:
             actualizados += 1
 
+        # Capturar snapshot inmediato si el partido aún no ha empezado
+        if ap.event_start_date and ap.event_start_date > now and ap.outcome_id and ap.outcome_id != 0:
+            try:
+                if _capture_snapshot_for_apuesta(ap, now):
+                    snapshots += 1
+            except Exception as e:
+                logger.warning(f'Error capturando snapshot para {ap.coupon_ref}: {e}')
+
     return {
         'ok': True,
         'borrados': borrados,
         'creados': creados,
         'actualizados': actualizados,
         'omitidos': omitidos,
-        'total': HistorialApuesta.objects.count(),
+        'snapshots': snapshots,
+        'total': HistorialApuesta.objects.filter(usuario=owner).count(),
     }

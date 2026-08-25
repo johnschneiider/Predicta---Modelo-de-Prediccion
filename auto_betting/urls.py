@@ -10,4 +10,6 @@ app_name = 'auto_betting'
 urlpatterns = [
     path('historial/', views.historial, name='historial'),
     path('historial/sync/', views.historial_sync, name='historial_sync'),
+    path('configuracion/', views.configuracion, name='configuracion'),
+    path('configuracion/umbrales/', views.configuracion_umbrales, name='configuracion_umbrales'),
 ]

@@ -195,12 +195,12 @@ class ShotsPredictionModel:
                 if matches.exists():
                     return matches.aggregate(avg=Avg('as_field'))['avg'] or 10.0
             
-            # Valores por defecto si no hay datos
-            return 12.0 if home_away == 'home' else 10.0
+            # Fase 3 — fallback al promedio de liga
+            return self._get_league_avg_shots(league, home_away)
             
         except Exception as e:
             logger.error(f"Error obteniendo promedio de remates: {e}")
-            return 12.0 if home_away == 'home' else 10.0
+            return self._get_league_avg_shots(league, home_away)
     
     def _get_team_shots_conceded_average(self, team_name: str, league: League, home_away: str) -> float:
         """Obtiene el promedio de remates recibidos por un equipo"""
@@ -222,11 +222,11 @@ class ShotsPredictionModel:
                 if matches.exists():
                     return matches.aggregate(avg=Avg('hs'))['avg'] or 12.0
             
-            return 12.0
+            return self._get_league_avg_shots(league, 'home' if home_away == 'away' else 'away')
             
         except Exception as e:
             logger.error(f"Error obteniendo promedio de remates recibidos: {e}")
-            return 12.0
+            return self._get_league_avg_shots(league, 'home' if home_away == 'away' else 'away')
     
     def _get_team_shots_on_target_average(self, team_name: str, league: League, home_away: str) -> float:
         """Obtiene el promedio de remates a puerta de un equipo"""
@@ -248,11 +248,11 @@ class ShotsPredictionModel:
                 if matches.exists():
                     return matches.aggregate(avg=Avg('ast'))['avg'] or 4.0
             
-            return 4.5 if home_away == 'home' else 4.0
+            return self._get_league_avg_sot(league, home_away)
             
         except Exception as e:
             logger.error(f"Error obteniendo promedio de remates a puerta: {e}")
-            return 4.5 if home_away == 'home' else 4.0
+            return self._get_league_avg_sot(league, home_away)
     
     def _get_team_shots_on_target_conceded_average(self, team_name: str, league: League, home_away: str) -> float:
         """Obtiene el promedio de remates a puerta recibidos por un equipo"""
@@ -279,6 +279,71 @@ class ShotsPredictionModel:
         except Exception as e:
             logger.error(f"Error obteniendo promedio de remates a puerta recibidos: {e}")
             return 4.5
+    
+    def _get_league_avg_shots(self, league: League, home_away: str) -> float:
+        """Fase 3 — promedio de remates de la liga cuando el equipo no tiene datos."""
+        try:
+            if home_away == 'home':
+                matches = Match.objects.filter(
+                    league=league, hs__isnull=False
+                ).exclude(hs=0).order_by('-date')[:200]
+                if matches.exists():
+                    avg = matches.aggregate(avg=Avg('hs'))['avg']
+                    if avg:
+                        logger.info(
+                            f"shots_prediction_model: fallback liga {league.name} "
+                            f"hs={avg:.1f}"
+                        )
+                        return float(avg)
+            else:
+                matches = Match.objects.filter(
+                    league=league, as_field__isnull=False
+                ).exclude(as_field=0).order_by('-date')[:200]
+                if matches.exists():
+                    avg = matches.aggregate(avg=Avg('as_field'))['avg']
+                    if avg:
+                        logger.info(
+                            f"shots_prediction_model: fallback liga {league.name} "
+                            f"as={avg:.1f}"
+                        )
+                        return float(avg)
+            # Último recurso
+            return 12.0 if home_away == 'home' else 10.0
+        except Exception as e:
+            logger.error(f"Error en _get_league_avg_shots: {e}")
+            return 12.0 if home_away == 'home' else 10.0
+    
+    def _get_league_avg_sot(self, league: League, home_away: str) -> float:
+        """Fase 3 — promedio de tiros a puerta de la liga cuando el equipo no tiene datos."""
+        try:
+            if home_away == 'home':
+                matches = Match.objects.filter(
+                    league=league, hst__isnull=False
+                ).exclude(hst=0).order_by('-date')[:200]
+                if matches.exists():
+                    avg = matches.aggregate(avg=Avg('hst'))['avg']
+                    if avg:
+                        logger.info(
+                            f"shots_prediction_model: fallback liga {league.name} "
+                            f"hst={avg:.1f}"
+                        )
+                        return float(avg)
+            else:
+                matches = Match.objects.filter(
+                    league=league, ast__isnull=False
+                ).exclude(ast=0).order_by('-date')[:200]
+                if matches.exists():
+                    avg = matches.aggregate(avg=Avg('ast'))['avg']
+                    if avg:
+                        logger.info(
+                            f"shots_prediction_model: fallback liga {league.name} "
+                            f"ast={avg:.1f}"
+                        )
+                        return float(avg)
+            return 4.5 if home_away == 'home' else 4.0
+        except Exception as e:
+            logger.error(f"Error en _get_league_avg_sot: {e}")
+            return 4.5 if home_away == 'home' else 4.0
     
     def _get_league_shots_factor(self, league: League) -> float:
         """Factor de ajuste por liga para remates"""

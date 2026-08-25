@@ -231,7 +231,14 @@ class XGShotsModel:
                 ).order_by('-date')[:20]
             
             if not matches.exists():
-                return self._default_team_data()
+                # Fase 3 — fallback al promedio de LIGA, no a valores fijos
+                league_data = self._get_league_average_data(league)
+                logger.info(
+                    f"XG Model: {team} sin datos hst/ast en {league.name}, "
+                    f"usando promedio de liga (shots={league_data['avg_shots']:.1f}, "
+                    f"sot={league_data['avg_sot']:.1f})"
+                )
+                return league_data
             
             # Calcular estadísticas
             shots_data = []
@@ -261,7 +268,7 @@ class XGShotsModel:
             
         except Exception as e:
             logger.error(f"Error obteniendo datos xG para {team}: {e}")
-            return self._default_team_data()
+            return self._get_league_average_data(league)
     
     def _calculate_expected_shots(self, team_data: dict, venue: str) -> float:
         """Calcular expected shots basado en datos reales"""
@@ -430,8 +437,47 @@ class XGShotsModel:
             logger.error(f"Error calculando probabilidades SOT: {e}")
             return {'over_5': 0.5, 'over_7': 0.3, 'over_10': 0.2}
     
+    def _get_league_average_data(self, league: League) -> dict:
+        """
+        Calcular promedios de liga cuando un equipo no tiene datos suficientes.
+        Fase 3 — reemplaza _default_team_data() con datos reales de la liga.
+        """
+        try:
+            from django.db.models import Avg
+            matches = Match.objects.filter(
+                league=league,
+                hs__isnull=False,
+                hst__isnull=False
+            ).order_by('-date')[:100]
+            
+            if not matches.exists():
+                # Sin datos de liga tampoco → fallback último recurso
+                return self._default_team_data()
+            
+            hs_list = [m.hs for m in matches]
+            hst_list = [m.hst for m in matches]
+            goals_list = [m.fthg for m in matches]
+            
+            avg_shots = float(np.mean(hs_list))
+            avg_sot = float(np.mean(hst_list))
+            avg_goals = float(np.mean(goals_list))
+            
+            return {
+                'total_matches': 0,  # 0 indica que son datos de liga, no del equipo
+                'avg_shots': avg_shots,
+                'avg_sot': avg_sot,
+                'avg_goals': avg_goals,
+                'conversion_rate': avg_sot / max(avg_shots, 1),
+                'sot_conversion_rate': avg_goals / max(avg_sot, 1),
+                'shots_std': float(np.std(hs_list)),
+                'sot_std': float(np.std(hst_list)),
+            }
+        except Exception as e:
+            logger.error(f"Error calculando promedio de liga para {league}: {e}")
+            return self._default_team_data()
+    
     def _default_team_data(self) -> dict:
-        """Datos por defecto cuando no hay suficiente información"""
+        """Datos por defecto cuando no hay suficiente información (último recurso)"""
         return {
             'total_matches': 0,
             'avg_shots': 12.0,

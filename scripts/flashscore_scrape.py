@@ -97,6 +97,14 @@ LEAGUE_CONFIG = {
         ("Primera Division (Costa Rica)", "football/costa-rica/primera-division"),
         ("Primera Nacional (Argentina)", "football/argentina/primera-nacional"),
     ],
+    # 3 segundas divisiones latinoamericanas (agregadas 2026-08-20)
+    # NOTA: México usa formato de temporada Apertura/Clausura (YYYY-YYYY),
+    #   ej. --seasons 2025-2026 2024-2025. Colombia y Ecuador usan año simple (2025).
+    'segunda': [
+        ("Primera B (Colombia)", "football/colombia/primera-b"),
+        ("Serie B (Ecuador)", "football/ecuador/serie-b"),
+        ("Liga de Expansion MX (Mexico)", "football/mexico/liga-de-expansion-mx"),
+    ],
 }
 
 
@@ -403,7 +411,8 @@ def get_results_listing_dom(page, slug_year, season=None):
         const sh = e.querySelector('.event__score--home')?.innerText || '';
         const sa = e.querySelector('.event__score--away')?.innerText || '';
         const t = e.querySelector('.event__stageTime')?.innerText || '';
-        return {time: t, home: h, away: a, sh: sh, sa: sa};
+        const link = e.querySelector('a[href*="mid="]')?.href || '';
+        return {time: t, home: h, away: a, sh: sh, sa: sa, link: link};
     })''')
 
     # Inferir año inicio/fin de la temporada (para fechas sin año)
@@ -455,6 +464,7 @@ def get_results_listing_dom(page, slug_year, season=None):
             'fthg': fthg,
             'ftag': ftag,
             'ftr': ftr,
+            'link': ev.get('link', ''),
         })
     return results
 
@@ -485,10 +495,76 @@ def scrape_match(page, url, retries=1):
 #  PERSISTENCIA
 # ─────────────────────────────────────────────────────────────────────────
 
-def save_match(league, d):
-    """Inserta o actualiza el partido respetando unique_together."""
+def _normalize_team_name(name):
+    """Normaliza nombres de equipos para matching."""
+    if not name:
+        return name
+    n = name.strip()
+    # Mapeo de nombres cortos a largos
+    replacements = {
+        'Atl. ': 'Atletico ',
+        'Athletico ': 'Atletico ',
+        'Atl ': 'Atletico ',
+    }
+    for short, long in replacements.items():
+        if n.startswith(short):
+            n = long + n[len(short):]
+    return n
+
+
+def _find_existing_match(league, date, home_team, away_team, prefer_no_stats=False):
+    """Busca un partido existente por fecha y nombres fuzzy.
+    Si prefer_no_stats=True, prefiere el registro sin córners."""
+    # Búsqueda exacta primero
+    qs = Match.objects.filter(
+        league=league, date=date,
+        home_team=home_team, away_team=away_team
+    )
+    if prefer_no_stats:
+        m = qs.filter(hc__isnull=True).first()
+        if m:
+            return m
+    m = qs.first()
+    if m:
+        return m
+    # Probar nombre normalizado
+    home_norm = _normalize_team_name(home_team)
+    qs2 = Match.objects.filter(
+        league=league, date=date,
+        home_team=home_norm, away_team=away_team
+    )
+    if prefer_no_stats:
+        m = qs2.filter(hc__isnull=True).first()
+        if m:
+            return m
+    m = qs2.first()
+    if m:
+        return m
+    # Búsqueda fuzzy: mismo league, fecha, away_team similar
+    from difflib import SequenceMatcher
+    candidates = list(Match.objects.filter(league=league, date=date))
+    # Si prefer_no_stats, ordenar: sin stats primero
+    if prefer_no_stats:
+        candidates.sort(key=lambda x: (x.hc is not None))
+    for c in candidates:
+        ratio_home = SequenceMatcher(None, home_team.lower(), c.home_team.lower()).ratio()
+        ratio_away = SequenceMatcher(None, away_team.lower(), c.away_team.lower()).ratio()
+        if ratio_home > 0.6 and ratio_away > 0.6:
+            return c
+    return None
+
+
+def save_match(league, d, skip_existing_stats=False):
+    """Inserta o actualiza el partido respetando unique_together.
+    Si skip_existing_stats=True, no actualiza si el partido ya tiene córners."""
     if not d or not d.get('date') or not d.get('home_team') or not d.get('away_team'):
         return False
+    if skip_existing_stats:
+        existing = _find_existing_match(
+            league, d['date'], d['home_team'], d['away_team']
+        )
+        if existing and existing.hc is not None:
+            return False  # ya tiene stats, saltar
     fields = {
         'fthg': d.get('fthg'), 'ftag': d.get('ftag'), 'ftr': d.get('ftr'),
         'hthg': d.get('hthg'), 'htag': d.get('htag'),
@@ -502,14 +578,19 @@ def save_match(league, d):
         'corners_total': d.get('corners_total'),
         'both_teams_score': d.get('both_teams_score'),
     }
-    obj, created = Match.objects.update_or_create(
-        league=league,
-        date=d['date'],
-        home_team=d['home_team'],
-        away_team=d['away_team'],
-        defaults=fields,
-    )
-    return created
+    # Buscar partido existente (fuzzy match)
+    existing = _find_existing_match(league, d['date'], d['home_team'], d['away_team'], prefer_no_stats=True)
+    if existing:
+        # Actualizar el registro existente
+        for k, v in fields.items():
+            if v is not None:
+                setattr(existing, k, v)
+        existing.save()
+        return False  # no fue creado nuevo
+    # Crear nuevo registro
+    Match.objects.create(league=league, date=d['date'],
+                         home_team=d['home_team'], away_team=d['away_team'], **fields)
+    return True
 
 
 def save_match_result(league, d):
@@ -559,7 +640,7 @@ def list_seasons(slug):
         return r
 
 
-def scrape_league(page, league_name, slug, seasons, mode, max_matches, delay):
+def scrape_league(page, league_name, slug, seasons, mode, max_matches, delay, skip_existing_stats=False):
     """Scrapea las temporadas de una liga. Devuelve (creados, existentes, errores)."""
     league = League.objects.filter(name=league_name).first()
     if not league:
@@ -597,6 +678,52 @@ def scrape_league(page, league_name, slug, seasons, mode, max_matches, delay):
             tot_c += created; tot_s += skipped
             continue
 
+        # ── MODO FULL con skip_existing_stats: pre-filtrar del DOM ──
+        if skip_existing_stats:
+            # Usar get_results_listing_dom para obtener team names + fechas + links
+            results = get_results_listing_dom(page, slug_year, season)
+            log.info(f"  {len(results)} partidos en el listado DOM")
+            # Pre-filtrar: solo visitar partidos que no tienen stats
+            to_scrape = []
+            for r in results:
+                if not r.get('link'):
+                    continue
+                existing = Match.objects.filter(
+                    league=league, date=r['date'],
+                    home_team=r['home_team'], away_team=r['away_team'],
+                    hc__isnull=False
+                ).exists()
+                if not existing:
+                    to_scrape.append(r)
+            log.info(f"  {len(to_scrape)} partidos necesitan stats (de {len(results)} totales)")
+
+            created = skipped = errors = consec_err = 0
+            for i, r in enumerate(to_scrape):
+                if max_matches and i >= max_matches:
+                    break
+                url = r['link']
+                d = scrape_match(page, url)
+                if not d:
+                    errors += 1
+                    consec_err += 1
+                    if consec_err >= 5:
+                        log.error(f"    5 errores consecutivos. Saltando {league_name}/{season}.")
+                        break
+                    continue
+                consec_err = 0
+                if save_match(league, d, skip_existing_stats=True):
+                    created += 1
+                else:
+                    skipped += 1
+                if (i + 1) % 10 == 0:
+                    log.info(f"    {i+1}/{len(to_scrape)} | nuevos={created} existentes={skipped} errores={errors}")
+                time.sleep(delay + random.uniform(0, 1.5))
+
+            log.info(f"  → {season}: {created} nuevos, {skipped} existentes, {errors} errores")
+            tot_c += created; tot_s += skipped; tot_e += errors
+            continue
+
+        # ── MODO FULL normal (sin pre-filtro) ──
         mids = get_season_match_links(page, slug_year)
         log.info(f"  {len(mids)} partidos encontrados")
 
@@ -613,7 +740,7 @@ def scrape_league(page, league_name, slug, seasons, mode, max_matches, delay):
                     break
                 continue
             consec_err = 0
-            if save_match(league, d):
+            if save_match(league, d, skip_existing_stats=skip_existing_stats):
                 created += 1
             else:
                 skipped += 1
@@ -638,6 +765,9 @@ def main():
     ap.add_argument('--sa', action='store_true', help='Scrapear todas las ligas de Suramérica')
     ap.add_argument('--europe', action='store_true', help='Scrapear todas las ligas de Europa')
     ap.add_argument('--nuevas', action='store_true', help='Scrapear las 14 ligas nuevas (2026-08-17)')
+    ap.add_argument('--segunda', action='store_true', help='Scrapear las 3 segundas divisiones latinoamericanas (2026-08-20)')
+    ap.add_argument('--skip-existing-stats', action='store_true',
+                   help='Saltar partidos que ya tienen córners en DB (backfill eficiente)')
     ap.add_argument('--current', action='store_true', help='Solo temporada actual (sin año)')
     args = ap.parse_args()
 
@@ -659,6 +789,8 @@ def main():
         jobs += LEAGUE_CONFIG['europe']
     if args.nuevas:
         jobs += LEAGUE_CONFIG['nuevas']
+    if args.segunda:
+        jobs += LEAGUE_CONFIG['segunda']
     if args.slug:
         jobs.append((args.league, args.slug))
     if not jobs:
@@ -674,7 +806,8 @@ def main():
             if not league_name:
                 log.error(f'Falta --league para el slug {slug}')
                 continue
-            c, s, e = scrape_league(page, league_name, slug, args.seasons, args.mode, args.max, args.delay)
+            c, s, e = scrape_league(page, league_name, slug, args.seasons, args.mode, args.max, args.delay,
+                                   skip_existing_stats=args.skip_existing_stats)
             log.info(f"[{league_name}] TOTAL: {c} nuevos, {s} existentes, {e} errores")
 
         browser.close()

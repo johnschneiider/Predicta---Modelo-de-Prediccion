@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Usuario
+from .models import Usuario, LoginAttempt
 
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
@@ -25,3 +25,13 @@ class UsuarioAdmin(UserAdmin):
             'fields': ('username', 'email', 'first_name', 'last_name', 'password1', 'password2'),
         }),
     )
+
+
+@admin.register(LoginAttempt)
+class LoginAttemptAdmin(admin.ModelAdmin):
+    """Admin para auditar los intentos de login."""
+    list_display = ('ip_address', 'username', 'success', 'timestamp')
+    list_filter = ('success', 'timestamp')
+    search_fields = ('ip_address', 'username')
+    ordering = ('-timestamp',)
+    readonly_fields = ('ip_address', 'username', 'success', 'timestamp')

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configuración de Apuestas — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cfg-container { max-width: 680px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .cfg-header { text-align: center; margin-bottom: 1.6rem; }
+  .cfg-header h2 { margin-bottom: 0.4rem; letter-spacing: -0.01em; }
+  .cfg-header .subtitle {
+    color: var(--text-secondary); font-size: 0.9rem;
+    display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+  }
+  .cfg-header .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-primary); box-shadow: 0 0 8px var(--accent-primary);
+    display: inline-block;
+  }
+
+  .cfg-form {
+    background: var(--bg-surface);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem 1.6rem;
+    display: flex; flex-direction: column; gap: 1.1rem;
+  }
+  .cfg-field { display: flex; flex-direction: column; gap: 0.35rem; }
+  .cfg-field label {
+    font-weight: 700; font-size: 0.85rem; color: var(--text-primary);
+    letter-spacing: 0.01em;
+  }
+  .cfg-input {
+    background: var(--bg-overlay);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-md, 8px);
+    color: var(--text-primary);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+    width: 100%;
+    transition: border-color .18s ease;
+    font-family: inherit;
+  }
+  .cfg-input:focus {
+    outline: none; border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.12);
+  }
+  textarea.cfg-input { resize: vertical; min-height: 72px; }
+  .cfg-help { color: var(--text-secondary); font-size: 0.78rem; line-height: 1.4; }
+  .cfg-error { color: var(--danger); font-size: 0.8rem; font-weight: 600; }
+
+  .cfg-check { width: 18px; height: 18px; accent-color: var(--accent-primary); cursor: pointer; }
+  .cfg-check-row { flex-direction: row !important; align-items: center; gap: 0.6rem; }
+  .cfg-check-row label { margin: 0; }
+
+  .cfg-save {
+    margin-top: 0.4rem;
+    background: var(--accent-primary); color: #0a0a0a; border: none;
+    border-radius: var(--radius-full); padding: 0.7rem 1.3rem;
+    font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    transition: background .18s ease, transform .18s ease;
+  }
+  .cfg-save:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+  .cfg-note {
+    margin-top: 1.2rem;
+    background: rgba(239,68,68,0.06);
+    border: 0.5px solid rgba(239,68,68,0.25);
+    border-radius: var(--radius-md, 8px);
+    padding: 0.8rem 1rem;
+    color: var(--text-secondary); font-size: 0.82rem; line-height: 1.5;
+  }
+  .cfg-note strong { color: var(--danger); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cfg-container">
+  <div class="cfg-header">
+    <h2>Configuración de mi cuenta BetPlay</h2>
+    <div class="subtitle">
+      <span class="dot"></span>
+      Credenciales y estrategia del auto-betting · {{ config.usuario.email }}
+    </div>
+  </div>
+
+  <form method="post" class="cfg-form" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="cfg-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    {% for field in form %}
+      <div class="cfg-field {% if field.field.widget.input_type == 'checkbox' %}cfg-check-row{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<small class="cfg-help">{{ field.help_text|safe }}</small>{% endif %}
+        {% if field.errors %}<div class="cfg-error">{{ field.errors|striptags }}</div>{% endif %}
+      </div>
+    {% endfor %}
+
+    <button type="submit" class="cfg-save">💾 Guardar configuración</button>
+  </form>
+
+  <div class="cfg-note">
+    <strong>⚠️ Ojo:</strong> el <em>ticket</em> es una credencial de sesión reutilizable de BetPlay
+    (equivale a acceso a tu cuenta de apuestas). Se guarda asociada a TU usuario de Predicta y solo tú
+    la ves desde esta página. Nunca la compartas ni la pegues en un chat público.
+  </div>
+</div>
+{% endblock %}
