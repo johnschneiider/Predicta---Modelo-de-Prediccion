@@ -76,3 +76,7 @@ SOUL.md
 *.local_backup
 data/
 edge_opportunities.json
+
+# SQLite WAL files (no comitear)
+db.sqlite3-wal
+db.sqlite3-shm
