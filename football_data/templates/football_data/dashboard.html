@@ -1,209 +1,394 @@
 {% extends 'base.html' %}
 
-{% block title %}Estado de Sincronización — Predicta{% endblock %}
+{% block title %}Estado de Datos — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* ── Dashboard API-Football ── */
+    .fd-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+    .fd-head h1 {
+        font-size: 1.6rem;
+        letter-spacing: 0.02em;
+        margin-bottom: 0.2rem;
+    }
+    .fd-sub {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+    .fd-live {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.75rem;
+        color: var(--accent-primary);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    /* Stats pills en una sola fila */
+    .fd-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 1px;
+        background: var(--border-primary);
+        border: 0.5px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    .fd-stat {
+        background: var(--bg-surface);
+        padding: 0.75rem 0.5rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.1rem;
+    }
+    .fd-stat .num {
+        font-family: var(--font-heading);
+        font-size: 1.9rem;
+        line-height: 1;
+        color: var(--accent-primary);
+    }
+    .fd-stat .lbl {
+        font-size: 0.66rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+    }
+    .fd-stat .num.muted { color: var(--text-primary); }
+    .fd-stat .num.warn { color: var(--warning); }
+    .fd-stat .num.done { color: var(--success); }
+
+    /* Tabs */
+    .fd-tabs {
+        display: flex;
+        gap: 0.25rem;
+        border-bottom: 0.5px solid var(--border-primary);
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    .fd-tab {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-family: var(--font-body);
+        font-size: 0.85rem;
+        font-weight: 500;
+        letter-spacing: 0.03em;
+        padding: 0.6rem 1rem;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.15s;
+        white-space: nowrap;
+    }
+    .fd-tab:hover { color: var(--text-primary); }
+    .fd-tab.active {
+        color: var(--accent-primary);
+        border-bottom-color: var(--accent-primary);
+    }
+    .fd-panel { display: none; }
+    .fd-panel.active { display: block; }
+
+    /* Tabla densa */
+    .fd-table-wrap {
+        border: 0.5px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        background: var(--bg-surface);
+    }
+    .fd-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+    .fd-table thead th {
+        text-align: left;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        background: var(--bg-surface-alt);
+        border-bottom: 0.5px solid var(--border-primary);
+        position: sticky;
+        top: 0;
+        white-space: nowrap;
+    }
+    .fd-table tbody td {
+        padding: 0.55rem 0.75rem;
+        border-bottom: 0.5px solid var(--border-subtle);
+        color: var(--text-primary);
+        vertical-align: middle;
+    }
+    .fd-table tbody tr:last-child td { border-bottom: none; }
+    .fd-table tbody tr:hover { background: var(--bg-overlay); }
+    .fd-table .col-right { text-align: right; }
+    .fd-table .col-center { text-align: center; }
+    .fd-table .sub { color: var(--text-secondary); font-size: 0.75rem; display: block; }
+    .fd-table .mono { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-secondary); }
+
+    /* Chips de estado */
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.2rem 0.6rem;
+        font-size: 0.68rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        border-radius: var(--radius-full);
+        white-space: nowrap;
+    }
+    .chip-done { background: var(--accent-subtle); color: var(--accent-primary); border: 0.5px solid var(--accent-border); }
+    .chip-run { background: rgba(38,165,228,0.1); color: var(--info); border: 0.5px solid rgba(38,165,228,0.3); }
+    .chip-pend { background: rgba(255,255,255,0.04); color: var(--text-secondary); border: 0.5px solid var(--border-primary); }
+    .chip-err { background: rgba(255,107,107,0.1); color: var(--danger); border: 0.5px solid rgba(255,107,107,0.3); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+    /* Barra de progreso */
+    .fd-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 120px;
+    }
+    .fd-bar .track {
+        flex: 1; height: 4px; background: var(--border-primary);
+        border-radius: var(--radius-full); overflow: hidden;
+    }
+    .fd-bar .fill {
+        height: 100%; background: var(--accent-primary);
+        border-radius: var(--radius-full); transition: width 0.3s;
+    }
+    .fd-bar .pct { font-size: 0.7rem; color: var(--text-secondary); min-width: 34px; text-align: right; }
+
+    /* Filtros inline */
+    .fd-filters {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 0.75rem 1rem;
+        background: var(--bg-surface);
+        border: 0.5px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        margin-bottom: 1rem;
+    }
+    .fd-filters label { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+    .fd-filters input, .fd-filters select {
+        background: var(--bg-primary);
+        border: 0.5px solid var(--border-secondary);
+        color: var(--text-primary);
+        border-radius: var(--radius-sm);
+        padding: 0.4rem 0.6rem;
+        font-size: 0.82rem;
+        font-family: var(--font-body);
+        outline: none;
+    }
+    .fd-filters input:focus, .fd-filters select:focus { border-color: var(--accent-primary); }
+    .fd-filters .spacer { flex: 1; }
+
+    /* Sincronizador */
+    .fd-sync-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .fd-sync {
+        background: var(--bg-surface);
+        border: 0.5px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        padding: 1rem 1.25rem;
+    }
+    .fd-sync .s-head {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 0.6rem;
+    }
+    .fd-sync .s-title { font-weight: 600; font-size: 0.9rem; }
+    .fd-sync .s-kv {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem 0.75rem;
+        font-size: 0.78rem;
+    }
+    .fd-sync .s-kv .k { color: var(--text-secondary); }
+    .fd-sync .s-kv .v { color: var(--text-primary); font-weight: 500; }
+    .fd-sync .s-err {
+        margin-top: 0.5rem; font-size: 0.75rem; color: var(--danger);
+        border-top: 0.5px solid var(--border-subtle); padding-top: 0.5rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="text-primary mb-1"><i class="fas fa-database"></i> Estado de Sincronización de Datos</h1>
-                    <p class="text-muted mb-0">Fuente: API-Football v3 · Backfill 2 temporadas + actual · actualización diaria 01:00 (Colombia)</p>
-                </div>
-                <button class="btn btn-outline-primary" onclick="location.reload()"><i class="fas fa-sync-alt"></i> Refrescar</button>
-            </div>
-        </div>
+<div class="fd-head">
+    <div>
+        <h1>Estado de Sincronización</h1>
+        <div class="fd-sub">API-Football v3 · Backfill 2 temporadas + actual · sincronización diaria 01:00 (Colombia)</div>
     </div>
-
-    <!-- Totales -->
-    <div class="row mb-4">
-        <div class="col-6 col-md-2 mb-2">
-            <div class="card bg-primary text-white shadow-sm h-100">
-                <div class="card-body text-center py-3">
-                    <i class="fas fa-trophy fa-2x mb-2"></i>
-                    <h3 class="mb-0">{{ totals.leagues }}</h3><small>Ligas</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-2 mb-2">
-            <div class="card bg-info text-white shadow-sm h-100">
-                <div class="card-body text-center py-3">
-                    <i class="fas fa-futbol fa-2x mb-2"></i>
-                    <h3 class="mb-0">{{ totals.fixtures }}</h3><small>Partidos</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-2 mb-2">
-            <div class="card bg-success text-white shadow-sm h-100">
-                <div class="card-body text-center py-3">
-                    <i class="fas fa-chart-bar fa-2x mb-2"></i>
-                    <h3 class="mb-0">{{ totals.stats }}</h3><small>Estadísticas</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-2 mb-2">
-            <div class="card bg-dark text-white shadow-sm h-100">
-                <div class="card-body text-center py-3">
-                    <i class="fas fa-shield-alt fa-2x mb-2"></i>
-                    <h3 class="mb-0">{{ totals.teams }}</h3><small>Equipos</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-2 mb-2">
-            <div class="card border-success shadow-sm h-100">
-                <div class="card-body text-center py-3">
-                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
-                    <h3 class="mb-0 text-success">{{ totals.done }}</h3><small class="text-muted">Completadas</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-2 mb-2">
-            <div class="card border-warning shadow-sm h-100">
-                <div class="card-body text-center py-3">
-                    <i class="fas fa-spinner fa-2x text-warning mb-2"></i>
-                    <h3 class="mb-0 text-warning">{{ totals.backfilling }}</h3><small class="text-muted">En curso</small>
-                </div>
-            </div>
-        </div>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+        <span class="fd-live"><span class="pulse-dot"></span> en vivo</span>
+        <button class="btn btn-secondary btn-sm" onclick="location.reload()">↻ Refrescar</button>
     </div>
+</div>
 
-    <!-- Estado del sincronizador -->
-    <div class="row mb-4">
+<!-- Stats en una fila -->
+<div class="fd-stats">
+    <div class="fd-stat"><span class="num">{{ totals.leagues }}</span><span class="lbl">Ligas</span></div>
+    <div class="fd-stat"><span class="num muted">{{ totals.fixtures }}</span><span class="lbl">Partidos</span></div>
+    <div class="fd-stat"><span class="num muted">{{ totals.stats }}</span><span class="lbl">Estadísticas</span></div>
+    <div class="fd-stat"><span class="num muted">{{ totals.teams }}</span><span class="lbl">Equipos</span></div>
+    <div class="fd-stat"><span class="num done">{{ totals.done }}</span><span class="lbl">Completas</span></div>
+    <div class="fd-stat"><span class="num warn">{{ totals.backfilling }}</span><span class="lbl">En curso</span></div>
+    <div class="fd-stat"><span class="num muted">{{ totals.pending }}</span><span class="lbl">Pendientes</span></div>
+</div>
+
+<!-- Tabs -->
+<div class="fd-tabs">
+    <button class="fd-tab active" data-tab="ligas">Ligas</button>
+    <button class="fd-tab" data-tab="sync">Sincronizador</button>
+</div>
+
+<!-- Panel ligas -->
+<div class="fd-panel active" id="panel-ligas">
+    <form method="get" class="fd-filters">
+        <label>Buscar</label>
+        <input type="text" name="q" value="{{ filters.q }}" placeholder="Nombre o país">
+        <label>País</label>
+        <select name="country">
+            <option value="">Todos</option>
+            {% for c in countries %}<option value="{{ c }}" {% if filters.country == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+        </select>
+        <label>Estado</label>
+        <select name="status">
+            <option value="">Todos</option>
+            <option value="done" {% if filters.status == 'done' %}selected{% endif %}>Completado</option>
+            <option value="backfilling" {% if filters.status == 'backfilling' %}selected{% endif %}>Cargando</option>
+            <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Pendiente</option>
+            <option value="error" {% if filters.status == 'error' %}selected{% endif %}>Error</option>
+        </select>
+        <label>Stats</label>
+        <select name="coverage">
+            <option value="">Todas</option>
+            <option value="yes" {% if filters.coverage == 'yes' %}selected{% endif %}>Con stats</option>
+            <option value="no" {% if filters.coverage == 'no' %}selected{% endif %}>Sin stats</option>
+        </select>
+        <span class="spacer"></span>
+        <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+        <a href="{% url 'football_data:dashboard' %}" class="btn btn-secondary btn-sm">Limpiar</a>
+    </form>
+
+    <div class="fd-table-wrap">
+        <table class="fd-table">
+            <thead>
+                <tr>
+                    <th>Liga</th>
+                    <th>País</th>
+                    <th class="col-center">API</th>
+                    <th class="col-center">Stats</th>
+                    <th class="col-center">Temp.</th>
+                    <th class="col-right">Partidos</th>
+                    <th class="col-right">Estadíst.</th>
+                    <th>Estado</th>
+                    <th class="col-center">Progreso</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in leagues %}
+                <tr>
+                    <td>
+                        <strong>{{ l.name }}</strong>
+                        {% if l.predicta_name and l.predicta_name != l.name %}<span class="sub">{{ l.predicta_name }}</span>{% endif %}
+                    </td>
+                    <td>{{ l.country }}</td>
+                    <td class="col-center"><span class="mono">{{ l.api_id }}</span></td>
+                    <td class="col-center">
+                        {% if l.has_statistics %}<span class="chip chip-done">✓</span>
+                        {% else %}<span class="chip chip-pend">parcial</span>{% endif %}
+                    </td>
+                    <td class="col-center"><span class="mono">{{ l.current_season|default:'—' }}</span></td>
+                    <td class="col-right">{{ l.fixture_count }}</td>
+                    <td class="col-right">{{ l.stats_count }}</td>
+                    <td>
+                        {% if l.backfill_status == 'done' %}<span class="chip chip-done"><span class="dot"></span>Completado</span>
+                        {% elif l.backfill_status == 'backfilling' %}<span class="chip chip-run"><span class="dot"></span>Cargando</span>
+                        {% elif l.backfill_status == 'error' %}<span class="chip chip-err"><span class="dot"></span>Error</span>
+                        {% else %}<span class="chip chip-pend"><span class="dot"></span>Pendiente</span>{% endif %}
+                    </td>
+                    <td class="col-center">
+                        {% if l.backfill_status == 'done' %}
+                            <span class="chip chip-done">100%</span>
+                        {% elif l.backfill_status == 'backfilling' %}
+                            <span class="chip chip-run">…</span>
+                        {% else %}
+                            <span class="chip chip-pend">0%</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" style="text-align:center;color:var(--text-secondary);padding:2rem;">Sin ligas que coincidan.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--text-secondary);">{{ leagues|length }} ligas</div>
+</div>
+
+<!-- Panel sincronizador -->
+<div class="fd-panel" id="panel-sync">
+    <div class="fd-sync-grid">
         {% for card in state_cards %}
-            {% with st=card.st %}
-            <div class="col-md-6 mb-3">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 text-primary"><i class="{{ card.icon }}"></i> {{ card.label }}</h6>
-                        {% if st %}
-                            {% if st.status == 'running' %}<span class="badge bg-primary">Corriendo</span>
-                            {% elif st.status == 'paused' %}<span class="badge bg-warning text-dark">Pausado (cuota)</span>
-                            {% elif st.status == 'done' %}<span class="badge bg-success">Completado</span>
-                            {% elif st.status == 'error' %}<span class="badge bg-danger">Error</span>
-                            {% else %}<span class="badge bg-secondary">{{ st.status }}</span>{% endif %}
-                        {% else %}<span class="badge bg-secondary">Sin ejecutar</span>{% endif %}
-                    </div>
-                    <div class="card-body py-2">
-                        {% if st %}
-                        <div class="row small text-muted">
-                            <div class="col-4">Liga: <strong>{{ st.league_api_id|default:'—' }}</strong></div>
-                            <div class="col-4">Temporada: <strong>{{ st.season|default:'—' }}</strong></div>
-                            <div class="col-4">Última: <strong>{{ st.last_run_at|date:'d/m H:i'|default:'—' }}</strong></div>
-                            <div class="col-4 mt-1">Requests hoy: <strong>{{ st.requests_today }}</strong></div>
-                            <div class="col-4 mt-1">Restantes: <strong>{{ st.requests_remaining }}</strong>/{{ st.limit_day }}</div>
-                            <div class="col-4 mt-1">Cuota fecha: <strong>{{ st.quota_date|date:'d/m'|default:'—' }}</strong></div>
-                        </div>
-                        {% if st.error_log %}<div class="small text-danger mt-1"><i class="fas fa-exclamation-triangle"></i> {{ st.error_log|truncatechars:120 }}</div>{% endif %}
-                        {% else %}<p class="small text-muted mb-0">Aún no se ha ejecutado.</p>{% endif %}
-                    </div>
-                </div>
+        {% with st=card.st %}
+        <div class="fd-sync">
+            <div class="s-head">
+                <span class="s-title">{{ card.label }}</span>
+                {% if st %}
+                    {% if st.status == 'running' %}<span class="chip chip-run"><span class="dot"></span>Corriendo</span>
+                    {% elif st.status == 'paused' %}<span class="chip chip-pend"><span class="dot"></span>Pausado</span>
+                    {% elif st.status == 'done' %}<span class="chip chip-done"><span class="dot"></span>Hecho</span>
+                    {% elif st.status == 'error' %}<span class="chip chip-err"><span class="dot"></span>Error</span>
+                    {% else %}<span class="chip chip-pend">{{ st.status }}</span>{% endif %}
+                {% else %}<span class="chip chip-pend">Sin ejecutar</span>{% endif %}
             </div>
-            {% endwith %}
+            {% if st %}
+            <div class="s-kv">
+                <div><div class="k">Liga</div><div class="v">{{ st.league_api_id|default:'—' }}</div></div>
+                <div><div class="k">Temporada</div><div class="v">{{ st.season|default:'—' }}</div></div>
+                <div><div class="k">Última</div><div class="v">{{ st.last_run_at|date:'d/m H:i'|default:'—' }}</div></div>
+                <div><div class="k">Hoy</div><div class="v">{{ st.requests_today }}</div></div>
+                <div><div class="k">Restantes</div><div class="v">{{ st.requests_remaining|default:'—' }}</div></div>
+                <div><div class="k">Cuota</div><div class="v">{{ st.quota_date|date:'d/m'|default:'—' }}</div></div>
+            </div>
+            {% if st.error_log %}<div class="s-err">⚠ {{ st.error_log|truncatechars:140 }}</div>{% endif %}
+            {% else %}<div style="font-size:0.8rem;color:var(--text-secondary);">Aún no se ha ejecutado.</div>{% endif %}
+        </div>
+        {% endwith %}
         {% endfor %}
-    </div>
-
-    <!-- Filtros -->
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-body py-2">
-            <form method="get" class="row g-2 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label small mb-0">Buscar</label>
-                    <input type="text" name="q" value="{{ filters.q }}" class="form-control form-control-sm" placeholder="Nombre liga / país">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small mb-0">País</label>
-                    <select name="country" class="form-select form-select-sm">
-                        <option value="">Todos</option>
-                        {% for c in countries %}<option value="{{ c }}" {% if filters.country == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small mb-0">Estado</label>
-                    <select name="status" class="form-select form-select-sm">
-                        <option value="">Todos</option>
-                        <option value="done" {% if filters.status == 'done' %}selected{% endif %}>Completado</option>
-                        <option value="backfilling" {% if filters.status == 'backfilling' %}selected{% endif %}>Cargando</option>
-                        <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Pendiente</option>
-                        <option value="error" {% if filters.status == 'error' %}selected{% endif %}>Error</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small mb-0">Estadísticas</label>
-                    <select name="coverage" class="form-select form-select-sm">
-                        <option value="">Todas</option>
-                        <option value="yes" {% if filters.coverage == 'yes' %}selected{% endif %}>Con stats</option>
-                        <option value="no" {% if filters.coverage == 'no' %}selected{% endif %}>Sin stats</option>
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex gap-1">
-                    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter"></i> Filtrar</button>
-                    <a href="{% url 'football_data:dashboard' %}" class="btn btn-outline-secondary btn-sm">Limpiar</a>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Tabla de ligas -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h6 class="mb-0 text-primary"><i class="fas fa-list"></i> Progreso por liga ({{ leagues|length }})</h6>
-            <span class="small text-muted">Prioridad 0 = ligas originales · 1 = parciales</span>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-sm align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Liga</th>
-                            <th>País</th>
-                            <th class="text-center">API ID</th>
-                            <th class="text-center">Stats</th>
-                            <th class="text-center">Temp. actual</th>
-                            <th class="text-center">Partidos</th>
-                            <th class="text-center">Estadísticas</th>
-                            <th>Estado</th>
-                            <th>Último backfill</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for l in leagues %}
-                        <tr>
-                            <td>
-                                <strong>{{ l.name }}</strong>
-                                {% if l.predicta_name and l.predicta_name != l.name %}<br><small class="text-muted">{{ l.predicta_name }}</small>{% endif %}
-                            </td>
-                            <td>{{ l.country }}</td>
-                            <td class="text-center">{{ l.api_id }}</td>
-                            <td class="text-center">
-                                {% if l.has_statistics %}<span class="badge bg-success">✓</span>
-                                {% else %}<span class="badge bg-warning text-dark">parcial</span>{% endif %}
-                            </td>
-                            <td class="text-center">{{ l.current_season|default:'—' }}</td>
-                            <td class="text-center"><strong>{{ l.fixture_count }}</strong></td>
-                            <td class="text-center">{{ l.stats_count }}</td>
-                            <td>
-                                {% if l.backfill_status == 'done' %}<span class="badge bg-success">Completado</span>
-                                {% elif l.backfill_status == 'backfilling' %}<span class="badge bg-primary">Cargando</span>
-                                {% elif l.backfill_status == 'error' %}<span class="badge bg-danger">Error</span>
-                                {% else %}<span class="badge bg-secondary">Pendiente</span>{% endif %}
-                            </td>
-                            <td class="small text-muted">{{ l.last_backfill_at|date:'d/m/Y H:i'|default:'—' }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="9" class="text-center text-muted py-4">Sin ligas que coincidan con los filtros.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Auto-refresh cada 60s mientras la página esté abierta (para ver avance del backfill)
+    // Tabs
+    document.querySelectorAll('.fd-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.fd-tab').forEach(function(t){ t.classList.remove('active'); });
+            document.querySelectorAll('.fd-panel').forEach(function(p){ p.classList.remove('active'); });
+            tab.classList.add('active');
+            document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+        });
+    });
+    // Auto-refresh cada 60s
     setTimeout(function(){ location.reload(); }, 60000);
 </script>
 {% endblock %}
