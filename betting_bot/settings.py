@@ -16,6 +16,16 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Cargar variables de entorno desde .env (gitignored) si existe
+_ENV_FILE = BASE_DIR / '.env'
+if _ENV_FILE.exists():
+    with open(_ENV_FILE, encoding='utf-8') as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith('#') and '=' in _line:
+                _k, _v = _line.split('=', 1)
+                os.environ.setdefault(_k.strip(), _v.strip())
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -45,6 +55,7 @@ INSTALLED_APPS = [
     'betfair',
     'betting',
     'football_data',
+    'football_api',
     'ai_predictions',
     'value_betting',
     'auto_betting',
@@ -156,6 +167,7 @@ MATCHBOOK_PASSWORD = os.getenv('MATCHBOOK_PASSWORD', '')
 
 # Configuración de The Odds API (para partidos próximos)
 ODDS_API_KEY = os.getenv('ODDS_API_KEY', '9c2c101074ae4a4c3ec9b01a4d38cb6a')
+APIFOOTBALL_KEY = os.getenv('APIFOOTBALL_KEY', '')
 ODDS_API_BASE_URL = 'https://api.the-odds-api.com/v4'
 
 # Configuración de Betfair

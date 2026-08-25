@@ -1,359 +1,200 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard - Datos Históricos de Fútbol{% endblock %}
+{% block title %}Estado de Sincronización — Predicta{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="text-primary"><i class="fas fa-tachometer-alt"></i> Dashboard de Datos Históricos</h1>
-                <a href="{% url 'football_data:import' %}" class="btn btn-primary">
-                    <i class="fas fa-upload"></i> Importar Datos
-                </a>
+                <div>
+                    <h1 class="text-primary mb-1"><i class="fas fa-database"></i> Estado de Sincronización de Datos</h1>
+                    <p class="text-muted mb-0">Fuente: API-Football v3 · Backfill 2 temporadas + actual · actualización diaria 01:00 (Colombia)</p>
+                </div>
+                <button class="btn btn-outline-primary" onclick="location.reload()"><i class="fas fa-sync-alt"></i> Refrescar</button>
             </div>
         </div>
     </div>
 
-    <!-- Estadísticas Generales -->
+    <!-- Totales -->
     <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card bg-primary text-white shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-futbol fa-2x mb-2"></i>
-                    <h3>{{ stats.total_matches }}</h3>
-                    <p class="mb-0">Partidos Totales</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card bg-primary text-white shadow-sm">
-                <div class="card-body text-center">
+        <div class="col-6 col-md-2 mb-2">
+            <div class="card bg-primary text-white shadow-sm h-100">
+                <div class="card-body text-center py-3">
                     <i class="fas fa-trophy fa-2x mb-2"></i>
-                    <h3>{{ stats.total_leagues }}</h3>
-                    <p class="mb-0">Ligas</p>
+                    <h3 class="mb-0">{{ totals.leagues }}</h3><small>Ligas</small>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card bg-primary text-white shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-file-excel fa-2x mb-2"></i>
-                    <h3>{{ stats.total_files }}</h3>
-                    <p class="mb-0">Archivos Importados</p>
+        <div class="col-6 col-md-2 mb-2">
+            <div class="card bg-info text-white shadow-sm h-100">
+                <div class="card-body text-center py-3">
+                    <i class="fas fa-futbol fa-2x mb-2"></i>
+                    <h3 class="mb-0">{{ totals.fixtures }}</h3><small>Partidos</small>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card bg-primary text-white shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-clock fa-2x mb-2"></i>
-                    <h3 id="currentTime">--:--:--</h3>
-                    <p class="mb-0">Hora Actual</p>
+        <div class="col-6 col-md-2 mb-2">
+            <div class="card bg-success text-white shadow-sm h-100">
+                <div class="card-body text-center py-3">
+                    <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                    <h3 class="mb-0">{{ totals.stats }}</h3><small>Estadísticas</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2 mb-2">
+            <div class="card bg-dark text-white shadow-sm h-100">
+                <div class="card-body text-center py-3">
+                    <i class="fas fa-shield-alt fa-2x mb-2"></i>
+                    <h3 class="mb-0">{{ totals.teams }}</h3><small>Equipos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2 mb-2">
+            <div class="card border-success shadow-sm h-100">
+                <div class="card-body text-center py-3">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <h3 class="mb-0 text-success">{{ totals.done }}</h3><small class="text-muted">Completadas</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2 mb-2">
+            <div class="card border-warning shadow-sm h-100">
+                <div class="card-body text-center py-3">
+                    <i class="fas fa-spinner fa-2x text-warning mb-2"></i>
+                    <h3 class="mb-0 text-warning">{{ totals.backfilling }}</h3><small class="text-muted">En curso</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Archivos Disponibles -->
+    <!-- Estado del sincronizador -->
     <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0 text-primary"><i class="fas fa-folder-open"></i> Archivos Excel Disponibles</h5>
-                </div>
-                <div class="card-body">
-                    {% if available_files %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Archivo</th>
-                                        <th>Tamaño</th>
-                                        <th>Modificado</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for file in available_files %}
-                                    <tr>
-                                        <td>
-                                            <i class="fas fa-file-excel text-success"></i>
-                                            <strong>{{ file.name }}</strong>
-                                        </td>
-                                        <td>{{ file.size|filesizeformat }}</td>
-                                        <td>{{ file.modified|date:"d/m/Y H:i" }}</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary" 
-                                                    onclick="importFile('{{ file.name }}')">
-                                                <i class="fas fa-upload"></i> Importar
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+        {% for card in state_cards %}
+            {% with st=card.st %}
+            <div class="col-md-6 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 text-primary"><i class="{{ card.icon }}"></i> {{ card.label }}</h6>
+                        {% if st %}
+                            {% if st.status == 'running' %}<span class="badge bg-primary">Corriendo</span>
+                            {% elif st.status == 'paused' %}<span class="badge bg-warning text-dark">Pausado (cuota)</span>
+                            {% elif st.status == 'done' %}<span class="badge bg-success">Completado</span>
+                            {% elif st.status == 'error' %}<span class="badge bg-danger">Error</span>
+                            {% else %}<span class="badge bg-secondary">{{ st.status }}</span>{% endif %}
+                        {% else %}<span class="badge bg-secondary">Sin ejecutar</span>{% endif %}
+                    </div>
+                    <div class="card-body py-2">
+                        {% if st %}
+                        <div class="row small text-muted">
+                            <div class="col-4">Liga: <strong>{{ st.league_api_id|default:'—' }}</strong></div>
+                            <div class="col-4">Temporada: <strong>{{ st.season|default:'—' }}</strong></div>
+                            <div class="col-4">Última: <strong>{{ st.last_run_at|date:'d/m H:i'|default:'—' }}</strong></div>
+                            <div class="col-4 mt-1">Requests hoy: <strong>{{ st.requests_today }}</strong></div>
+                            <div class="col-4 mt-1">Restantes: <strong>{{ st.requests_remaining }}</strong>/{{ st.limit_day }}</div>
+                            <div class="col-4 mt-1">Cuota fecha: <strong>{{ st.quota_date|date:'d/m'|default:'—' }}</strong></div>
                         </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No hay archivos Excel disponibles.</p>
-                            <p class="text-muted">Coloca tus archivos en: <code>data/excel_files/</code></p>
-                        </div>
-                    {% endif %}
+                        {% if st.error_log %}<div class="small text-danger mt-1"><i class="fas fa-exclamation-triangle"></i> {{ st.error_log|truncatechars:120 }}</div>{% endif %}
+                        {% else %}<p class="small text-muted mb-0">Aún no se ha ejecutado.</p>{% endif %}
+                    </div>
                 </div>
             </div>
+            {% endwith %}
+        {% endfor %}
+    </div>
+
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body py-2">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small mb-0">Buscar</label>
+                    <input type="text" name="q" value="{{ filters.q }}" class="form-control form-control-sm" placeholder="Nombre liga / país">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-0">País</label>
+                    <select name="country" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        {% for c in countries %}<option value="{{ c }}" {% if filters.country == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-0">Estado</label>
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        <option value="done" {% if filters.status == 'done' %}selected{% endif %}>Completado</option>
+                        <option value="backfilling" {% if filters.status == 'backfilling' %}selected{% endif %}>Cargando</option>
+                        <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Pendiente</option>
+                        <option value="error" {% if filters.status == 'error' %}selected{% endif %}>Error</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-0">Estadísticas</label>
+                    <select name="coverage" class="form-select form-select-sm">
+                        <option value="">Todas</option>
+                        <option value="yes" {% if filters.coverage == 'yes' %}selected{% endif %}>Con stats</option>
+                        <option value="no" {% if filters.coverage == 'no' %}selected{% endif %}>Sin stats</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-1">
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter"></i> Filtrar</button>
+                    <a href="{% url 'football_data:dashboard' %}" class="btn btn-outline-secondary btn-sm">Limpiar</a>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Ligas Principales -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-primary"><i class="fas fa-trophy"></i> Ligas Principales</h5>
-                    <a href="{% url 'football_data:leagues_list' %}" class="btn btn-sm btn-outline-primary">Ver Todas</a>
-                </div>
-                <div class="card-body">
-                    {% if leagues %}
-                        <div class="row">
-                            {% for league in leagues|slice:":6" %}
-                            <div class="col-md-4 mb-3">
-                                <div class="card border-0 shadow-sm h-100">
-                                    <div class="card-body">
-                                        <h6 class="card-title text-primary">
-                                            <i class="fas fa-trophy text-warning"></i>
-                                            {{ league.name }}
-                                        </h6>
-                                        <p class="card-text">
-                                            <small class="text-muted">{{ league.season }}</small><br>
-                                            <strong>{{ league.match_count }}</strong> partidos
-                                        </p>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <small class="text-muted">
-                                                Último: {{ league.latest_match|date:"d/m/Y" }}
-                                            </small>
-                                            <a href="{% url 'football_data:league_detail' league.id %}" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-eye"></i> Ver
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-trophy fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No hay ligas disponibles.</p>
-                            <a href="{% url 'football_data:import' %}" class="btn btn-primary">
-                                <i class="fas fa-upload"></i> Importar Datos
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
+    <!-- Tabla de ligas -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 text-primary"><i class="fas fa-list"></i> Progreso por liga ({{ leagues|length }})</h6>
+            <span class="small text-muted">Prioridad 0 = ligas originales · 1 = parciales</span>
         </div>
-    </div>
-
-    <!-- Partidos Recientes -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-primary"><i class="fas fa-clock"></i> Partidos Recientes</h5>
-                    <a href="{% url 'football_data:matches_list' %}" class="btn btn-sm btn-outline-primary">Ver Todos</a>
-                </div>
-                <div class="card-body">
-                    {% if recent_matches %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Partido</th>
-                                        <th>Liga</th>
-                                        <th>Fecha</th>
-                                        <th>Resultado</th>
-                                        <th>Goles</th>
-                                        <th>Mejores Cuotas</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for match in recent_matches %}
-                                    <tr>
-                                        <td>
-                                            <strong>{{ match.home_team }}</strong><br>
-                                            <small class="text-muted">vs</small><br>
-                                            <strong>{{ match.away_team }}</strong>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-secondary">{{ match.league.name }}</span>
-                                        </td>
-                                        <td>{{ match.date|date:"d/m/Y" }}</td>
-                                        <td>
-                                            {% if match.ftr %}
-                                                <span class="badge 
-                                                    {% if match.ftr == 'H' %}bg-success
-                                                    {% elif match.ftr == 'D' %}bg-warning
-                                                    {% else %}bg-info{% endif %}">
-                                                    {% if match.ftr == 'H' %}Local
-                                                    {% elif match.ftr == 'D' %}Empate
-                                                    {% else %}Visitante{% endif %}
-                                                </span>
-                                            {% else %}
-                                                <span class="text-muted">-</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if match.fthg is not None and match.ftag is not None %}
-                                                <strong>{{ match.fthg }}-{{ match.ftag }}</strong>
-                                            {% else %}
-                                                <span class="text-muted">-</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if match.best_home_odds %}
-                                                <div class="d-flex flex-column gap-1">
-                                                    <span class="badge bg-primary badge-odds">
-                                                        H: {{ match.best_home_odds|floatformat:2 }}
-                                                    </span>
-                                                    <span class="badge bg-warning badge-odds">
-                                                        E: {{ match.best_draw_odds|floatformat:2 }}
-                                                    </span>
-                                                    <span class="badge bg-info badge-odds">
-                                                        A: {{ match.best_away_odds|floatformat:2 }}
-                                                    </span>
-                                                </div>
-                                            {% else %}
-                                                <span class="text-muted">Sin datos</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <a href="{% url 'football_data:match_detail' match.id %}" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-eye"></i> Ver
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-futbol fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No hay partidos recientes disponibles.</p>
-                            <a href="{% url 'football_data:import' %}" class="btn btn-primary">
-                                <i class="fas fa-upload"></i> Importar Datos
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Acciones Rápidas -->
-    <div class="row">
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-upload fa-3x text-primary"></i>
-                    </div>
-                    <h5 class="text-primary">Importar Datos</h5>
-                    <p class="text-muted">Subir archivos Excel con datos históricos</p>
-                    <a href="{% url 'football_data:import' %}" class="btn btn-primary">Importar</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-chart-bar fa-3x text-success"></i>
-                    </div>
-                    <h5 class="text-success">Estadísticas</h5>
-                    <p class="text-muted">Análisis detallado de los datos</p>
-                    <a href="{% url 'football_data:statistics' %}" class="btn btn-success">Ver Stats</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-chart-pie fa-3x text-warning"></i>
-                    </div>
-                    <h5 class="text-warning">Mercados</h5>
-                    <p class="text-muted">Análisis de mercados con gráficas</p>
-                    <a href="{% url 'football_data:markets' %}" class="btn btn-warning">Ver Mercados</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-bullseye fa-3x text-danger"></i>
-                    </div>
-                    <h5 class="text-danger">Remates</h5>
-                    <p class="text-muted">Análisis detallado de tiros</p>
-                    <a href="{% url 'football_data:shots' %}" class="btn btn-danger">Ver Remates</a>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="row">
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-chart-line fa-3x" style="color: #6f42c1;"></i>
-                    </div>
-                    <h5 style="color: #6f42c1;">Análisis</h5>
-                    <p class="text-muted">Predicciones de ambos marcan</p>
-                    <a href="{% url 'football_data:analysis' %}" class="btn" style="background-color: #6f42c1; color: white;">Ver Análisis</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-table fa-3x text-info"></i>
-                    </div>
-                    <h5 class="text-info">Tabla de Datos</h5>
-                    <p class="text-muted">Ver datos completos por liga</p>
-                    <a href="{% url 'football_data:league_data_table' %}" class="btn btn-info">Ver Tabla</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-chart-line fa-3x text-info"></i>
-                    </div>
-                    <h5 class="text-info">Cuotas API</h5>
-                    <p class="text-muted">Ver cuotas en tiempo real</p>
-                    <a href="{% url 'odds:dashboard' %}" class="btn btn-info">Ver Cuotas</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-cog fa-3x text-secondary"></i>
-                    </div>
-                    <h5 class="text-secondary">Administración</h5>
-                    <p class="text-muted">Panel de administración</p>
-                    <a href="/admin/" class="btn btn-secondary">Admin</a>
-                </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Liga</th>
+                            <th>País</th>
+                            <th class="text-center">API ID</th>
+                            <th class="text-center">Stats</th>
+                            <th class="text-center">Temp. actual</th>
+                            <th class="text-center">Partidos</th>
+                            <th class="text-center">Estadísticas</th>
+                            <th>Estado</th>
+                            <th>Último backfill</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for l in leagues %}
+                        <tr>
+                            <td>
+                                <strong>{{ l.name }}</strong>
+                                {% if l.predicta_name and l.predicta_name != l.name %}<br><small class="text-muted">{{ l.predicta_name }}</small>{% endif %}
+                            </td>
+                            <td>{{ l.country }}</td>
+                            <td class="text-center">{{ l.api_id }}</td>
+                            <td class="text-center">
+                                {% if l.has_statistics %}<span class="badge bg-success">✓</span>
+                                {% else %}<span class="badge bg-warning text-dark">parcial</span>{% endif %}
+                            </td>
+                            <td class="text-center">{{ l.current_season|default:'—' }}</td>
+                            <td class="text-center"><strong>{{ l.fixture_count }}</strong></td>
+                            <td class="text-center">{{ l.stats_count }}</td>
+                            <td>
+                                {% if l.backfill_status == 'done' %}<span class="badge bg-success">Completado</span>
+                                {% elif l.backfill_status == 'backfilling' %}<span class="badge bg-primary">Cargando</span>
+                                {% elif l.backfill_status == 'error' %}<span class="badge bg-danger">Error</span>
+                                {% else %}<span class="badge bg-secondary">Pendiente</span>{% endif %}
+                            </td>
+                            <td class="small text-muted">{{ l.last_backfill_at|date:'d/m/Y H:i'|default:'—' }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="9" class="text-center text-muted py-4">Sin ligas que coincidan con los filtros.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -362,22 +203,7 @@
 
 {% block extra_js %}
 <script>
-    // Actualizar hora actual
-    function updateTime() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('es-ES');
-        document.getElementById('currentTime').textContent = timeString;
-    }
-    
-    updateTime();
-    setInterval(updateTime, 1000);
-    
-    // Función para importar archivo
-    function importFile(fileName) {
-        if (confirm(`¿Desea importar el archivo "${fileName}"?`)) {
-            // Redirigir a la página de importación con el archivo preseleccionado
-            window.location.href = `{% url 'football_data:import' %}?file=${encodeURIComponent(fileName)}`;
-        }
-    }
+    // Auto-refresh cada 60s mientras la página esté abierta (para ver avance del backfill)
+    setTimeout(function(){ location.reload(); }, 60000);
 </script>
 {% endblock %}

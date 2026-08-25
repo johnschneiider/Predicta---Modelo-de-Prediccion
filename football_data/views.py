@@ -28,33 +28,59 @@ import json
 
 @method_decorator(login_required, name='dispatch')
 class FootballDataDashboardView(View):
-    """Dashboard principal de datos de fútbol"""
-    
+    """Dashboard de estado de sincronización API-Football (fuente de datos)."""
+
     def get(self, request):
-        service = ExcelImportService()
-        
-        # Obtener estadísticas
-        stats = service.get_import_statistics()
-        
-        # Obtener ligas con estadísticas
-        leagues = League.objects.annotate(
-            match_count=Count('matches'),
-            latest_match=Max('matches__date')
-        ).order_by('-match_count')
-        
-        # Obtener partidos recientes
-        recent_matches = Match.objects.select_related('league').order_by('-date')[:10]
-        
-        # Obtener archivos disponibles
-        available_files = service.get_available_files()
-        
-        context = {
-            'stats': stats,
-            'leagues': leagues,
-            'recent_matches': recent_matches,
-            'available_files': available_files,
+        from football_api.models import ApiLeague, ApiFixture, TeamFixtureStat, ApiTeam, SyncState
+
+        qs = ApiLeague.objects.annotate(
+            fixture_count=Count('fixtures', distinct=True),
+            stats_count=Count('fixtures__stats', distinct=True),
+        ).order_by('priority', 'country', 'name')
+
+        q = request.GET.get('q', '').strip()
+        country = request.GET.get('country', '').strip()
+        status = request.GET.get('status', '').strip()
+        coverage = request.GET.get('coverage', '').strip()
+
+        if q:
+            qs = qs.filter(Q(name__icontains=q) | Q(country__icontains=q) | Q(predicta_name__icontains=q))
+        if country:
+            qs = qs.filter(country=country)
+        if status:
+            qs = qs.filter(backfill_status=status)
+        if coverage == 'yes':
+            qs = qs.filter(has_statistics=True)
+        elif coverage == 'no':
+            qs = qs.filter(has_statistics=False)
+
+        countries = ApiLeague.objects.values_list('country', flat=True).distinct().order_by('country')
+
+        totals = {
+            'leagues': ApiLeague.objects.count(),
+            'fixtures': ApiFixture.objects.count(),
+            'stats': TeamFixtureStat.objects.count(),
+            'teams': ApiTeam.objects.count(),
+            'done': ApiLeague.objects.filter(backfill_status='done').count(),
+            'backfilling': ApiLeague.objects.filter(backfill_status='backfilling').count(),
+            'pending': ApiLeague.objects.filter(backfill_status='pending').count(),
+            'error': ApiLeague.objects.filter(backfill_status='error').count(),
         }
-        
+
+        sync_states = {s.key: s for s in SyncState.objects.all()}
+
+        state_cards = [
+            {'label': 'Backfill histórico (2 temporadas)', 'icon': 'fas fa-history', 'st': sync_states.get('backfill')},
+            {'label': 'Sync diario (próximos partidos)', 'icon': 'fas fa-calendar-check', 'st': sync_states.get('daily')},
+        ]
+
+        context = {
+            'totals': totals,
+            'leagues': qs,
+            'countries': countries,
+            'state_cards': state_cards,
+            'filters': {'q': q, 'country': country, 'status': status, 'coverage': coverage},
+        }
         return render(request, 'football_data/dashboard.html', context)
 
 
