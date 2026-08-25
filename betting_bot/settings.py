@@ -98,6 +98,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        # 2026-08-25: timeout alto para convivir con backfill/auto_betting concurrentes
+        # (journal mode WAL se activa a nivel de archivo: PRAGMA journal_mode=WAL).
+        'OPTIONS': {'timeout': 30},
     }
 }
 
