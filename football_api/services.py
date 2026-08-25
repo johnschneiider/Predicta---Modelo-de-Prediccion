@@ -4,6 +4,7 @@ Lógica de sincronización: seed de ligas, backfill histórico y sync diario.
 
 import logging
 from datetime import datetime, timedelta
+from decimal import Decimal
 from django.utils import timezone
 
 from .client import ApiFootballClient, QuotaExceeded, RateLimitError
@@ -282,6 +283,10 @@ def run_backfill(fetch_stats=True, max_leagues=None):
                 league.backfill_status = "done"
                 league.last_backfill_at = timezone.now()
                 league.save(update_fields=["backfill_status", "last_backfill_at"])
+                try:
+                    populate_legacy_matches(league_api_id=league.api_id, clear_first=True)
+                except Exception:
+                    logger.exception("Error poblando Match legacy para %s", league.name)
             except QuotaExceeded:
                 raise  # pausa todo el run
             except Exception as e:
@@ -365,3 +370,120 @@ def run_daily_sync(days_ahead=7, days_back=3):
     finally:
         state.save(update_fields=["status", "error_log", "updated_at"])
     return state.status, total_fx, total_st
+
+
+# ── ETL: poblar la tabla legacy `football_data.Match` desde API-Football ──
+# Los motores (corners_model, xg_shots, DixonColes) leen `Match`; esto cambia
+# SOLO el origen de datos (API-Football en vez de Excel/Flashscore), sin
+# reentrenar ni tocar la lógica de los motores.
+
+
+def _legacy_league_map():
+    """ApiLeague.api_id -> football_data.League.id (cache)."""
+    from football_data.models import League as LegacyLeague
+    m = {}
+    for al in ApiLeague.objects.all():
+        if al.predicta_league_id:
+            m[al.api_id] = al.predicta_league_id
+            continue
+        lg = LegacyLeague.objects.filter(name=al.predicta_name).first()
+        if lg:
+            m[al.api_id] = lg.id
+            al.predicta_league_id = lg.id
+            al.save(update_fields=["predicta_league_id"])
+    return m
+
+
+def _dec(value):
+    if value is None:
+        return None
+    try:
+        return Decimal(str(round(float(value), 3)))
+    except (TypeError, ValueError):
+        return None
+
+
+def _ftr(h, a):
+    if h is None or a is None:
+        return None
+    return "H" if h > a else ("A" if a > h else "D")
+
+
+def populate_legacy_matches(league_api_id=None, clear_first=False):
+    """Mapea ApiFixture (con stats) -> football_data.Match.
+
+    - league_api_id: si se indica, solo procesa esa liga (ApiLeague.api_id).
+    - clear_first: borra los Match legacy de la liga antes de insertar los nuevos
+      (evita duplicados por nombres de equipos distintos entre fuentes).
+
+    Devuelve (creados, actualizados, borrados).
+    """
+    from football_data.models import Match as LegacyMatch
+
+    league_map = _legacy_league_map()
+    leagues = ApiLeague.objects.all()
+    if league_api_id:
+        leagues = leagues.filter(api_id=league_api_id)
+
+    created = updated = deleted = 0
+    for al in leagues:
+        lid = league_map.get(al.api_id)
+        if not lid:
+            continue
+        if clear_first:
+            n, _ = LegacyMatch.objects.filter(league_id=lid).delete()
+            deleted += n
+
+        qs = ApiFixture.objects.filter(league=al, has_statistics=True).select_related("home_team", "away_team")
+        for fx in qs.iterator():
+            stats = {s.team_id: s for s in fx.stats.all()}
+            hs = stats.get(fx.home_team_id)
+            aws = stats.get(fx.away_team_id)
+
+            fthg = fx.home_score
+            ftag = fx.away_score
+            hc = hs.corner_kicks if hs else None
+            ac = aws.corner_kicks if aws else None
+
+            defaults = {
+                "date": fx.date.date(),
+                "time": fx.date.time(),
+                "home_team": fx.home_team.name,
+                "away_team": fx.away_team.name,
+                "fthg": fthg,
+                "ftag": ftag,
+                "ftr": _ftr(fthg, ftag),
+                "hthg": fx.ht_home,
+                "htag": fx.ht_away,
+                "htr": _ftr(fx.ht_home, fx.ht_away),
+                "hs": hs.total_shots if hs else None,
+                "as_field": aws.total_shots if aws else None,
+                "hst": hs.shots_on_goal if hs else None,
+                "ast": aws.shots_on_goal if aws else None,
+                "hf": hs.fouls if hs else None,
+                "af": aws.fouls if aws else None,
+                "hc": hc,
+                "ac": ac,
+                "hy": hs.yellow_cards if hs else None,
+                "ay": aws.yellow_cards if aws else None,
+                "hr": hs.red_cards if hs else None,
+                "ar": aws.red_cards if aws else None,
+                "xg_home": _dec(hs.expected_goals if hs else None),
+                "xg_away": _dec(aws.expected_goals if aws else None),
+                "corners_total": (hc + ac) if (hc is not None and ac is not None) else None,
+                "corners_home": hc,
+                "corners_away": ac,
+                "both_teams_score": (fthg > 0 and ftag > 0) if (fthg is not None and ftag is not None) else None,
+            }
+            obj, was_created = LegacyMatch.objects.update_or_create(
+                league_id=lid,
+                date=defaults["date"],
+                home_team=defaults["home_team"],
+                away_team=defaults["away_team"],
+                defaults=defaults,
+            )
+            if was_created:
+                created += 1
+            else:
+                updated += 1
+    return created, updated, deleted

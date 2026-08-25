@@ -14,4 +14,7 @@ venv/bin/python manage.py sync_daily >> "$LOG" 2>&1 || echo "$(date '+%F %T') sy
 echo "$(date '+%F %T') === backfill_leagues ===" >> "$LOG"
 venv/bin/python manage.py backfill_leagues >> "$LOG" 2>&1 || echo "$(date '+%F %T') backfill_leagues ERROR" >> "$LOG"
 
+echo "$(date '+%F %T') === populate_legacy (Match <- API) ===" >> "$LOG"
+venv/bin/python manage.py populate_legacy --clear >> "$LOG" 2>&1 || echo "$(date '+%F %T') populate_legacy ERROR" >> "$LOG"
+
 echo "$(date '+%F %T') === done ===" >> "$LOG"
