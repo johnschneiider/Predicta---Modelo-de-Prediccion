@@ -12,7 +12,13 @@ echo "$(date '+%F %T') === sync_daily ===" >> "$LOG"
 venv/bin/python manage.py sync_daily >> "$LOG" 2>&1 || echo "$(date '+%F %T') sync_daily ERROR" >> "$LOG"
 
 echo "$(date '+%F %T') === backfill_leagues ===" >> "$LOG"
-venv/bin/python manage.py backfill_leagues >> "$LOG" 2>&1 || echo "$(date '+%F %T') backfill_leagues ERROR" >> "$LOG"
+# Guard 2026-08-25: no arrancar un segundo backfill si ya hay uno corriendo
+# (evita doble procesamiento y quemar cuota en la misma liga).
+if pgrep -f "manage.py backfill_leagues" >/dev/null 2>&1; then
+  echo "$(date '+%F %T') backfill_leagues SKIP: ya hay un backfill corriendo" >> "$LOG"
+else
+  venv/bin/python manage.py backfill_leagues >> "$LOG" 2>&1 || echo "$(date '+%F %T') backfill_leagues ERROR" >> "$LOG"
+fi
 
 echo "$(date '+%F %T') === populate_legacy (Match <- API) ===" >> "$LOG"
 venv/bin/python manage.py populate_legacy --clear >> "$LOG" 2>&1 || echo "$(date '+%F %T') populate_legacy ERROR" >> "$LOG"

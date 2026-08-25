@@ -96,7 +96,11 @@ def seed_leagues(client=None):
             if s.get("current"):
                 current = year
 
-        target_years = sorted([current - i for i in range(3)])
+        # Fix 2026-08-25: algunas ligas (copas) no traen temporada "current".
+        # Usamos la última temporada disponible como referencia.
+        if current is None and seasons:
+            current = max(s["year"] for s in seasons)
+        target_years = sorted([current - i for i in range(3)]) if current else []
         cov = {"statistics": False, "odds": False, "predictions": False}
         for y in target_years:
             yc = year_cov.get(y, {})
