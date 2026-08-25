@@ -35,9 +35,11 @@ def _api_key():
 API_KEY = _api_key()
 
 DAILY_LIMIT = 75000
-MINUTE_LIMIT = 300
+MINUTE_LIMIT = 450
 # Margen de seguridad: nunca gastar las últimas N requests del día
 DAILY_BUFFER = 10
+# Seguridad sobre el rate-limit por minuto (parar un poco antes de 450)
+MINUTE_BUFFER = 20
 
 
 class QuotaExceeded(Exception):
@@ -59,6 +61,28 @@ class ApiFootballClient:
         self.daily_limit = DAILY_LIMIT
         self.minute_remaining = None
         self.requests_made = 0
+        # Throttle por minuto: marca de tiempo de inicio de la ventana actual
+        self._minute_start = None
+        self._minute_count = 0
+
+    def _throttle(self):
+        """Evita superar el rate-limit por minuto durmiendo si hace falta."""
+        import time as _t
+        now = _t.monotonic()
+        # resetear ventana cada 60s
+        if self._minute_start is None or (now - self._minute_start) >= 60:
+            self._minute_start = now
+            self._minute_count = 0
+        if self._minute_count > 0 and now - self._minute_start < 60:
+            self._minute_count += 1
+            if self._minute_count >= (MINUTE_LIMIT - MINUTE_BUFFER):
+                wait = 60 - (now - self._minute_start) + 0.5
+                if wait > 0:
+                    time.sleep(wait)
+                self._minute_start = _t.monotonic()
+                self._minute_count = 0
+        else:
+            self._minute_count = 1
 
     def _get(self, endpoint, params=None, retries=3):
         url = f"{BASE_URL}/{endpoint}"
@@ -68,6 +92,7 @@ class ApiFootballClient:
         for attempt in range(retries):
             # Pre-check de cuota diaria antes de gastar un request
             self.check_quota()
+            self._throttle()
             resp = self.session.get(url, timeout=30)
             self._update_limits(resp)
 

@@ -289,6 +289,11 @@ def run_backfill(fetch_stats=True, max_leagues=None):
                     logger.exception("Error poblando Match legacy para %s", league.name)
             except QuotaExceeded:
                 raise  # pausa todo el run
+            except RateLimitError as e:
+                # Rate-limit por minuto: no es error fatal, deja la liga pendiente para reintentar
+                league.backfill_status = "pending"
+                league.save(update_fields=["backfill_status"])
+                logger.warning("Rate-limit en %s (%s): %s — queda pendiente", league.name, league.api_id, e)
             except Exception as e:
                 league.backfill_status = "error"
                 league.save(update_fields=["backfill_status"])
