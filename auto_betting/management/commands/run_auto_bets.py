@@ -230,7 +230,10 @@ class Command(BaseCommand):
         # Controles globales (auditoría 2026-08-23): cuota mínima global,
         # stop-loss diario, tope de exposición por evento, cap de calibración.
         gcfg = get_global_config()
-        cuota_minima_efectiva = max(config.cuota_minima, gcfg.get('cuota_minima_global', 2.5) or 0)
+        # Cuota por usuario (2026-08-25): la cuota mínima de cada cuenta se toma
+        # SOLO de su propia config (/auto-betting/configuracion/). El piso global
+        # (cuota_minima_global) ya no pisa la config per-user.
+        cuota_minima_efectiva = config.cuota_minima
         stop_loss_diario = gcfg.get('stop_loss_diario_cop', 0) or 0
         max_exp_evento = gcfg.get('max_exposicion_evento_cop', 0) or 0
         calib_cap = gcfg.get('calib_cap', 0.58) or 0.58
@@ -305,10 +308,17 @@ class Command(BaseCommand):
             # 6. Selección por EV + filtros por SUBMERCADO (mercado+lado, ej.
             # corners_over vs corners_under). Fuente: MarketFilterConfig
             # (global, editable solo por admin en /auto-betting/configuracion/).
+            # Cuota por usuario (2026-08-25): las cuotas mínimas globales por
+            # submercado (MarketFilterConfig.*_min_cuota) ya no se aplican —
+            # serían un piso global que pisaría la cuota mínima per-user.
+            # Se neutralizan (0) y queda solo cuota_minima_efectiva del usuario.
+            market_filters = get_market_filters()
+            market_filters = {k: {**v, 'min_cuota': 0.0} for k, v in market_filters.items()}
+
             candidates = select_bets(
                 markets, cuota_minima_efectiva,
                 min_p=0.50, min_confidence=0.35,
-                market_filters=get_market_filters(),
+                market_filters=market_filters,
                 calib_cap=calib_cap,
             )
             if not candidates:

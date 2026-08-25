@@ -305,7 +305,7 @@ def configuracion_umbrales(request):
 
     globales = [
         {'field': form['cuota_minima_global'], 'label': 'Cuota mínima global',
-         'help': 'Piso de cuota para TODO el sistema (reemplaza el 2.0 per-user).'},
+         'help': '⚠️ Ya no se aplica (25-Ago-2026): la cuota mínima la define cada usuario en su propia config. Campo conservado por compatibilidad.'},
         {'field': form['stop_loss_diario_cop'], 'label': 'Stop-loss diario (COP)',
          'help': 'Si el P&L del día (solo sistema) baja de esto, se detiene el auto-betting. 0 = off.'},
         {'field': form['max_exposicion_evento_cop'], 'label': 'Máx. exposición por evento (COP)',

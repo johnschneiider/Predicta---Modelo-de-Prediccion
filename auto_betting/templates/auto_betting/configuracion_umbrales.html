@@ -109,7 +109,7 @@
               {% if sf.ev.errors %}<div class="cfg-error">{{ sf.ev.errors|striptags }}</div>{% endif %}
             </div>
             <div class="cfg-field">
-              <label for="{{ sf.cuota.id_for_label }}">Cuota mín</label>
+              <label for="{{ sf.cuota.id_for_label }}" title="Ya no se aplica: la cuota mínima es por usuario (config de cada cuenta)">Cuota mín (no aplica)</label>
               {{ sf.cuota }}
               {% if sf.cuota.errors %}<div class="cfg-error">{{ sf.cuota.errors|striptags }}</div>{% endif %}
             </div>
