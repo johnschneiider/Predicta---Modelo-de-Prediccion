@@ -201,8 +201,8 @@ class SyncState(models.Model):
     error_log = models.TextField(blank=True, verbose_name="Errores")
 
     requests_today = models.IntegerField(default=0, verbose_name="Requests hoy")
-    limit_day = models.IntegerField(default=7500, verbose_name="Límite diario")
-    requests_remaining = models.IntegerField(default=7500, verbose_name="Requests restantes")
+    limit_day = models.IntegerField(default=75000, verbose_name="Límite diario")
+    requests_remaining = models.IntegerField(default=75000, verbose_name="Requests restantes")
     quota_date = models.DateField(null=True, blank=True, verbose_name="Fecha de cuota")
 
     last_run_at = models.DateTimeField(null=True, blank=True, verbose_name="Última corrida")

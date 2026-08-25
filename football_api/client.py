@@ -3,7 +3,7 @@ Cliente HTTP para API-Football v3 con control de rate-limit.
 
 Dos límites:
 - Por minuto: 300 req (header `x-ratelimit-remaining`).
-- Por día: 7500 req (header `x-ratelimit-requests-remaining`).
+- Por día: 75000 req (header `x-ratelimit-requests-remaining`).
 
 Cuando el límite diario se agota -> `QuotaExceeded` (el cron pausa y reanuda en 24h).
 """
@@ -34,7 +34,7 @@ def _api_key():
 
 API_KEY = _api_key()
 
-DAILY_LIMIT = 7500
+DAILY_LIMIT = 75000
 MINUTE_LIMIT = 300
 # Margen de seguridad: nunca gastar las últimas N requests del día
 DAILY_BUFFER = 10
