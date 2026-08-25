@@ -54,6 +54,7 @@ LEAGUE_MAPPING = {
     'football/argentina/liga_profesional_argentina': 'Primera Division (Argentina)',
     # Colombia
     'football/colombia/primera_a': 'Primera A (Colombia)',
+    'football/colombia/liga_betplay_dimayor': 'Primera A (Colombia)',  # BetPlay renombró el path (25-Ago-2026)
     'football/colombia/torneo_betplay_dimayor': 'Primera B (Colombia)',
     # ── 14 ligas nuevas (2026-08-17) ──
     'football/ecuador/liga_pro': 'Liga Pro (Ecuador)',
