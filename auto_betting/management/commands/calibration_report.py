@@ -87,6 +87,7 @@ class Command(BaseCommand):
         self.stdout.write('-' * 95)
 
         alerts = []
+        warns = []
         for key in sorted(buckets):
             b = buckets[key]
             n = b['n']
@@ -102,6 +103,7 @@ class Command(BaseCommand):
                 alerts.append((key, n, wr, p_avg, gap))
             elif gap <= -WARN_GAP_PP:
                 verdict = '🟡 SOSPECHOSO'
+                warns.append((key, n, wr, p_avg, gap))
             elif gap >= WARN_GAP_PP:
                 verdict = '🟢 mejor de lo dicho'
             else:
@@ -130,9 +132,33 @@ class Command(BaseCommand):
                     f"  • {key}: WR {wr:.0f}% vs P {p_avg:.0f}% "
                     f"({gap:+.0f}pp, n={n})"
                 )
+            if warns:
+                msg_lines.append(
+                    f"⚠️ Sospechosos (−10 a −20pp, vigilar): {len(warns)} submercados"
+                )
+                for key, n, wr, p_avg, gap in warns:
+                    msg_lines.append(
+                        f"  • {key}: WR {wr:.0f}% vs P {p_avg:.0f}% "
+                        f"({gap:+.0f}pp, n={n})"
+                    )
             msg = "\n".join(msg_lines)
             self.stdout.write(self.style.ERROR("\n" + msg))
             logger.error(msg)
+        elif warns:
+            # FIX 2026-08-31: los 🟡 (−10 a −20pp) también se reportan como
+            # WARNING visible en logs (antes pasaban desapercibidos: tiros a
+            # puerta sangró −15-18pp durante días sin ninguna alerta).
+            msg_lines = [
+                f"⚠️ Submercados sospechosos ({len(warns)}, últimos {days} días):"
+            ]
+            for key, n, wr, p_avg, gap in warns:
+                msg_lines.append(
+                    f"  • {key}: WR {wr:.0f}% vs P {p_avg:.0f}% "
+                    f"({gap:+.0f}pp, n={n})"
+                )
+            msg = "\n".join(msg_lines)
+            self.stdout.write(self.style.WARNING("\n" + msg))
+            logger.warning(msg)
         else:
             self.stdout.write(self.style.SUCCESS(
                 "\n✅ Sin alertas de descalibración."

@@ -6,7 +6,9 @@ bind = "127.0.0.1:8015"
 backlog = 2048
 
 # Worker processes
-workers = 1
+# FIX 2026-08-31: con PostgreSQL (sin 'database is locked') ya es seguro
+# subir de 1 a 3 workers (mejora capacidad de respuesta de la web).
+workers = 3
 worker_class = "sync"
 worker_connections = 1000
 timeout = 300  # 5 minutos - tiempo suficiente para procesar predicciones
