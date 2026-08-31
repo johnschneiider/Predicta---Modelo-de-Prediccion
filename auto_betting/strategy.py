@@ -338,7 +338,12 @@ def get_official_predictions(home_team, away_team, league):
     # de la liga (ventana 730d, misma que validate_market_data), el mercado de
     # goles se descarta por descalibración: el "value" era error del modelo,
     # no ventaja real contra el mercado.
-    GOALS_LAMBDA_MAX_RATIO = 1.25
+    #
+    # FIX CAUSA RAÍZ 2026-08-31: con el motor de ratings Poisson regularizados
+    # (poisson_ratings.py) el λ ya NO se infla (ridge encoge los ratings). El
+    # cap de sanidad se sube a 1.6x como red de seguridad extrema, no como
+    # mecanismo de calibración (era un remiendo para un modelo sin shrinkage).
+    GOALS_LAMBDA_MAX_RATIO = 1.6
     if 'goals_total' in official:
         try:
             from football_data.models import Match
@@ -382,6 +387,56 @@ def get_official_predictions(home_team, away_team, league):
             'yes': official['both_teams_score']['prediction'],
             'confidence': official['both_teams_score']['confidence'],
         }
+
+    # ── SOLUCIÓN DEFINITIVA (2026-08-31): λ del motor Poisson regularizado ──
+    # El pipeline legacy (promedios sin shrinkage) subestima/sobreestima λ y
+    # no discrimina (ver scripts/poisson_bench.py). El motor nuevo se valida
+    # walk-forward y REEMPLAZA el λ de goles y tiros a puerta. Kill-switch:
+    # poner POISSON_RATINGS_ENABLED=False para volver al pipeline legacy.
+    POISSON_RATINGS_ENABLED = True
+    if POISSON_RATINGS_ENABLED:
+        try:
+            from ai_predictions.poisson_ratings import poisson_ratings_engine
+            for market_key in ('goals_total', 'shots_on_target'):
+                m = 'goals' if market_key == 'goals_total' else 'sot'
+                engine_pred = poisson_ratings_engine.predict_total(
+                    home_team, away_team, league, m)
+                if engine_pred and engine_pred.get('lambda'):
+                    lam = engine_pred['lambda']
+                    # red de seguridad extrema también para el motor (1.6x)
+                    if market_key == 'goals_total':
+                        try:
+                            from football_data.models import Match
+                            from django.utils import timezone as _tz
+                            from datetime import timedelta as _td
+                            from django.db.models import Avg as _Avg, F as _F
+                            _cutoff = _tz.now().date() - _td(days=730)
+                            _league_avg = Match.objects.filter(
+                                league=league, date__gte=_cutoff,
+                                fthg__isnull=False, ftag__isnull=False,
+                            ).aggregate(avg=_Avg(_F('fthg') + _F('ftag')))['avg']
+                            if _league_avg and _league_avg > 0 and lam > 1.6 * _league_avg:
+                                logger.warning(
+                                    f'poisson_ratings: λ goles {lam:.2f} > 1.6x promedio '
+                                    f'liga {_league_avg:.2f} — mercado descartado (seguridad)')
+                                continue
+                        except Exception:
+                            pass
+                    result[market_key] = {
+                        'lambda': lam,
+                        'confidence': engine_pred['confidence'],
+                        'method': engine_pred['method'],
+                    }
+                    logger.info(
+                        f'poisson_ratings: {market_key} λ={engine_pred["lambda"]:.2f} '
+                        f'({home_team} vs {away_team}, conf={engine_pred["confidence"]:.2f})')
+                elif market_key in result:
+                    logger.info(
+                        f'poisson_ratings: sin modelo para {market_key} '
+                        f'({home_team} vs {away_team}) — se usa pipeline legacy')
+        except Exception as e:
+            logger.error(f'poisson_ratings override error: {e}')
+
     return result
 
 
@@ -489,7 +544,8 @@ def _get_tier_thresholds(cuota):
 
 def _add_candidate(candidates, market, offer, line, side, p, cuota_minima,
                    confidence=None, min_p=0.50, min_confidence=0.35,
-                   enabled=True, sub_min_ev=0.0, sub_min_cuota=0.0, calib_cap=0.58):
+                   enabled=True, sub_min_ev=0.0, sub_min_cuota=0.0, calib_cap=0.58,
+                   min_line=0.0, max_line=0.0):
     # Submercado apagado desde la config (ej. Córners Under, BTTS No)
     if not enabled:
         return
@@ -500,6 +556,15 @@ def _add_candidate(candidates, market, offer, line, side, p, cuota_minima,
     # Cuota mínima específica del submercado (0 = usa la global/cuota_minima)
     if sub_min_cuota and cuota < sub_min_cuota:
         return
+
+    # Fix 2026-08-31: filtro por línea (solo over/under, donde line no es None).
+    # min_line=9.5 en tiros-under elimina el sangrador de under 7.5/8.5
+    # (WR 27%/40% — el modelo subestima ~2 tiros a puerta).
+    if line is not None:
+        if min_line and line < min_line:
+            return
+        if max_line and line > max_line:
+            return
 
     # Fase 4 — calibrar la probabilidad antes de evaluar (cap configurable)
     p_raw = p
@@ -570,6 +635,8 @@ def _resolve_filters(market_filters, market_key, side, min_p, min_confidence):
         mf.get('enabled', True),
         mf.get('min_ev', 0.0),
         mf.get('min_cuota', 0.0),
+        mf.get('min_line', 0.0),
+        mf.get('max_line', 0.0),
     )
 
 
@@ -615,12 +682,12 @@ def select_bets(markets_data, cuota_minima=2.0, min_p=0.50, min_confidence=0.35,
                     p, side = p_under, 'under'
                 else:
                     continue
-                eff_min_p, eff_min_conf, eff_enabled, eff_min_ev, eff_min_cuota = _resolve_filters(
+                eff_min_p, eff_min_conf, eff_enabled, eff_min_ev, eff_min_cuota, eff_min_line, eff_max_line = _resolve_filters(
                     market_filters, market_key, side, min_p, min_confidence)
                 _add_candidate(candidates, md['market'], offer, line, side, p, cuota_minima,
                               confidence=confidence, min_p=eff_min_p, min_confidence=eff_min_conf,
                               enabled=eff_enabled, sub_min_ev=eff_min_ev, sub_min_cuota=eff_min_cuota,
-                              calib_cap=calib_cap)
+                              calib_cap=calib_cap, min_line=eff_min_line, max_line=eff_max_line)
 
         elif mtype == 'x12':
             probs = md.get('probs') or {}
@@ -636,12 +703,12 @@ def select_bets(markets_data, cuota_minima=2.0, min_p=0.50, min_confidence=0.35,
                     continue
                 if not p:
                     continue
-                eff_min_p, eff_min_conf, eff_enabled, eff_min_ev, eff_min_cuota = _resolve_filters(
+                eff_min_p, eff_min_conf, eff_enabled, eff_min_ev, eff_min_cuota, eff_min_line, eff_max_line = _resolve_filters(
                     market_filters, market_key, side, min_p, min_confidence)
                 _add_candidate(candidates, md['market'], offer, None, side, p, cuota_minima,
                               confidence=confidence, min_p=eff_min_p, min_confidence=eff_min_conf,
                               enabled=eff_enabled, sub_min_ev=eff_min_ev, sub_min_cuota=eff_min_cuota,
-                              calib_cap=calib_cap)
+                              calib_cap=calib_cap, min_line=eff_min_line, max_line=eff_max_line)
 
         elif mtype == 'btts':
             p_yes = md.get('p_yes')
@@ -655,12 +722,12 @@ def select_bets(markets_data, cuota_minima=2.0, min_p=0.50, min_confidence=0.35,
                     p, side = 1.0 - p_yes, 'No'
                 else:
                     continue
-                eff_min_p, eff_min_conf, eff_enabled, eff_min_ev, eff_min_cuota = _resolve_filters(
+                eff_min_p, eff_min_conf, eff_enabled, eff_min_ev, eff_min_cuota, eff_min_line, eff_max_line = _resolve_filters(
                     market_filters, market_key, side, min_p, min_confidence)
                 _add_candidate(candidates, md['market'], offer, None, side, p, cuota_minima,
                               confidence=confidence, min_p=eff_min_p, min_confidence=eff_min_conf,
                               enabled=eff_enabled, sub_min_ev=eff_min_ev, sub_min_cuota=eff_min_cuota,
-                              calib_cap=calib_cap)
+                              calib_cap=calib_cap, min_line=eff_min_line, max_line=eff_max_line)
 
     candidates.sort(key=lambda x: x['ev'], reverse=True)
     return candidates

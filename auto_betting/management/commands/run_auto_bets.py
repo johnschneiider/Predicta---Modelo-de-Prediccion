@@ -46,21 +46,10 @@ MARKET_LABELS = {
     'btts': 'Ambos Equipos Marcarán',
 }
 
-# Tope diario de apuestas por SUBMERCADO (mercado+lado, ej. goles-over).
-# Fix 2026-08-23: el 23-Ago el sistema colocó 15 apuestas de goles-over el
-# mismo día, todas correlacionadas al mismo error de calibración del modelo
-# (λ inflado) → 13 perdidas juntas. Este tope corta la correlación: aunque el
-# modelo esté mal en un submercado, el daño diario queda acotado.
-MAX_BETS_PER_SUBMARKET_DAILY = 5
-
-
-def _side_prefix(side):
-    """Prefijo de selección para agrupar por lado (Over/Under/Sí/No/1/X/2)."""
-    if side == 'over':
-        return 'Over'
-    if side == 'under':
-        return 'Under'
-    return side
+# 2026-08-29: tope diario por SUBMERCADO eliminado por decisión de John.
+# Antes existía MAX_BETS_PER_SUBMARKET_DAILY = 5 (5 apuestas/día por
+# mercado+lado). Sin ese tope, se apuesta TODOS los candidatos válidos
+# (sujetos solo a max_apuestas_diarias + deduplicación por evento+mercado).
 
 
 def find_predicta_league(match):
@@ -343,24 +332,6 @@ class Command(BaseCommand):
                 if ya_apostado_este_mercado:
                     continue
 
-                # Tope diario por submercado (mercado+lado). Fix 2026-08-23:
-                # evita que un modelo descalibrado queme el día entero en un
-                # solo tipo de apuesta correlacionada (ej. 15 goles-over).
-                side_prefix = _side_prefix(best['side'])
-                count_submercado = AutoBet.objects.filter(
-                    usuario=owner, creado__date=hoy,
-                    mercado=mercado_label_check,
-                    seleccion__startswith=side_prefix,
-                ).count()
-                if count_submercado >= MAX_BETS_PER_SUBMARKET_DAILY:
-                    self.stdout.write(
-                        f"  ⛔ Tope diario por submercado alcanzado "
-                        f"({mercado_label_check} {side_prefix}: "
-                        f"{count_submercado}/{MAX_BETS_PER_SUBMARKET_DAILY}). "
-                        f"Saltando {home_team} vs {away_team}."
-                    )
-                    continue
-
                 # Tope de exposición combinada (todas las cuentas) por
                 # evento+mercado. Suma stake ya colocado (OPEN/WIN/LOSE/VOID)
                 # de TODOS los usuarios + el stake propuesto.
@@ -413,6 +384,8 @@ class Command(BaseCommand):
                         cuota=best['cuota'],
                         corners_predichos=pred_value,
                         predicta_prob=round(best['p'] * 100, 2),
+                        predicta_prob_raw=round((best.get('p_raw') or best['p']) * 100, 2),
+                        confidence=round(best.get('confidence', 0) * 100, 2),
                         edge=round((best['p'] - 1.0 / best['cuota']) * 100, 2),
                         ev=round(best['ev'], 4),
                         coupon_ref=place_resp.get('coupon_ref'),

@@ -95,6 +95,13 @@ class MarketFilterConfig(models.Model):
     shots_on_target_under_enabled = models.BooleanField(default=True, verbose_name="Tiros a puerta Under — Activo")
     shots_on_target_under_min_ev = models.FloatField(default=0.0, verbose_name="Tiros a puerta Under — EV mínimo")
     shots_on_target_under_min_cuota = models.FloatField(default=0.0, verbose_name="Tiros a puerta Under — Cuota mínima (0=usa global)")
+    # Fix 2026-08-31: filtro por línea. Los under de línea baja (7.5/8.5) sangran
+    # (WR 27%/40%) porque el modelo subestima ~2 tiros; el under 9.5+ sí rinde (80%).
+    # min_line=9.5 por defecto => solo se apuesta Under de línea >= 9.5.
+    shots_on_target_under_min_line = models.FloatField(default=9.5, verbose_name="Tiros a puerta Under — Línea mínima")
+    shots_on_target_under_max_line = models.FloatField(default=0.0, verbose_name="Tiros a puerta Under — Línea máxima (0=sin tope)")
+    shots_on_target_over_min_line = models.FloatField(default=0.0, verbose_name="Tiros a puerta Over — Línea mínima")
+    shots_on_target_over_max_line = models.FloatField(default=0.0, verbose_name="Tiros a puerta Over — Línea máxima (0=sin tope)")
 
     # Ambos equipos marcan (BTTS)
     btts_si_min_p = models.FloatField(default=0.52, verbose_name="BTTS Sí — P mínima")
@@ -169,11 +176,13 @@ class MarketFilterConfig(models.Model):
                 'min_p': self.shots_on_target_over_min_p, 'min_confidence': self.shots_on_target_over_min_confidence,
                 'enabled': self.shots_on_target_over_enabled, 'min_ev': self.shots_on_target_over_min_ev,
                 'min_cuota': self.shots_on_target_over_min_cuota,
+                'min_line': self.shots_on_target_over_min_line, 'max_line': self.shots_on_target_over_max_line,
             },
             'shots_on_target_under': {
                 'min_p': self.shots_on_target_under_min_p, 'min_confidence': self.shots_on_target_under_min_confidence,
                 'enabled': self.shots_on_target_under_enabled, 'min_ev': self.shots_on_target_under_min_ev,
                 'min_cuota': self.shots_on_target_under_min_cuota,
+                'min_line': self.shots_on_target_under_min_line, 'max_line': self.shots_on_target_under_max_line,
             },
             'btts_si': {
                 'min_p': self.btts_si_min_p, 'min_confidence': self.btts_si_min_confidence,
@@ -233,6 +242,11 @@ class AutoBet(models.Model):
     # Datos de la predicción
     corners_predichos = models.FloatField(verbose_name="Córners predichos")
     predicta_prob = models.FloatField(verbose_name="Probabilidad Predicta (%)")
+    # P cruda del modelo ANTES de calibrate_probability. Persistirla es la base
+    # para re-calibrar con datos reales sin depender de logs (2026-08-31).
+    predicta_prob_raw = models.FloatField(null=True, blank=True,
+                                          verbose_name="Probabilidad cruda (%)")
+    confidence = models.FloatField(null=True, blank=True, verbose_name="Confianza (%)")
     edge = models.FloatField(verbose_name="Edge (%)")
     ev = models.FloatField(verbose_name="EV")
 
