@@ -397,8 +397,9 @@ def get_official_predictions(home_team, away_team, league):
     if POISSON_RATINGS_ENABLED:
         try:
             from ai_predictions.poisson_ratings import poisson_ratings_engine
-            for market_key in ('goals_total', 'shots_on_target'):
-                m = 'goals' if market_key == 'goals_total' else 'sot'
+            for market_key in ('goals_total', 'shots_on_target', 'corners_total'):
+                m = {'goals_total': 'goals', 'shots_on_target': 'sot',
+                     'corners_total': 'corners'}[market_key]
                 engine_pred = poisson_ratings_engine.predict_total(
                     home_team, away_team, league, m)
                 if engine_pred and engine_pred.get('lambda'):
@@ -568,7 +569,17 @@ def _add_candidate(candidates, market, offer, line, side, p, cuota_minima,
 
     # Fase 4 — calibrar la probabilidad antes de evaluar (cap configurable)
     p_raw = p
-    p = calibrate_probability(p, cap=calib_cap)
+    # SOLUCIÓN DEFINITIVA (2026-08-31): los mercados servidos por el motor
+    # Poisson ridge (goles, tiros a puerta, córners) ya producen P honesta
+    # (validada walk-forward: ±5pp). La heurística shrinkage+cap era un
+    # remiendo para el λ roto; aplicarla aquí distorsionaría P honesta
+    # (el cap 0.58 truncaba la cola alta calibrada). Se conserva SOLO para
+    # mercados legacy (BTTS, 1X2) que no pasan por el motor.
+    ENGINE_MARKETS = {'goals', 'shots_on_target', 'corners'}
+    if market in ENGINE_MARKETS:
+        p = min(0.97, max(0.03, p))
+    else:
+        p = calibrate_probability(p, cap=calib_cap)
 
     # Filtro primario: P mínima absoluta (hard floor, no negociable)
     if p < min_p:
