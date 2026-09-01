@@ -244,105 +244,66 @@ def get_official_predictions(home_team, away_team, league):
         dict: {
             'corners_total': {'lambda': float, 'confidence': float},
             'goals_total':   {'lambda': float, 'confidence': float},
-            'shots_total':    {'lambda': float, 'confidence': float},
+            'shots_on_target': {'lambda': float, 'confidence': float},
             'both_teams_score': {'yes': float, 'confidence': float},
         } (solo mercados con datos válidos)
     """
     _setup_django()
 
-    from ai_predictions.official_prediction_model import official_prediction_model
-    from ai_predictions.simple_models import SimplePredictionService, ModeloHibridoGeneral
-    from ai_predictions.corners_model import corners_model
-    from ai_predictions.shots_prediction_model import shots_prediction_model
-    from ai_predictions.xg_shots_model import xg_shots_model
-    from ai_predictions.enhanced_both_teams_score import enhanced_both_teams_score_model
+    from ai_predictions.web_pipeline import build_web_predictions, get_official_prediction
 
     # Fase 3 — Validar cobertura de datos antes de ejecutar cualquier modelo
     coverage = validate_market_data(home_team, away_team, league)
 
+    # ── MOTOR ÚNICO (2026-09-01, decisión de John) ──
+    # Los 4 mercados se calculan con build_web_predictions(), que replica
+    # EXACTAMENTE el pipeline de la web /ai/predict/ (mismos modelos por
+    # mercado + "Predicción Oficial" = promedio ponderado por confianza).
+    # Ya NO se usa el motor poisson_ratings (ridge): la fuente oficial es la web.
+    #
+    # Mercado auto_betting -> pred_type web:
+    #   goals_total      -> goals_total          (Dixon+Avg+Ens+Híbrido)
+    #   shots_on_target  -> shots_on_target_total (shots_prediction + xg_shots)
+    #   corners_total    -> corners_total        (corners_model 40/30/15/15)
+    #   both_teams_score -> both_teams_score     (simples+Enhanced+Híbrido)
+    market_to_web_type = {
+        'goals_total': 'goals_total',
+        'shots_on_target': 'shots_on_target_total',
+        'corners_total': 'corners_total',
+        'both_teams_score': 'both_teams_score',
+    }
+
     all_predictions = {}
+    pred_types_needed = [
+        web_type for market_key, web_type in market_to_web_type.items()
+        if coverage.get(market_key, False)
+    ]
+    if pred_types_needed:
+        all_predictions = build_web_predictions(
+            home_team, away_team, league, prediction_types=pred_types_needed
+        )
 
-    # ── GOLES: Dixon-Coles + Simple Average + Ensemble + Híbrido General ──
-    if coverage.get('goals_total', False):
-        try:
-            simple_service = SimplePredictionService()
-            goals_models = simple_service.get_all_simple_predictions(
-                home_team, away_team, league, 'goals_total'
-            )
+    # ── Predicción Oficial por mercado (la misma que muestra la web) ──
+    official = {}
+    for market_key, web_type in market_to_web_type.items():
+        off = get_official_prediction(all_predictions, web_type)
+        if off:
+            official[market_key] = off
+        else:
+            logger.info(f'get_official_predictions: sin predicción oficial para {market_key} '
+                        f'({home_team} vs {away_team}) — mercado omitido')
 
-            hybrid = ModeloHibridoGeneral()
-            hybrid_pred = hybrid.predecir(home_team, away_team, league, 'goals_total')
-            if hybrid_pred and hybrid_pred.get('prediction', 0) > 0:
-                goals_models.append(hybrid_pred)
-
-            if goals_models:
-                all_predictions['goals_total'] = goals_models
-        except Exception as e:
-            logger.error(f'get_official_predictions - goals pipeline error: {e}')
-    else:
-        logger.info(f'get_official_predictions: saltando goals_total — datos insuficientes')
-
-    # ── TIROS A PUERTA (shots on target): xg_shots_model ──
-    # BetPlay ofrece "Total de tiros a puerta (Resuelta usando Opta Data)"
-    # No ofrece "remates totales" como mercado over/under.
-    if coverage.get('shots_on_target', False):
-        shots_models = []
-        try:
-            pred1 = xg_shots_model.predict_shots_on_target_total(home_team, away_team, league)
-            if pred1:
-                shots_models.append(pred1)
-        except Exception as e:
-            logger.error(f'get_official_predictions - xg_shots_model (on target) error: {e}')
-        if shots_models:
-            all_predictions['shots_on_target'] = shots_models
-    else:
-        logger.info(f'get_official_predictions: saltando shots_on_target — datos insuficientes')
-
-    # ── CÓRNERS: modelo único (ya alineado con la web) ──
-    if coverage.get('corners_total', False):
-        try:
-            corner_pred = corners_model.predecir(home_team, away_team, league, 'corners_total')
-            if corner_pred:
-                all_predictions['corners_total'] = [corner_pred]
-        except Exception as e:
-            logger.error(f'get_official_predictions - corners_model error: {e}')
-    else:
-        logger.info(f'get_official_predictions: saltando corners_total — datos insuficientes')
-
-    # ── BTTS: modelo único (ya alineado con la web) ──
-    if coverage.get('both_teams_score', False):
-        try:
-            btts_prob = enhanced_both_teams_score_model.predict(home_team, away_team, league)
-            if btts_prob is not None:
-                all_predictions['both_teams_score'] = [{
-                    'model_name': 'Enhanced Both Teams Score',
-                    'prediction': float(btts_prob),
-                    'confidence': 0.80,
-                    'total_matches': 100,
-                }]
-        except Exception as e:
-            logger.error(f'get_official_predictions - btts error: {e}')
-    else:
-        logger.info(f'get_official_predictions: saltando both_teams_score — datos insuficientes')
-
-    # ── Calcular predicción oficial (promedio ponderado) ──
-    official = official_prediction_model.calculate_official_predictions(all_predictions)
 
     # ── Formatear resultado ──
     result = {}
 
-    # ── Cap de sanidad de lambda de goles (fix 2026-08-23) ──
-    # Auditoría del 23-Ago: el modelo inflaba λ de goles hasta 1.75x el
-    # promedio real de la liga → P(over) fantasma → 15 apuestas de goles-over
-    # correlacionadas perdidas en un día (−36% ROI). Si λ > 1.25x el promedio
-    # de la liga (ventana 730d, misma que validate_market_data), el mercado de
-    # goles se descarta por descalibración: el "value" era error del modelo,
-    # no ventaja real contra el mercado.
-    #
-    # FIX CAUSA RAÍZ 2026-08-31: con el motor de ratings Poisson regularizados
-    # (poisson_ratings.py) el λ ya NO se infla (ridge encoge los ratings). El
-    # cap de sanidad se sube a 1.6x como red de seguridad extrema, no como
-    # mecanismo de calibración (era un remiendo para un modelo sin shrinkage).
+    # ── Cap de sanidad de lambda de goles (red de seguridad) ──
+    # Si λ > 1.6x el promedio real de la liga (ventana 730d, misma que
+    # validate_market_data), el mercado de goles se descarta: un λ tan alto
+    # indicaría descalibración del pipeline (histórico: 15 apuestas de
+    # goles-over correlacionadas perdidas en un día, −36% ROI).
+    # Con el motor único web (web_pipeline) rara vez se activa; se mantiene
+    # como protección extrema sin alterar el dato de la web.
     GOALS_LAMBDA_MAX_RATIO = 1.6
     if 'goals_total' in official:
         try:
@@ -388,55 +349,12 @@ def get_official_predictions(home_team, away_team, league):
             'confidence': official['both_teams_score']['confidence'],
         }
 
-    # ── SOLUCIÓN DEFINITIVA (2026-08-31): λ del motor Poisson regularizado ──
-    # El pipeline legacy (promedios sin shrinkage) subestima/sobreestima λ y
-    # no discrimina (ver scripts/poisson_bench.py). El motor nuevo se valida
-    # walk-forward y REEMPLAZA el λ de goles y tiros a puerta. Kill-switch:
-    # poner POISSON_RATINGS_ENABLED=False para volver al pipeline legacy.
-    POISSON_RATINGS_ENABLED = True
-    if POISSON_RATINGS_ENABLED:
-        try:
-            from ai_predictions.poisson_ratings import poisson_ratings_engine
-            for market_key in ('goals_total', 'shots_on_target', 'corners_total'):
-                m = {'goals_total': 'goals', 'shots_on_target': 'sot',
-                     'corners_total': 'corners'}[market_key]
-                engine_pred = poisson_ratings_engine.predict_total(
-                    home_team, away_team, league, m)
-                if engine_pred and engine_pred.get('lambda'):
-                    lam = engine_pred['lambda']
-                    # red de seguridad extrema también para el motor (1.6x)
-                    if market_key == 'goals_total':
-                        try:
-                            from football_data.models import Match
-                            from django.utils import timezone as _tz
-                            from datetime import timedelta as _td
-                            from django.db.models import Avg as _Avg, F as _F
-                            _cutoff = _tz.now().date() - _td(days=730)
-                            _league_avg = Match.objects.filter(
-                                league=league, date__gte=_cutoff,
-                                fthg__isnull=False, ftag__isnull=False,
-                            ).aggregate(avg=_Avg(_F('fthg') + _F('ftag')))['avg']
-                            if _league_avg and _league_avg > 0 and lam > 1.6 * _league_avg:
-                                logger.warning(
-                                    f'poisson_ratings: λ goles {lam:.2f} > 1.6x promedio '
-                                    f'liga {_league_avg:.2f} — mercado descartado (seguridad)')
-                                continue
-                        except Exception:
-                            pass
-                    result[market_key] = {
-                        'lambda': lam,
-                        'confidence': engine_pred['confidence'],
-                        'method': engine_pred['method'],
-                    }
-                    logger.info(
-                        f'poisson_ratings: {market_key} λ={engine_pred["lambda"]:.2f} '
-                        f'({home_team} vs {away_team}, conf={engine_pred["confidence"]:.2f})')
-                elif market_key in result:
-                    logger.info(
-                        f'poisson_ratings: sin modelo para {market_key} '
-                        f'({home_team} vs {away_team}) — se usa pipeline legacy')
-        except Exception as e:
-            logger.error(f'poisson_ratings override error: {e}')
+    # ── MOTOR ÚNICO (2026-09-01): fin del override poisson_ratings ──
+    # El motor ridge fue removido del flujo por decisión de John: la fuente
+    # oficial de predicción es la web (/ai/predict/), replicada por
+    # ai_predictions/web_pipeline.py. El λ de goles, córners y tiros a puerta
+    # es EXACTAMENTE el de la "Predicción Oficial" que muestra la web.
+    # (El motor poisson_ratings sigue en el repo solo para análisis/backtests.)
 
     return result
 

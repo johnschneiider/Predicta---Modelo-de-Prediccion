@@ -128,36 +128,39 @@ def compute_poisson_probabilities(mean_value: float) -> Dict:
 
 def generate_full_prediction(home_team: str, away_team: str, league: League) -> Optional[Dict]:
     """
-    Genera TODAS las predicciones de Predicta para un partido usando el MISMO motor
-    que la app original de Predicta (/ai/predict/result/).
+    Genera TODAS las predicciones de Predicta para un partido usando el MOTOR
+    ÚNICO de la web (/ai/predict/) — ai_predictions/web_pipeline.py (2026-09-01).
     
     Usa:
-    - SimplePredictionService + ModeloHibridoGeneral para goles
+    - Predicción Oficial de la web para goles (λ total/home/away) y BTTS
     - corners_model.predecir() para córners (modelo 40/30/15/15)
-    - EnhancedBothTeamsScore para BTS
-    - Poisson bivariado para 1X2 desde lambda_home y lambda_away
+    - Poisson bivariado para 1X2 desde lambda_home y lambda_away (oficiales web)
     """
     try:
-        from ai_predictions.simple_models import SimplePredictionService, ModeloHibridoGeneral
+        from ai_predictions.simple_models import SimplePredictionService
         from ai_predictions.corners_model import corners_model
         from ai_predictions.enhanced_both_teams_score import enhanced_both_teams_score_model
         
         svc = SimplePredictionService()
         
-        # ── 1. Goles local y visitante por separado ──
-        # Usar SimplePredictionService + ModeloHibridoGeneral (igual que la app original)
-        home_goals_simple = svc.get_all_simple_predictions(home_team, away_team, league, 'goals_home')
-        away_goals_simple = svc.get_all_simple_predictions(home_team, away_team, league, 'goals_away')
+        # ── 1. MOTOR ÚNICO (2026-09-01, decisión de John) ──
+        # Goles y BTTS se calculan con build_web_predictions(), que replica
+        # EXACTAMENTE el pipeline de la web /ai/predict/ (mismos modelos por
+        # mercado + "Predicción Oficial" = promedio ponderado por confianza).
+        # λ_total = Predicción Oficial de goals_total de la web (NO la suma de
+        # ensambles de home/away como antes).
+        from ai_predictions.web_pipeline import build_web_predictions, get_official_prediction
+
+        web_preds = build_web_predictions(
+            home_team, away_team, league,
+            prediction_types=['goals_total', 'goals_home', 'goals_away', 'both_teams_score'],
+        )
+        of_total = get_official_prediction(web_preds, 'goals_total')
+        of_home = get_official_prediction(web_preds, 'goals_home')
+        of_away = get_official_prediction(web_preds, 'goals_away')
+        of_bts = get_official_prediction(web_preds, 'both_teams_score')
         
-        if not home_goals_simple or not away_goals_simple:
-            return None
-        
-        # Verificar si hay datos reales (total_matches > 0)
-        # Si no hay datos, no podemos calcular goles/1X2/BTS
-        has_real_data = any(r.get('total_matches', 0) > 0 for r in home_goals_simple) or \
-                         any(r.get('total_matches', 0) > 0 for r in away_goals_simple)
-        
-        if not has_real_data:
+        if not (of_total and of_home and of_away):
             logger.info(f"Sin datos históricos de goles para {home_team} vs {away_team} en {league.name}. Solo córners.")
             # No calcular goles/1X2/BTS. Solo retornar córners si corners_model tiene datos.
             corners_prediction = None
@@ -196,28 +199,11 @@ def generate_full_prediction(home_team: str, away_team: str, league: League) -> 
                 'corners_probs': corners_prediction['probabilities'],
             }
         
-        # Agregar ModeloHibridoGeneral (igual que la app original)
-        try:
-            hybrid_home = ModeloHibridoGeneral().predecir(home_team, away_team, league, 'goals_home')
-            if hybrid_home:
-                home_goals_simple.append(hybrid_home)
-        except Exception as e:
-            logger.warning(f"ModeloHibridoGeneral goals_home falló: {e}")
-        
-        try:
-            hybrid_away = ModeloHibridoGeneral().predecir(home_team, away_team, league, 'goals_away')
-            if hybrid_away:
-                away_goals_simple.append(hybrid_away)
-        except Exception as e:
-            logger.warning(f"ModeloHibridoGeneral goals_away falló: {e}")
-        
-        # Usar Ensemble como predicción principal, fallback al primero
-        home_ensemble = next((r for r in home_goals_simple if 'Ensemble' in r.get('model_name', '')), home_goals_simple[0])
-        away_ensemble = next((r for r in away_goals_simple if 'Ensemble' in r.get('model_name', '')), away_goals_simple[0])
-        
-        lambda_home = home_ensemble['prediction']
-        lambda_away = away_ensemble['prediction']
-        lambda_total = lambda_home + lambda_away
+        # λ = Predicción Oficial de la web (mismo dato en /ai/predict/,
+        # auto_betting y value_betting)
+        lambda_home = float(of_home['prediction'])
+        lambda_away = float(of_away['prediction'])
+        lambda_total = float(of_total['prediction'])
         
         # ── 2. 1X2 con Poisson bivariado ──
         probs_1x2 = bivariate_poisson_1x2(lambda_home, lambda_away)
@@ -225,17 +211,20 @@ def generate_full_prediction(home_team: str, away_team: str, league: League) -> 
         # ── 3. Over/Under goles con Poisson ──
         goals_probs = compute_poisson_probabilities(lambda_total)
         
-        # ── 4. BTS: usar EnhancedBothTeamsScore (igual que la app original) ──
-        p_bts_yes = 0.45  # fallback
-        try:
-            enhanced_prob = enhanced_both_teams_score_model.predict(home_team, away_team, league)
-            p_bts_yes = enhanced_prob
-        except Exception as e:
-            logger.warning(f"EnhancedBothTeamsScore falló, usando Poisson: {e}")
-            # Fallback: P(home>0) * P(away>0)
-            p_home_scores = 1.0 - poisson_pmf(0, lambda_home)
-            p_away_scores = 1.0 - poisson_pmf(0, lambda_away)
-            p_bts_yes = p_home_scores * p_away_scores
+        # ── 4. BTTS: Predicción Oficial de la web (mismo dato que /ai/predict/) ──
+        if of_bts is not None:
+            p_bts_yes = float(of_bts['prediction'])
+        else:
+            p_bts_yes = 0.45  # fallback
+            try:
+                enhanced_prob = enhanced_both_teams_score_model.predict(home_team, away_team, league)
+                p_bts_yes = enhanced_prob
+            except Exception as e:
+                logger.warning(f"EnhancedBothTeamsScore falló, usando Poisson: {e}")
+                # Fallback: P(home>0) * P(away>0)
+                p_home_scores = 1.0 - poisson_pmf(0, lambda_home)
+                p_away_scores = 1.0 - poisson_pmf(0, lambda_away)
+                p_bts_yes = p_home_scores * p_away_scores
         
         p_bts_no = 1.0 - p_bts_yes
         
@@ -275,8 +264,8 @@ def generate_full_prediction(home_team: str, away_team: str, league: League) -> 
             'lambda_home': lambda_home,
             'lambda_away': lambda_away,
             'lambda_total': lambda_total,
-            'confidence': min(home_ensemble.get('confidence', 0.4), away_ensemble.get('confidence', 0.4)),
-            'model_name': 'Poisson Bivariado + ModeloHibridoGeneral + EnhancedBTS + CornersModel',
+            'confidence': min(float(of_home.get('confidence', 0.4)), float(of_away.get('confidence', 0.4))),
+            'model_name': 'Motor único web (/ai/predict/): Predicción Oficial + Poisson Bivariado + CornersModel',
             'probs_1x2': probs_1x2,
             'goals_probs': goals_probs,
             'p_bts_yes': p_bts_yes,

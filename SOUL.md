@@ -1,8 +1,8 @@
 # SOUL.md — Predicta · Integración BetPlay (Kambi)
 
 > Documentación de credenciales, APIs y flujos de la integración con BetPlay para predicta.com.co.
-> **Última actualización:** 2026-08-31
-> **Estado:** Apuestas + historial/tracking DESCIFRADO ✅ · Balance (backend JWT) PENDIENTE ⚠️ · Estrategia v3 FIX ✅ · Umbrales por submercado (Fase 6) ✅ · Investigación patrón dominical + 3 propuestas ✅ (§16) · Filtro por línea tiros (Fase 7) ✅ (§12b) · PostgreSQL (Fase 8) ✅ (§15) · Cron reordenado ✅ (§16) · Diagnóstico calibración (§17)
+> **Última actualización:** 2026-09-01
+> **Estado:** MOTOR ÚNICO DE PREDICCIÓN = WEB ✅ (§21) · PostgreSQL verificado en runtime ✅ (§21) · Apuestas + historial/tracking DESCIFRADO ✅ · Balance (backend JWT) PENDIENTE ⚠️ · Estrategia v3 FIX ✅ · Umbrales por submercado (Fase 6) ✅ · Filtro por línea tiros (Fase 7) ✅ (§12b) · Cron reordenado ✅ (§16) · Hardening operativo ✅ (§20)
 > ⚠️ **SEGURIDAD:** credenciales en texto plano. NO subir a git público ni exponer en logs.
 
 ## 1. Credenciales BetPlay
@@ -344,3 +344,26 @@ P&L domingo 30: −108.355 COP (91 apuestas, 38% WR). Tiros a puerta = 75% de la
 **Monitor de calibración mejorado:** los submercados 🟡 (−10 a −20pp) ahora emiten WARNING visible en `logs/auto_betting.log` (antes solo los 🔴 ≤−20pp alertaban → los tiros sangraron −15-18pp días sin aviso). El cron sigue en 05:25 UTC.
 **Gunicorn 1→3 workers** (`gunicorn_config.py`): seguro ahora con PostgreSQL (el lock de SQLite era la razón del worker único). Verificado 200 OK post-restart.
 **Pendientes conocidos (priorizados):** (1) encriptar `AutoBetConfig.ticket` con Fernet (credenciales en texto plano DB+SOUL.md) · (2) binomial negativa en `poisson_over` (over-dispersión ±3-5pp) · (3) migrar 1X2 al motor (λ_home/λ_away → Skellam) con validación walk-forward · (4) BTTS desde el motor (medido calibrado 70.2 vs 72.6, requiere validación dedicada antes de tocar el modelo actual que rinde 58%) · (5) sincronizar `AutoBet.estado` con resultados en `sync_bet_history` (hoy queda OPEN) · (6) balance/cashout JWT (bloqueado por Cloudflare, requiere DevTools manual).
+
+## 21. Motor único de predicción = WEB (/ai/predict/) — 2026-09-01
+**Decisión de John (01-Sep):** la fuente oficial de verdad de predicciones es la web `https://predicta.com.co/ai/predict/`. Auto_betting y value_betting deben usar EL MISMO dato que la web. Solo se cambió el motor de predicción; todo lo demás (filtros, cobertura, calibración, cron, apuestas) quedó igual.
+
+**Contexto (auditoría 01-Sep):** el fix del 31-Ago (§18) metió el motor `poisson_ratings` (ridge) SOLO en auto_betting (`POISSON_RATINGS_ENABLED=True` en strategy.py), dejando a la web con el pipeline legacy → datos distintos. Ej. Ghazl vs Enppi (01-Sep): auto_betting λ=2.83 → Over 2.5 (perdió, 0-0); web λ=2.11 → Under 2.5. Además auto_betting usaba solo xg_shots para tiros a puerta (web usa 2 modelos) y solo Enhanced para BTTS (web promedia 5).
+
+**Cambios aplicados (commit en git):**
+1. **Nuevo `ai_predictions/web_pipeline.py`** — `build_web_predictions()` replica EXACTO el pipeline de la web (views.py) por mercado + `get_official_prediction()`. Mercados: goals (Dixon+Avg+Ens+Híbrido), córners (corners_model 40/30/15/15), tiros a puerta (shots_prediction + xg_shots), BTTS (simples+Enhanced+Híbrido) → "Predicción Oficial" (promedio ponderado por confianza).
+2. **`auto_betting/strategy.py::get_official_predictions`** — ahora llama `build_web_predictions` para los 4 mercados (mismo dato que la web). **Eliminado el override del ridge** (`POISSON_RATINGS_ENABLED` removido del flujo). Se mantienen: `validate_market_data` (gate de cobertura ≥10 partidos) y el cap de sanidad 1.6x de λ goles (red de seguridad).
+3. **`value_betting/services.py::generate_full_prediction`** — λ_total = Predicción Oficial de goals_total de la web (antes: suma de ensambles home/away); BTTS = oficial web. Contrato de salida intacto.
+
+**PostgreSQL verificado en runtime (no SQLite):** `settings.py` usa `django.db.backends.postgresql` (env DB_NAME/USER/HOST, password en `.env`); runtime confirma `vendor=postgresql` (PostgreSQL 15.19). El `db.sqlite3` de 352 MB en el directorio es un vestigio muerto (no se usa; candidato a archivar).
+
+**Pruebas (01-Sep):**
+- **Ghazl vs Enppi:** web = auto_betting = value_betting → goles λ=2.11, córners λ=8.54, tiros a puerta λ=5.3, BTTS p=0.42. ✔
+- **`scripts/verify_motor_unico.py`:** 39 partidos (24 de las apuestas de hoy + 15 fixtures de mañana) → **0 desajustes reales** entre los 3 motores en todo mercado que ambos generan. Las omisiones del auto_betting son solo el gate de cobertura (esperado).
+- **`scripts/dry_run_auto_bets.py` (flujo real mañana, sin apostar):** login OK, 126 partidos, embudo completo, 5 candidatos. Atlético-MG pasó de Under 7.5 tiros (ridge) a Over 9.5 @2.45 (web λ=10.70) ✔ consistente con la web.
+- `manage.py check` sin errores · `predicta.service` reiniciado, 200 OK.
+
+**Notas:**
+- El motor `poisson_ratings` queda en el repo solo para análisis/backtests (scripts/poisson_bench.py, reopen_analysis.py, backtest_3_sistemas.py). No participa en producción.
+- El cron de apuestas corre 06:10 UTC (01:10 Bogotá) por la reordenación del §16 (sync 05:00 → apuestas 06:10); no es 00:10 Bogotá por diseño.
+- Pendiente heredado: la plantilla `prediction_result.html` etiqueta columnas "Over 1.5/2.5/3.5" pero renderiza `over_1/over_2/over_3` (etiquetado confuso, no afecta el dato del auto_betting).
