@@ -558,7 +558,9 @@ def sync_historial(since_str='2026-08-01', usuario=None):
     if not token:
         return {'error': 'Ticket BetPlay inválido o expirado. Actualízalo en ⚙️ Config BetPlay del menú.'}
 
-    cups = fetch_bet_history(token)
+    # 2026-09-01: rango ampliado a 500 (antes 200) porque cuentas con más de
+    # 200 cupones nunca sincronizaban los más antiguos desde el corte.
+    cups = fetch_bet_history(token, range_size=500)
     # Set de coupon_refs del sistema (AutoBet) para marcar is_system
     system_refs = set(AutoBet.objects.filter(usuario=owner).exclude(coupon_ref__isnull=True)
                       .values_list('coupon_ref', flat=True))
@@ -591,6 +593,32 @@ def sync_historial(since_str='2026-08-01', usuario=None):
             except Exception as e:
                 logger.warning(f'Error capturando snapshot para {ap.coupon_ref}: {e}')
 
+    # 2026-09-01: limpieza de registros fantasma. Si el ticket de la cuenta
+    # cambió (o se pegó el ticket de OTRA cuenta), BetPlay deja de devolver
+    # los cupones de la cuenta anterior y esos registros quedaban mezclados
+    # para siempre. Ahora borramos los registros (desde el corte) que NO
+    # aparecen en el historial real de la cuenta.
+    # Guard: solo si el fetch cubre TODO el rango desde `since` (el cupón más
+    # antiguo devuelto es anterior al corte). Si la cuenta tiene tantos cupones
+    # que el fetch se trunca dentro del rango, no borramos nada (conservador).
+    borrados_ghost = 0
+    if cups:
+        oldest_placed = min(
+            (_parse_iso(c.get('placedDate')) for c in cups if c.get('placedDate')),
+            default=None,
+        )
+        if oldest_placed is not None and oldest_placed < since:
+            refs_betplay = {c.get('couponRef') for c in cups}
+            ghost_qs = HistorialApuesta.objects.filter(
+                usuario=owner, placed_date__gte=since
+            ).exclude(coupon_ref__in=refs_betplay)
+            borrados_ghost, _ = ghost_qs.delete()
+            if borrados_ghost:
+                logger.warning(
+                    f'sync_historial {owner.email}: eliminados {borrados_ghost} registros '
+                    'que no existen en BetPlay (cuenta/ticket distinto o cupón cancelado).'
+                )
+
     return {
         'ok': True,
         'borrados': borrados,
@@ -598,5 +626,6 @@ def sync_historial(since_str='2026-08-01', usuario=None):
         'actualizados': actualizados,
         'omitidos': omitidos,
         'snapshots': snapshots,
+        'borrados_ghost': borrados_ghost,
         'total': HistorialApuesta.objects.filter(usuario=owner).count(),
     }

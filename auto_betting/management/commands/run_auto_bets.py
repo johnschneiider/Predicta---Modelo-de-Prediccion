@@ -238,9 +238,29 @@ class Command(BaseCommand):
                 )
                 return
 
+        # Gestor de capital (2026-09-01): el stake puede ser FIJO (config.stake,
+        # comportamiento histórico) o COMPUESTO (% del balance paralelo).
+        # `None` => NO apostar para este usuario (sin balance declarado, sin
+        # saldo o % por debajo del mínimo). Nadie se perjudica: nunca se
+        # apuesta más de lo que el usuario eligió.
+        from capital.services import resolve_stake
+        stake_kambi, stake_motivo = resolve_stake(config)
+        if stake_kambi is None:
+            razones = {
+                'sin_balance': 'modo compuesto sin balance declarado',
+                'sin_saldo': 'balance paralelo agotado (≤ 0 COP)',
+                'stake_minimo': 'stake calculado por debajo del mínimo configurado',
+            }
+            self.stdout.write(
+                f"⛔ {owner.email}: sin apuestas ({razones.get(stake_motivo, stake_motivo)})."
+            )
+            return
+        stake_cop_efectivo = stake_kambi / 1000.0
+
         self.stdout.write(
             f"🎯 Auto-betting v5 multi-mercado: {disponibles} disponibles "
             f"(cuota ≥ {cuota_minima_efectiva}, P ≥ 50%, conf ≥ 0.35, cap calib {calib_cap})."
+            f" Stake: {stake_cop_efectivo:,.0f} COP [{stake_motivo}]."
         )
 
         # 2. Login
@@ -343,7 +363,7 @@ class Command(BaseCommand):
                     ).aggregate(s=Sum('stake'))['s'] or 0
                     # stake en unidades Kambi (÷1000 = COP)
                     exp_actual_cop = stake_existente / 1000.0
-                    exp_nueva_cop = config.stake / 1000.0
+                    exp_nueva_cop = stake_cop_efectivo
                     if exp_actual_cop + exp_nueva_cop > max_exp_evento:
                         self.stdout.write(
                             f"  ⚠️ Exposición máxima por evento alcanzada "
@@ -358,13 +378,13 @@ class Command(BaseCommand):
                 pred_value = _pred_value(best, markets)
 
                 # 7. Validar
-                success, val_resp = validate_coupon(token, outcome, event_data, config.stake)
+                success, val_resp = validate_coupon(token, outcome, event_data, stake_kambi)
                 if not success:
                     logger.warning(f"Validate falló {match['home']} vs {match['away']} ({market_label}): {val_resp}")
                     continue
 
                 # 8. Colocar
-                success, place_resp = place_bet(token, outcome, event_data, config.stake)
+                success, place_resp = place_bet(token, outcome, event_data, stake_kambi)
                 if not success:
                     logger.error(f"Place falló {match['home']} vs {match['away']} ({market_label}): {place_resp}")
                     continue
@@ -390,7 +410,7 @@ class Command(BaseCommand):
                         ev=round(best['ev'], 4),
                         coupon_ref=place_resp.get('coupon_ref'),
                         bet_ref=place_resp.get('bet_ref'),
-                        stake=config.stake,
+                        stake=stake_kambi,
                         potential_payout=place_resp.get('potential_payout'),
                         estado='OPEN',
                     )

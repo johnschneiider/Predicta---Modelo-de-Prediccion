@@ -173,6 +173,7 @@ LEAGUE_MAPPING = {
     'football/uefa_nations_league': 'UEFA Nations League',
     'football/world_cup_2030': 'World Cup',
     'football/euro_2028': 'European Championship',
+    'football/fifa_intercontinental_cup': 'FIFA Intercontinental Cup',
     'football/champions_league_qualification': 'Champions League',
 }
 

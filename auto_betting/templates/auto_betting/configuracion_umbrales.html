@@ -66,6 +66,25 @@
     padding: 0.8rem 1rem;
     color: var(--text-secondary); font-size: 0.82rem; line-height: 1.5;
   }
+  .cfg-run {
+    margin-top: 1.2rem;
+    background: var(--bg-surface);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg);
+    padding: 1.2rem 1.6rem;
+    display: flex; flex-direction: column; gap: 0.7rem;
+  }
+  .cfg-run h3 { font-size: 0.95rem; margin: 0; color: var(--text-primary); }
+  .cfg-run .g-help { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; }
+  .cfg-run-btn {
+    align-self: flex-start;
+    background: var(--accent-primary); color: #0a0a0a; border: none;
+    border-radius: var(--radius-full); padding: 0.7rem 1.3rem;
+    font-size: 0.9rem; font-weight: 700; cursor: pointer;
+  }
+  .cfg-run-btn:hover { background: var(--accent-hover); }
+  .cfg-run-btn:disabled { opacity: 0.55; cursor: wait; }
+  .cfg-run-status { font-size: 0.82rem; min-height: 1.1rem; color: var(--text-secondary); }
 </style>
 {% endblock %}
 
@@ -132,6 +151,20 @@
       </div>
     </div>
 
+    <div class="cfg-group">
+      <h3>🎯 Filtro por línea — Tiros a puerta</h3>
+      <div class="cfg-global-row">
+        {% for g in line_filters %}
+          <div class="cfg-global-item">
+            <div class="g-label">{{ g.label }}</div>
+            {{ g.field }}
+            {% if g.field.errors %}<div class="cfg-error">{{ g.field.errors|striptags }}</div>{% endif %}
+            <div class="g-help">{{ g.help }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
     <button type="submit" class="cfg-save">💾 Guardar umbrales</button>
     <div class="cfg-meta">
       Última actualización: {{ cfg.actualizado|date:"d/m/Y H:i" }}{% if cfg.actualizado_por %} por {{ cfg.actualizado_por }}{% endif %}.
@@ -143,5 +176,44 @@
     las cuentas del auto-betting (admin y admin2). Solo el administrador principal puede editarla.
     El próximo ciclo del cron ya usará los valores guardados aquí.
   </div>
+
+  <div class="cfg-run">
+    <h3>▶️ Ejecución manual del auto-betting</h3>
+    <div class="g-help">
+      Lanza ahora el auto-betting en segundo plano para <strong>todas las cuentas activas</strong>
+      (las que tienen configuración BetPlay activa). No repite apuestas ya colocadas
+      (deduplicación por usuario + partido + mercado); solo agrega las nuevas que pasen los
+      filtros, hasta el límite diario de cada cuenta. Tarda ~3-8 min.
+    </div>
+    <button type="button" id="btn-run-auto" class="cfg-run-btn">▶️ Ejecutar auto-betting para todas las cuentas</button>
+    <div id="run-status" class="cfg-run-status"></div>
+  </div>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('btn-run-auto');
+      var status = document.getElementById('run-status');
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        status.textContent = '⏳ Lanzando proceso…';
+        var tokenInput = document.querySelector('input[name=csrfmiddlewaretoken]');
+        var headers = {};
+        if (tokenInput) { headers['X-CSRFToken'] = tokenInput.value; }
+        fetch("{% url 'auto_betting:run_manual' %}", {
+          method: 'POST',
+          headers: headers,
+          credentials: 'same-origin'
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            status.textContent = (data.ok ? '✅ ' : '❌ ') + (data.ok ? data.msg : data.error);
+          })
+          .catch(function (e) {
+            status.textContent = '❌ Error de red: ' + e;
+          })
+          .finally(function () { btn.disabled = false; });
+      });
+    })();
+  </script>
 </div>
 {% endblock %}

@@ -14,5 +14,6 @@ urlpatterns = [
     path('admin/usuarios/crear/', views.VistaCrearUsuario.as_view(), name='crear_usuario'),
     path('admin/usuarios/<int:user_id>/editar/', views.VistaEditarUsuario.as_view(), name='editar_usuario'),
     path('admin/usuarios/<int:user_id>/cambiar-contraseña/', views.VistaCambiarContraseña.as_view(), name='cambiar_contraseña'),
+    path('admin/usuarios/<int:user_id>/suspender/', views.vista_suspender_usuario, name='suspender_usuario'),
     path('admin/usuarios/<int:user_id>/eliminar/', views.vista_eliminar_usuario, name='eliminar_usuario'),
 ]

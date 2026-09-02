@@ -13,7 +13,7 @@ django.setup()
 
 from auto_betting.models import AutoBetConfig
 from auto_betting.services import login, fetch_upcoming_matches
-from auto_betting.strategy import select_bets
+from auto_betting.strategy import select_bets, get_market_filters
 from auto_betting.management.commands.run_auto_bets import (
     find_predicta_league, map_teams, _build_market_data, MARKET_LABELS,
 )
@@ -36,6 +36,14 @@ token, rk = login(cfg.ticket, cfg.punter_id)
 print('Login:', 'OK' if token else 'FAIL')
 if not token:
     raise SystemExit(1)
+
+# Gestor de capital: muestra el stake que se usaría (sin apostar nada).
+from capital.services import resolve_stake
+stake_kambi, motivo = resolve_stake(cfg)
+if stake_kambi:
+    print(f'💼 Stake: {stake_kambi // 1000:,.0f} COP [{motivo}]')
+else:
+    print(f'💼 Stake: NO APOSTARÍA [{motivo}]')
 
 matches = fetch_upcoming_matches(cfg.horas_adelante)
 print(f'Partidos próximas {cfg.horas_adelante}h: {len(matches)}\n')
@@ -69,7 +77,12 @@ for m in matches:
     if not markets:
         continue
 
-    candidates = select_bets(markets, cfg.cuota_minima, min_p=0.50, min_confidence=0.35)
+    # Fix 2026-08-31: usar get_market_filters() igual que run_auto_bets para que
+    # el dry-run refleje los umbrales reales (incluido el filtro por línea).
+    market_filters = get_market_filters()
+    market_filters = {k: {**v, 'min_cuota': 0.0} for k, v in market_filters.items()}
+    candidates = select_bets(markets, cfg.cuota_minima, min_p=0.50, min_confidence=0.35,
+                             market_filters=market_filters)
     if not candidates:
         n_no_value += 1
         continue

@@ -16,6 +16,11 @@ _GLOBALES = [
     'cuota_minima_global', 'stop_loss_diario_cop',
     'max_exposicion_evento_cop', 'calib_cap',
 ]
+# Filtro por línea (Fix 2026-08-31): solo tiros a puerta over/under.
+_LINE_FIELDS = [
+    'shots_on_target_over_min_line', 'shots_on_target_over_max_line',
+    'shots_on_target_under_min_line', 'shots_on_target_under_max_line',
+]
 
 
 class AutoBetConfigForm(forms.ModelForm):
@@ -36,7 +41,7 @@ class AutoBetConfigForm(forms.ModelForm):
             'ticket': forms.Textarea(attrs={
                 'rows': 3,
                 'class': 'cfg-input',
-                'placeholder': 'Ticket de login de BetPlay (ej. DED15E71-97A3-325C-E6DB-260816162851)',
+                'placeholder': 'Ticket de login de BetPlay (ej. TU-TICKET-AQUI, ver SOUL.md §2)',
             }),
             'punter_id': forms.TextInput(attrs={'class': 'cfg-input', 'placeholder': 'Tu Punter ID de BetPlay'}),
             'cuota_minima': forms.NumberInput(attrs={'class': 'cfg-input', 'step': '0.05'}),
@@ -83,6 +88,7 @@ class MarketFilterConfigForm(forms.ModelForm):
             + [f'{s}_enabled' for s in _SUBMERCADOS]
             + [f'{s}_min_ev' for s in _SUBMERCADOS]
             + [f'{s}_min_cuota' for s in _SUBMERCADOS]
+            + _LINE_FIELDS
             + _GLOBALES
         )
 
@@ -91,9 +97,12 @@ class MarketFilterConfigForm(forms.ModelForm):
         prob_step = {'class': 'cfg-input', 'step': '0.01', 'min': '0', 'max': '1'}
         cuota_step = {'class': 'cfg-input', 'step': '0.05', 'min': '0'}
         cop_step = {'class': 'cfg-input', 'step': '1000'}
+        line_step = {'class': 'cfg-input', 'step': '0.5', 'min': '0'}
         for name, field in self.fields.items():
             if name.endswith('_enabled'):
                 field.widget = forms.CheckboxInput(attrs={'class': 'cfg-check'})
+            elif name.endswith('_min_line') or name.endswith('_max_line'):
+                field.widget = forms.NumberInput(attrs=line_step)
             elif name.endswith('_min_cuota') or name == 'cuota_minima_global':
                 field.widget = forms.NumberInput(attrs=cuota_step)
             elif name in ('stop_loss_diario_cop', 'max_exposicion_evento_cop'):
@@ -118,6 +127,11 @@ class MarketFilterConfigForm(forms.ModelForm):
                 self.add_error(name, 'Debe estar entre 0.0 y 1.0.')
         # Cuotas mínimas: ≥ 0 (0 = usa global).
         for name in [f'{s}_min_cuota' for s in self._SUBS] + ['cuota_minima_global']:
+            value = cleaned.get(name)
+            if value is not None and value < 0:
+                self.add_error(name, 'No puede ser negativa.')
+        # Líneas: ≥ 0 (0 = sin tope).
+        for name in _LINE_FIELDS:
             value = cleaned.get(name)
             if value is not None and value < 0:
                 self.add_error(name, 'No puede ser negativa.')

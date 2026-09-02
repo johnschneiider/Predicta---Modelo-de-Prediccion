@@ -15,6 +15,14 @@
         {% csrf_token %}
 
         <div class="form-group">
+            <label for="{{ form.username.id_for_label }}" class="form-label">Usuario (username)</label>
+            <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}" class="form-control" value="{{ form.username.value|default:'' }}" required>
+            {% if form.username.errors %}
+                <p style="color:var(--danger);font-size:0.8rem;margin-top:0.25rem;">{{ form.username.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
             <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
             <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" class="form-control" value="{{ form.email.value|default:'' }}">
             {% if form.email.errors %}

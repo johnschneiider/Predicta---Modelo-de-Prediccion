@@ -3,6 +3,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.views import View
+from django.views.decorators.http import require_POST
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.core.paginator import Paginator
@@ -133,6 +134,7 @@ class VistaPanelUsuarios(View):
         page_obj = paginator.get_page(page_number)
         
         context = {
+            'page_obj': page_obj,   # el template itera page_obj.object_list
             'usuarios': page_obj,
             'query': query,
             'total_usuarios': usuarios.count(),
@@ -145,7 +147,7 @@ class VistaCrearUsuario(View):
     Vista para crear nuevos usuarios
     """
     def get(self, request):
-        form = FormularioCrearUsuario()
+        form = FormularioCrearUsuario(initial={'is_active': True})
         return render(request, 'cuentas/crear_usuario.html', {'form': form})
     
     def post(self, request):
@@ -218,3 +220,26 @@ def vista_eliminar_usuario(request, user_id):
         return redirect('cuentas:panel_usuarios')
     
     return render(request, 'cuentas/eliminar_usuario.html', {'usuario': usuario})
+
+@user_passes_test(es_superusuario)
+@require_POST
+def vista_suspender_usuario(request, user_id):
+    """
+    Suspende o reactiva una cuenta (toggle is_active).
+    No permite suspender a otro superusuario ni a uno mismo.
+    """
+    usuario = get_object_or_404(Usuario, id=user_id)
+
+    if usuario.is_superuser:
+        messages.error(request, 'No puedes suspender a un superusuario.')
+        return redirect('cuentas:panel_usuarios')
+    if usuario == request.user:
+        messages.error(request, 'No puedes suspender tu propia cuenta.')
+        return redirect('cuentas:panel_usuarios')
+
+    usuario.is_active = not usuario.is_active
+    usuario.save(update_fields=['is_active'])
+
+    estado = 'suspendida' if not usuario.is_active else 'reactivada'
+    messages.success(request, f'Cuenta de {usuario.get_full_name()} {estado} exitosamente.')
+    return redirect('cuentas:panel_usuarios')

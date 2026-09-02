@@ -206,8 +206,12 @@ class FormularioEditarUsuario(forms.ModelForm):
     """
     class Meta:
         model = Usuario
-        fields = ('email', 'first_name', 'last_name', 'is_active', 'is_staff')
+        fields = ('username', 'email', 'first_name', 'last_name', 'is_active', 'is_staff')
         widgets = {
+            'username': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'usuario'
+            }),
             'email': forms.EmailInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'usuario@ejemplo.com'
@@ -234,6 +238,12 @@ class FormularioEditarUsuario(forms.ModelForm):
         if Usuario.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError("Ya existe una cuenta con este correo electrónico.")
         return email
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if Usuario.objects.filter(username=username).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("Ya existe una cuenta con este usuario.")
+        return username
 
 class FormularioCambiarContraseña(forms.Form):
     """

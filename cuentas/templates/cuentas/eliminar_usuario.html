@@ -14,12 +14,13 @@
     <div style="font-size:3rem;margin-bottom:1rem;">⚠️</div>
     <h3>¿Eliminar a {{ usuario.get_full_name }}?</h3>
     <p style="color:var(--text-secondary);margin:1rem 0;">{{ usuario.email }}<br>Registrado: {{ usuario.fecha_registro|date:"d/m/Y" }}</p>
+    <p style="color:var(--danger);font-size:0.85rem;margin:1rem auto;max-width:420px;">⚠️ Al eliminar se borran también sus apuestas, historial de BetPlay y configuración de auto-betting. Si solo quieres bloquear el acceso, usa <strong>Suspender</strong> en el panel.</p>
 
     <form method="post" style="margin-top:2rem;">
         {% csrf_token %}
         <div style="display:flex;gap:1rem;justify-content:center;">
             <button type="submit" class="btn" style="background:var(--danger);color:#fff;border:none;">Sí, Eliminar</button>
-            <a href="/panel_usuarios/" class="btn btn-secondary">Cancelar</a>
+            <a href="{% url 'cuentas:panel_usuarios' %}" class="btn btn-secondary">Cancelar</a>
         </div>
     </form>
 </div>

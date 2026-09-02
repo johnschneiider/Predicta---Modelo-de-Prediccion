@@ -4,7 +4,7 @@ Vista simplificada para análisis de remates
 
 from django.shortcuts import render
 from django.views.generic import View
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, F
 from django.http import JsonResponse
 import json
 
@@ -118,8 +118,8 @@ class ShotsAnalysisView(View):
         }
         
         # Gráfica 3: Distribución de remates totales por partido
-        total_shots_dist = matches_with_shots.extra(
-            select={'total_shots': 'hs + "as_field"'}
+        total_shots_dist = matches_with_shots.annotate(
+            total_shots=F('hs') + F('as_field')
         ).values('total_shots').annotate(
             count=Count('id')
         ).order_by('total_shots')
@@ -131,8 +131,8 @@ class ShotsAnalysisView(View):
         }
         
         # Gráfica 4: Distribución de remates a puerta por partido
-        shots_target_dist = matches_with_shots.extra(
-            select={'total_shots_target': 'hst + ast'}
+        shots_target_dist = matches_with_shots.annotate(
+            total_shots_target=F('hst') + F('ast')
         ).values('total_shots_target').annotate(
             count=Count('id')
         ).order_by('total_shots_target')

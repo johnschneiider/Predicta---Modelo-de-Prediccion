@@ -71,6 +71,55 @@
     color: var(--text-secondary); font-size: 0.82rem; line-height: 1.5;
   }
   .cfg-note strong { color: var(--danger); }
+
+  /* ── Sección de capital ── */
+  .cfg-capital {
+    margin-top: 1.6rem;
+    background: var(--bg-surface);
+    border: 0.5px solid rgba(0,229,255,0.25);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem 1.6rem;
+    display: flex; flex-direction: column; gap: 1.1rem;
+  }
+  .cfg-capital-header { display: flex; align-items: center; gap: 0.5rem; }
+  .cfg-capital-header h3 { margin: 0; font-size: 1.05rem; }
+  .cfg-capital-header .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-primary); box-shadow: 0 0 8px var(--accent-primary);
+    display: inline-block;
+  }
+  .cfg-radio-group { display: flex; flex-direction: column; gap: 0.55rem; }
+  .cfg-radio-group label {
+    display: flex; align-items: center; gap: 0.55rem;
+    font-weight: 600; font-size: 0.88rem; color: var(--text-primary);
+    cursor: pointer;
+  }
+  .cfg-radio-group input[type="radio"] {
+    width: 16px; height: 16px; accent-color: var(--accent-primary); cursor: pointer;
+  }
+  .cfg-capital-fields { display: none; flex-direction: column; gap: 1.1rem; }
+  .cfg-capital-fields.visible { display: flex; }
+  .cfg-balance-box {
+    background: var(--bg-overlay);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-md, 8px);
+    padding: 0.9rem 1rem;
+    display: flex; flex-direction: column; gap: 0.3rem;
+  }
+  .cfg-balance-box .monto {
+    font-size: 1.5rem; font-weight: 800; color: var(--accent-primary);
+    letter-spacing: 0.01em;
+  }
+  .cfg-balance-box .monto.negativo { color: var(--danger); }
+  .cfg-balance-box .detalle { color: var(--text-secondary); font-size: 0.78rem; }
+  .cfg-badge-pausa {
+    background: rgba(239,68,68,0.1);
+    border: 0.5px solid rgba(239,68,68,0.35);
+    color: var(--danger);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.8rem;
+    font-size: 0.8rem; font-weight: 600;
+  }
 </style>
 {% endblock %}
 
@@ -102,10 +151,107 @@
     <button type="submit" class="cfg-save">💾 Guardar configuración</button>
   </form>
 
+  {# ── Gestión de capital (app capital) ── #}
+  <form method="post" class="cfg-capital" novalidate>
+    {% csrf_token %}
+    <div class="cfg-capital-header"><span class="dot"></span><h3>💼 Gestión del stake</h3></div>
+    {% if cap_form.non_field_errors %}
+      <div class="cfg-error">{{ cap_form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="cfg-field">
+      <label>{{ cap_form.modo.label }}</label>
+      <div class="cfg-radio-group">
+        {% for value, label in cap_form.modo.field.choices %}
+          <label>
+            <input type="radio" name="{{ cap_form.modo.name }}" value="{{ value }}"
+                   {% if cap_form.modo.value == value %}checked{% endif %} class="cfg-radio">
+            {{ label }}
+          </label>
+        {% endfor %}
+      </div>
+      <small class="cfg-help">{{ cap_form.modo.help_text }}</small>
+      {% if cap_form.modo.errors %}<div class="cfg-error">{{ cap_form.modo.errors|striptags }}</div>{% endif %}
+    </div>
+
+    <div class="cfg-capital-fields" id="capitalFields">
+      <div class="cfg-field">
+        <label for="{{ cap_form.balance_inicial.id_for_label }}">{{ cap_form.balance_inicial.label }}</label>
+        {{ cap_form.balance_inicial }}
+        <small class="cfg-help">{{ cap_form.balance_inicial.help_text }}</small>
+        {% if cap_form.balance_inicial.errors %}<div class="cfg-error">{{ cap_form.balance_inicial.errors|striptags }}</div>{% endif %}
+      </div>
+      <div class="cfg-field">
+        <label for="{{ cap_form.porcentaje.id_for_label }}">{{ cap_form.porcentaje.label }}</label>
+        {{ cap_form.porcentaje }}
+        <small class="cfg-help">{{ cap_form.porcentaje.help_text }}</small>
+        {% if cap_form.porcentaje.errors %}<div class="cfg-error">{{ cap_form.porcentaje.errors|striptags }}</div>{% endif %}
+      </div>
+      <div class="form-row">
+        <div class="cfg-field">
+          <label for="{{ cap_form.stake_min_cop.id_for_label }}">{{ cap_form.stake_min_cop.label }}</label>
+          {{ cap_form.stake_min_cop }}
+          <small class="cfg-help">{{ cap_form.stake_min_cop.help_text }}</small>
+          {% if cap_form.stake_min_cop.errors %}<div class="cfg-error">{{ cap_form.stake_min_cop.errors|striptags }}</div>{% endif %}
+        </div>
+        <div class="cfg-field">
+          <label for="{{ cap_form.stake_max_cop.id_for_label }}">{{ cap_form.stake_max_cop.label }}</label>
+          {{ cap_form.stake_max_cop }}
+          <small class="cfg-help">{{ cap_form.stake_max_cop.help_text }}</small>
+          {% if cap_form.stake_max_cop.errors %}<div class="cfg-error">{{ cap_form.stake_max_cop.errors|striptags }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# Estado actual del capital #}
+    <div class="cfg-balance-box">
+      {% if balance is not None %}
+        <span class="monto {% if balance < 0 %}negativo{% endif %}" id="balanceMonto"></span>
+        <span class="detalle" id="balanceDetalle"></span>
+      {% else %}
+        <span class="monto">—</span>
+        <span class="detalle">Activa el interés compuesto para ver tu balance paralelo aquí.</span>
+      {% endif %}
+    </div>
+    {% if cap_config.modo == 'COMPUESTO' %}
+      {% if stake_resuelto_cop %}
+        <span class="detalle">Próximo stake calculado: {{ stake_resuelto_cop|floatformat:0 }} COP por apuesta.</span>
+      {% else %}
+        <div class="cfg-badge-pausa">⛔ Auto-betting en pausa para esta cuenta: sin saldo disponible o stake por debajo del mínimo. No se colocarán apuestas hasta que el balance lo permita.</div>
+      {% endif %}
+    {% endif %}
+
+    <button type="submit" class="cfg-save">💾 Guardar gestión del stake</button>
+  </form>
+
   <div class="cfg-note">
     <strong>⚠️ Ojo:</strong> el <em>ticket</em> es una credencial de sesión reutilizable de BetPlay
     (equivale a acceso a tu cuenta de apuestas). Se guarda asociada a TU usuario de Predicta y solo tú
     la ves desde esta página. Nunca la compartas ni la pegues en un chat público.
   </div>
 </div>
+
+<script>
+  (function () {
+    const radios = document.querySelectorAll('input[name="{{ cap_form.modo.name }}"]');
+    const fields = document.getElementById('capitalFields');
+    const montoEl = document.getElementById('balanceMonto');
+    const detalleEl = document.getElementById('balanceDetalle');
+
+    function sync() {
+      const compuesto = document.querySelector('input[name="{{ cap_form.modo.name }}"]:checked');
+      const activo = compuesto && compuesto.value === 'COMPUESTO';
+      if (fields) fields.classList.toggle('visible', !!activo);
+    }
+    radios.forEach(r => r.addEventListener('change', sync));
+    sync();
+
+    {# Solo rellena si el backend envió balance (modo compuesto activo) #}
+    {% if balance is not None %}
+      const b = {{ balance }};
+      montoEl.textContent = (b < 0 ? '-$' : '$') + Math.abs(b).toLocaleString('es-CO', {maximumFractionDigits: 0});
+      detalleEl.textContent = b < 0 ? 'Balance paralelo en negativo — se pausan las apuestas.' : 'Balance paralelo actualizado con tu historial de apuestas.';
+    {% endif %}
+  })();
+</script>
 {% endblock %}

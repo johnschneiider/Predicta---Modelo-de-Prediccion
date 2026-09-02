@@ -242,14 +242,25 @@ def fetch_fixtures(client, league, season, date_from=None, date_to=None, status=
 
 
 def backfill_league_season(client, league, season, state, fetch_stats=True):
-    """Backfill de fixtures + stats de una liga/temporada. Resiste rate-limit."""
+    """Backfill de fixtures + stats de una liga/temporada. Resiste rate-limit.
+
+    Si la liga no tiene cobertura de stats en API-Football (has_statistics=False),
+    los finalizados se marcan como revisados SIN llamar al endpoint de stats
+    (ahorra cuota: el endpoint devuelve vacío de todas formas).
+    """
     fixtures = fetch_fixtures(client, league, season)
     total_fixtures = len(fixtures)
     stats_fetched = 0
+    fetch_api_stats = fetch_stats and league.has_statistics
     for fx in fixtures:
         obj = _save_fixture(league, season, fx)
         if fetch_stats and obj.status in FINISHED_STATUSES and not obj.has_statistics:
-            save_statistics(obj, client)
+            if fetch_api_stats:
+                save_statistics(obj, client)
+            else:
+                # Sin cobertura en el plan actual: marcar revisado sin gastar cuota.
+                obj.has_statistics = True
+                obj.save(update_fields=["has_statistics"])
             stats_fetched += 1
     return total_fixtures, stats_fetched
 
@@ -360,9 +371,13 @@ def run_daily_sync(days_ahead=7, days_back=3):
                 league=league, status__in=FINISHED_STATUSES, has_statistics=False,
                 date__gte=now - timedelta(days=days_back),
             )
-            for fx in pending:
-                save_statistics(fx, client)
-                total_st += 1
+            if league.has_statistics:
+                for fx in pending:
+                    save_statistics(fx, client)
+                    total_st += 1
+            else:
+                # Sin cobertura de stats en API-Football: marcar sin gastar cuota.
+                pending.update(has_statistics=True)
 
         state.status = "done"
     except QuotaExceeded as e:

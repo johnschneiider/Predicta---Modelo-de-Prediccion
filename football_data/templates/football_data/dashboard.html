@@ -153,6 +153,7 @@
     .chip-run { background: rgba(38,165,228,0.1); color: var(--info); border: 0.5px solid rgba(38,165,228,0.3); }
     .chip-pend { background: rgba(255,255,255,0.04); color: var(--text-secondary); border: 0.5px solid var(--border-primary); }
     .chip-err { background: rgba(255,107,107,0.1); color: var(--danger); border: 0.5px solid rgba(255,107,107,0.3); }
+    .chip-off { background: rgba(255,165,0,0.08); color: var(--text-secondary); border: 0.5px solid rgba(255,165,0,0.25); }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 
     /* Barra de progreso */
@@ -312,12 +313,14 @@
                     <td>{{ l.country }}</td>
                     <td class="col-center"><span class="mono">{{ l.api_id }}</span></td>
                     <td class="col-center">
-                        {% if l.has_statistics %}<span class="chip chip-done">✓</span>
-                        {% else %}<span class="chip chip-pend">parcial</span>{% endif %}
+                        {% if l.has_statistics %}
+                            {% if l.stats_pct is not None and l.stats_pct < 95 %}<span class="chip chip-run">Parcial {{ l.stats_pct }}%</span>
+                            {% else %}<span class="chip chip-done">✓</span>{% endif %}
+                        {% else %}<span class="chip chip-off">Sin cobertura</span>{% endif %}
                     </td>
                     <td class="col-center"><span class="mono">{{ l.current_season|default:'—' }}</span></td>
                     <td class="col-right">{{ l.fixture_count }}</td>
-                    <td class="col-right">{{ l.stats_count }}</td>
+                    <td class="col-right">{% if l.has_statistics %}{{ l.stats_count }}{% else %}—{% endif %}</td>
                     <td>
                         {% if l.backfill_status == 'done' %}<span class="chip chip-done"><span class="dot"></span>Completado</span>
                         {% elif l.backfill_status == 'backfilling' %}<span class="chip chip-run"><span class="dot"></span>Cargando</span>

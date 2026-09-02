@@ -51,7 +51,7 @@ class Match(models.Model):
     
     # Estadísticas del partido
     hs = models.IntegerField(null=True, blank=True, verbose_name="Home Shots")
-    as_field = models.IntegerField(null=True, blank=True, verbose_name="Away Shots", db_column='as')
+    as_field = models.IntegerField(null=True, blank=True, verbose_name="Away Shots", db_column='as_field')
     hst = models.IntegerField(null=True, blank=True, verbose_name="Home Shots on Target")
     ast = models.IntegerField(null=True, blank=True, verbose_name="Away Shots on Target")
     hf = models.IntegerField(null=True, blank=True, verbose_name="Home Fouls")

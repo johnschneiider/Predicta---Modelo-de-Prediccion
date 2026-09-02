@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'odds',
     'betfair',
     'betting',
+    'capital',
     'football_data',
     'football_api',
     'ai_predictions',
@@ -83,6 +84,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'capital.context_processors.navbar_balance',
             ],
         },
     },
@@ -96,11 +98,15 @@ WSGI_APPLICATION = 'betting_bot.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        # 2026-08-25: timeout alto para convivir con backfill/auto_betting concurrentes
-        # (journal mode WAL se activa a nivel de archivo: PRAGMA journal_mode=WAL).
-        'OPTIONS': {'timeout': 30},
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', 'predicta'),
+        'USER': os.getenv('DB_USER', 'predicta'),
+        # Credencial en .env (gitignored). Sin hardcode: el repo es público.
+        'PASSWORD': os.getenv('DB_PASSWORD', os.getenv('DATABASE_PASSWORD', '')),
+        'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+        'PORT': os.getenv('DB_PORT', '5432'),
+        # 2026-08-31: migración SQLite -> PostgreSQL (fix 'database is locked').
+        'CONN_MAX_AGE': 60,
     }
 }
 

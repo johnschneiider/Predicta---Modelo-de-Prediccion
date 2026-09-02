@@ -8,7 +8,7 @@ import logging
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.core.paginator import Paginator
-from django.db.models import Q, Avg, Count, Max, Min
+from django.db.models import Q, Avg, Count, Max, Min, F
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -36,6 +36,16 @@ class FootballDataDashboardView(View):
         qs = ApiLeague.objects.annotate(
             fixture_count=Count('fixtures', distinct=True),
             stats_count=Count('fixtures__stats', distinct=True),
+            finished_count=Count(
+                'fixtures',
+                filter=Q(fixtures__status__in=('FT', 'AET', 'PEN', 'AWD', 'WO')),
+                distinct=True,
+            ),
+            finished_with_stats=Count(
+                'fixtures',
+                filter=Q(fixtures__status__in=('FT', 'AET', 'PEN', 'AWD', 'WO'), fixtures__stats__isnull=False),
+                distinct=True,
+            ),
         ).order_by('priority', 'country', 'name')
 
         q = request.GET.get('q', '').strip()
@@ -56,6 +66,13 @@ class FootballDataDashboardView(View):
 
         countries = ApiLeague.objects.values_list('country', flat=True).distinct().order_by('country')
 
+        # % de finalizados con al menos una fila de stats (cobertura real por liga)
+        for l in qs:
+            if l.finished_count:
+                l.stats_pct = round(100.0 * l.finished_with_stats / l.finished_count)
+            else:
+                l.stats_pct = None
+
         totals = {
             'leagues': ApiLeague.objects.count(),
             'fixtures': ApiFixture.objects.count(),
@@ -65,6 +82,7 @@ class FootballDataDashboardView(View):
             'backfilling': ApiLeague.objects.filter(backfill_status='backfilling').count(),
             'pending': ApiLeague.objects.filter(backfill_status='pending').count(),
             'error': ApiLeague.objects.filter(backfill_status='error').count(),
+            'sin_cobertura': ApiLeague.objects.filter(has_statistics=False).count(),
         }
 
         sync_states = {s.key: s for s in SyncState.objects.all()}
@@ -642,7 +660,7 @@ class StatisticsView(View):
         # Calcular porcentaje Over 2.5 si hay datos
         goals_data = Match.objects.exclude(fthg__isnull=True, ftag__isnull=True)
         if goals_data.exists():
-            over_25_count = goals_data.extra(where=['fthg + ftag > 2.5']).count()
+            over_25_count = goals_data.annotate(_tot_goals=F('fthg') + F('ftag')).filter(_tot_goals__gt=2.5).count()
             total_goals_matches = goals_data.count()
             if total_goals_matches > 0:
                 stats['over_25_percentage'] = (over_25_count / total_goals_matches) * 100
@@ -811,8 +829,8 @@ class MarketsView(View):
         }
         
         # Gráfica 3: Distribución de remates totales por partido
-        total_shots_dist = matches_with_shots.extra(
-            select={'total_shots': 'hs + as_field'}
+        total_shots_dist = matches_with_shots.annotate(
+            total_shots=F('hs') + F('as_field')
         ).values('total_shots').annotate(
             count=Count('id')
         ).order_by('total_shots')
@@ -824,8 +842,8 @@ class MarketsView(View):
         }
         
         # Gráfica 4: Distribución de remates a puerta por partido
-        shots_target_dist = matches_with_shots.extra(
-            select={'total_shots_target': 'hst + ast'}
+        shots_target_dist = matches_with_shots.annotate(
+            total_shots_target=F('hst') + F('ast')
         ).values('total_shots_target').annotate(
             count=Count('id')
         ).order_by('total_shots_target')
@@ -870,12 +888,8 @@ class MarketsView(View):
         matches_with_goals = matches.exclude(fthg__isnull=True, ftag__isnull=True)
         
         if matches_with_goals.exists():
-            over_25_count = matches_with_goals.extra(
-                where=['fthg + ftag > 2.5']
-            ).count()
-            under_25_count = matches_with_goals.extra(
-                where=['fthg + ftag <= 2.5']
-            ).count()
+            over_25_count = matches_with_goals.annotate(_tot=F('fthg') + F('ftag')).filter(_tot__gt=2.5).count()
+            under_25_count = matches_with_goals.annotate(_tot=F('fthg') + F('ftag')).filter(_tot__lte=2.5).count()
             
             data['charts']['over_under_distribution'] = {
                 'type': 'pie',
@@ -905,8 +919,8 @@ class MarketsView(View):
             }
             
             # Distribución de goles por partido
-            goals_dist = matches_with_goals.extra(
-                select={'total_goals': 'fthg + ftag'}
+            goals_dist = matches_with_goals.annotate(
+                total_goals=F('fthg') + F('ftag')
             ).values('total_goals').annotate(
                 count=Count('id')
             ).order_by('total_goals')
@@ -960,8 +974,8 @@ class MarketsView(View):
         # Distribución de goles por partido
         goals_dist = matches.exclude(
             fthg__isnull=True, ftag__isnull=True
-        ).extra(
-            select={'total_goals': 'fthg + ftag'}
+        ).annotate(
+            total_goals=F('fthg') + F('ftag')
         ).values('total_goals').annotate(
             count=Count('id')
         ).order_by('total_goals')
@@ -1006,8 +1020,8 @@ class MarketsView(View):
             # Distribución de corners totales
             corners_dist = matches.exclude(
                 hc__isnull=True, ac__isnull=True
-            ).extra(
-                select={'total_corners': 'hc + ac'}
+            ).annotate(
+                total_corners=F('hc') + F('ac')
             ).values('total_corners').annotate(
                 count=Count('id')
             ).order_by('total_corners')

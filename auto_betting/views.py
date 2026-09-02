@@ -10,8 +10,11 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.db.models import Sum, Count, Avg, Min, Max
+from django.conf import settings
 import datetime
-from .models import HistorialApuesta, OddsSnapshot, AutoBetConfig, MarketFilterConfig
+import os
+import subprocess
+from .models import HistorialApuesta, OddsSnapshot, AutoBetConfig, MarketFilterConfig, AutoBet
 from .services import sync_historial
 from .forms import AutoBetConfigForm, MarketFilterConfigForm
 
@@ -210,6 +213,19 @@ def historial(request):
     elif filtro == 'manual':
         apuestas = apuestas.filter(is_system=False)
 
+    # Anotar probabilidad y confianza de la predicción (AutoBet) por coupon_ref
+    from django.db.models import OuterRef, Subquery
+    prob_sub = AutoBet.objects.filter(
+        usuario=OuterRef('usuario'), coupon_ref=OuterRef('coupon_ref')
+    ).values('predicta_prob')[:1]
+    conf_sub = AutoBet.objects.filter(
+        usuario=OuterRef('usuario'), coupon_ref=OuterRef('coupon_ref')
+    ).values('confidence')[:1]
+    apuestas = apuestas.annotate(
+        pred_prob=Subquery(prob_sub),
+        pred_conf=Subquery(conf_sub),
+    )
+
     stats = _analisis(usuario=request.user, desde=desde, hasta=hasta)
     stats_active = stats.get(filtro, stats['todos'])
 
@@ -239,22 +255,97 @@ def historial_sync(request):
 
 @login_required
 def configuracion(request):
-    """Cada usuario ve/edita SU propia configuración de auto-apuestas (BetPlay)."""
+    """Cada usuario ve/edita SU propia configuración de auto-apuestas (BetPlay)
+    y su modo de gestión de capital (stake fijo vs % compuesto)."""
+    from capital.forms import CapitalConfigForm
+    from capital.models import CapitalAjuste
+    from capital.services import bankroll_cop, get_config, resolve_stake
+    from django.utils import timezone
+
     config, created = AutoBetConfig.objects.get_or_create(usuario=request.user)
+    cap_config = get_config(request.user)
 
     if request.method == 'POST':
         form = AutoBetConfigForm(request.POST, instance=config)
-        if form.is_valid():
+        cap_form = CapitalConfigForm(request.POST, instance=cap_config)
+        if form.is_valid() and cap_form.is_valid():
             form.save()
-            messages.success(request, '✅ Configuración de BetPlay guardada.')
+            _guardar_capital(request, cap_form)
+            messages.success(request, '✅ Configuración de BetPlay y de capital guardada.')
             return redirect('auto_betting:configuracion')
     else:
         form = AutoBetConfigForm(instance=config)
+        cap_form = CapitalConfigForm(instance=cap_config)
+        # El campo de balance muestra el balance paralelo actual (referencia),
+        # no el ancla original: así el usuario ve el número "vivo".
+        actual = bankroll_cop(request.user)
+        if actual is not None:
+            cap_form.initial['balance_inicial'] = actual
+
+    balance = bankroll_cop(request.user)
+    stake_kambi, motivo = resolve_stake(config)
 
     return render(request, 'auto_betting/configuracion.html', {
         'form': form,
+        'cap_form': cap_form,
         'config': config,
+        'cap_config': cap_config,
+        'balance': balance,
+        'stake_resuelto_cop': (stake_kambi // 1000) if stake_kambi else None,
+        'stake_motivo': motivo,
     })
+
+
+def _guardar_capital(request, cap_form):
+    """
+    Persiste la CapitalConfig gestionando balance_inicial/ancla manualmente:
+    - Alta del modo compuesto: fija el balance declarado y el ancla (momento
+      exacto desde el que cuenta el histórico para el balance paralelo).
+    - Re-declaración de balance (compuesto ya activo): se toma como
+      RECONCILIACIÓN → CapitalAjuste por la diferencia, sin tocar el ancla.
+    - Modo fijo: conserva ancla/balance existentes (el balance paralelo sigue
+      vivo aunque el stake vuelva a ser fijo).
+    """
+    from django.utils import timezone
+    from capital.models import CapitalAjuste, CapitalConfig
+    from capital.services import bankroll_cop
+
+    prev = CapitalConfig.objects.filter(pk=cap_form.instance.pk).first()
+    old_ancla = prev.ancla if prev else None
+    old_balance = prev.balance_inicial if prev else None
+
+    cap = cap_form.save(commit=False)
+    modo = cap_form.cleaned_data.get('modo')
+    balance_input = cap_form.cleaned_data.get('balance_inicial')
+
+    if modo == CapitalConfig.MODO_COMPUESTO:
+        if old_ancla is None:
+            # Primera activación: anclar balance + momento.
+            cap.ancla = timezone.now()
+            cap.balance_inicial = int(balance_input)
+        else:
+            # Ya activo: el ancla/balance declarado son inmutables.
+            cap.ancla = old_ancla
+            cap.balance_inicial = old_balance
+            if balance_input and balance_input > 0:
+                actual = bankroll_cop(request.user)
+                diff = int(balance_input) - (actual or 0)
+                if diff != 0:
+                    CapitalAjuste.objects.create(
+                        usuario=request.user,
+                        monto_cop=diff,
+                        motivo='Reconciliación desde configuración',
+                    )
+                    messages.info(
+                        request,
+                        f'💰 Balance reconciliado: ajuste de {diff:+,} COP registrado.',
+                    )
+    else:
+        # FIJO: conservar el ancla/balance declarado (si existía).
+        cap.balance_inicial = old_balance
+        cap.ancla = old_ancla
+
+    cap.save()
 
 
 def _es_admin_principal(user):
@@ -314,9 +405,88 @@ def configuracion_umbrales(request):
          'help': 'Cap duro de probabilidad calibrada. Auditoría: anti-señal arriba de 0.60.'},
     ]
 
+    # Filtro por línea (Fix 2026-08-31): solo tiros a puerta over/under.
+    # 0 = sin tope en ese lado.
+    line_filters = [
+        {'field': form['shots_on_target_under_min_line'], 'label': 'Tiros Under — línea mínima',
+         'help': 'Bloquea Under de línea menor a este valor. 9.5 elimina el sangrador de under 7.5/8.5 (WR 27%/40%). 0 = sin filtro.'},
+        {'field': form['shots_on_target_under_max_line'], 'label': 'Tiros Under — línea máxima',
+         'help': 'Tope superior para Under. 0 = sin tope.'},
+        {'field': form['shots_on_target_over_min_line'], 'label': 'Tiros Over — línea mínima',
+         'help': 'Bloquea Over de línea menor a este valor. 0 = sin filtro.'},
+        {'field': form['shots_on_target_over_max_line'], 'label': 'Tiros Over — línea máxima',
+         'help': 'Tope superior para Over. 0 = sin tope.'},
+    ]
+
     return render(request, 'auto_betting/configuracion_umbrales.html', {
         'form': form,
         'cfg': cfg,
         'filas': filas,
         'globales': globales,
+        'line_filters': line_filters,
+    })
+
+
+@login_required
+@user_passes_test(_es_admin_principal, login_url='auto_betting:configuracion')
+@require_POST
+def run_manual(request):
+    """
+    Botón del panel superusuario (2026-08-29): ejecuta el auto-betting
+    manualmente EN SEGUNDO PLANO para TODAS las cuentas activas
+    (todas las AutoBetConfig con activo=True), igual que el cron.
+
+    - Usa el mismo comando y settings del cron (`run_auto_bets` sin --email,
+      DJANGO_SETTINGS_MODULE=betting_bot.settings).
+    - La salida se anexa a logs/auto_betting.log.
+    - Guard anti-concurrencia: si ya hay una corrida en curso (cron o manual),
+      no lanza otra (SQLite es mono-escritor).
+
+    Semántica: NO repite apuestas ya hechas (dedup por usuario+evento+mercado
+    en run_auto_bets); SÍ coloca nuevas apuestas que pasen filtros para cada
+    usuario, hasta su límite diario (max_apuestas_diarias - ya colocadas hoy).
+    """
+    try:
+        check = subprocess.run(
+            ['pgrep', '-f', 'manage.py run_auto_bets'],
+            capture_output=True, text=True, timeout=10,
+        )
+        if check.returncode == 0:
+            return JsonResponse({
+                'ok': False,
+                'error': 'Ya hay una ejecución de auto_betting en curso (cron o manual). Espera a que termine e inténtalo de nuevo.',
+            })
+    except Exception:
+        pass  # pgrep no disponible: seguimos (riesgo bajo, dedup protege)
+
+    cmd = [
+        str(settings.BASE_DIR / 'venv' / 'bin' / 'python'),
+        'manage.py', 'run_auto_bets',
+        # Sin --email: ejecuta TODAS las AutoBetConfig activas (igual que el cron).
+    ]
+    env = dict(os.environ)
+    # Mismo settings del cron: evita heredar config.settings.production
+    # de /etc/environment (fix documentado en SOUL.md §10).
+    env['DJANGO_SETTINGS_MODULE'] = 'betting_bot.settings'
+
+    log_path = settings.BASE_DIR / 'logs' / 'auto_betting.log'
+    try:
+        with open(log_path, 'a', encoding='utf-8') as log_f:
+            subprocess.Popen(
+                cmd,
+                cwd=str(settings.BASE_DIR),
+                env=env,
+                stdout=log_f,
+                stderr=subprocess.STDOUT,
+                start_new_session=True,  # sobrevive aunque gunicorn se reinicie
+            )
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': f'No se pudo lanzar el proceso: {e}'})
+
+    return JsonResponse({
+        'ok': True,
+        'msg': 'Auto-betting lanzado en segundo plano para TODAS las cuentas '
+               'activas (admin, admin2, carlos…). Tarda ~3-8 min. Revisa el '
+               'resultado en el historial de apuestas BetPlay o en '
+               'logs/auto_betting.log.',
     })

@@ -80,3 +80,7 @@ edge_opportunities.json
 # SQLite WAL files (no comitear)
 db.sqlite3-wal
 db.sqlite3-shm
+
+# Backups locales con datos sensibles (dumps de BD, credenciales)
+backups_predicta_fix/
+.env.bak*

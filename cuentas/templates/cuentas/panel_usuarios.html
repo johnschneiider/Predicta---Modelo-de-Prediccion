@@ -31,6 +31,7 @@
             <tr style="border-bottom:0.5px solid var(--border-primary);">
                 <td style="padding:0.75rem 0.5rem;color:var(--text-primary);">
                     {{ usuario.get_full_name|default:usuario.username }}
+                    <div style="color:var(--text-secondary);font-size:0.72rem;">@{{ usuario.username }}</div>
                     {% if usuario.is_superuser %}<span style="color:var(--accent-primary);font-size:0.7rem;font-weight:500;"> SUPERADMIN</span>{% endif %}
                 </td>
                 <td style="padding:0.75rem 0.5rem;color:var(--text-secondary);">{{ usuario.email }}</td>
@@ -38,13 +39,18 @@
                     {% if usuario.is_active %}
                         <span class="status-active">Activo</span>
                     {% else %}
-                        <span class="status-inactive">Inactivo</span>
+                        <span class="status-inactive">Suspendido</span>
                     {% endif %}
                 </td>
                 <td style="padding:0.75rem 0.5rem;color:var(--text-secondary);">{{ usuario.fecha_registro|date:"d/m/Y" }}</td>
                 <td style="padding:0.75rem 0.5rem;">
                     <a href="{% url 'cuentas:editar_usuario' user_id=usuario.id %}" class="btn btn-secondary btn-sm" style="font-size:0.78rem;margin-right:0.35rem;">Editar</a>
                     {% if usuario != request.user %}
+                    <form method="post" action="{% url 'cuentas:suspender_usuario' user_id=usuario.id %}" style="display:inline;margin-right:0.35rem;" onsubmit="return confirm('¿Seguro que quieres {{ usuario.is_active|yesno:'suspender,reactivar' }} esta cuenta?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary btn-sm" style="font-size:0.78rem;">{% if usuario.is_active %}Suspender{% else %}Activar{% endif %}</button>
+                    </form>
+                    <a href="{% url 'cuentas:cambiar_contraseña' user_id=usuario.id %}" class="btn btn-secondary btn-sm" style="font-size:0.78rem;margin-right:0.35rem;">Contraseña</a>
                     <a href="{% url 'cuentas:eliminar_usuario' user_id=usuario.id %}" class="btn btn-secondary btn-sm" style="font-size:0.78rem;color:var(--danger);border-color:rgba(255,107,107,0.25);">Eliminar</a>
                     {% endif %}
                 </td>
@@ -56,6 +62,18 @@
 {% else %}
 <div style="text-align:center;padding:3rem;color:var(--text-secondary);">
     <p>No hay usuarios registrados.</p>
+</div>
+{% endif %}
+
+{% if page_obj.has_other_pages %}
+<div style="display:flex;gap:0.75rem;justify-content:center;align-items:center;margin-top:1.5rem;">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="btn btn-secondary btn-sm" style="font-size:0.8rem;">← Anterior</a>
+    {% endif %}
+    <span style="color:var(--text-secondary);font-size:0.85rem;">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }} · {{ total_usuarios }} usuarios</span>
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="btn btn-secondary btn-sm" style="font-size:0.8rem;">Siguiente →</a>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

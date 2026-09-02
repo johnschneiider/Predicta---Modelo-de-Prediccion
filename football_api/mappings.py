@@ -158,6 +158,7 @@ LEAGUES = [
     ("UEFA Nations League", 5, "football/uefa_nations_league", "Europe"),
     ("World Cup", 1, "football/world_cup_2030", "World"),
     ("European Championship", 4, "football/euro_2028", "Europe"),
+    ("FIFA Intercontinental Cup", 1168, "football/fifa_intercontinental_cup", "World"),
 ]
 
 LEAGUE_API_IDS = {name: api_id for (name, api_id, _p, _c) in LEAGUES}

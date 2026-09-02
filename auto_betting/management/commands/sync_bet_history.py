@@ -30,7 +30,11 @@ class Command(BaseCommand):
         since_str = options.get('since') or '2026-08-01'
         email = options.get('email')
 
-        configs = AutoBetConfig.objects.select_related('usuario').all()
+        # 2026-09-01: solo sincronizar configs ACTIVAS. Una cuenta desactivada
+        # (ej. ticket incorrecto en revisión) no debe sincronizarse: con la limpieza
+        # de fantasmas, sincronizar con un ticket de OTRA cuenta borraría el
+        # historial real de la cuenta desactivada.
+        configs = AutoBetConfig.objects.select_related('usuario').filter(activo=True)
         if email:
             configs = configs.filter(usuario__email=email)
         if not configs.exists():
@@ -45,12 +49,14 @@ class Command(BaseCommand):
                 continue
             if result.get('borrados'):
                 self.stdout.write(f"   🧹 Borrados {result['borrados']} registros anteriores a {since_str}.")
+            ghosts = result.get('borrados_ghost', 0)
+            ghosts_msg = f" 👻 {ghosts} registros fantasma eliminados." if ghosts else ""
             snaps = result.get('snapshots', 0)
             snaps_msg = f" 📸 {snaps} snapshots capturados." if snaps else ""
             self.stdout.write(
                 self.style.SUCCESS(
                     f"   🏁 Historial sincronizado (desde {since_str}): "
                     f"{result['creados']} nuevos, {result['actualizados']} actualizados, "
-                    f"{result['omitidos']} omitidos.{snaps_msg} Total en DB: {result['total']}."
+                    f"{result['omitidos']} omitidos.{snaps_msg}{ghosts_msg} Total en DB: {result['total']}."
                 )
             )
