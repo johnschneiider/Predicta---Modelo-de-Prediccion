@@ -54,6 +54,12 @@
     transition: background .18s ease, transform .18s ease;
   }
   .acc-save:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .acc-save-ghost {
+    background: transparent; color: var(--accent-primary);
+    border: 1px solid rgba(0,229,255,0.45);
+  }
+  .acc-save-ghost:hover { background: rgba(0,229,255,0.08); transform: translateY(-1px); }
+  .acc-test { margin-top: 1.4rem; }
   .acc-note {
     margin-top: 1.2rem;
     background: rgba(0,229,255,0.05);
@@ -92,6 +98,20 @@
     💡 Este número se usa para avisarte por WhatsApp cuando algo de tu cuenta lo requiera
     (por ejemplo, el vencimiento del ticket de BetPlay). Si lo dejas vacío, no recibirás
     notificaciones.
+  </div>
+
+  <div class="acc-test">
+    <form method="post" action="{% url 'cuentas:enviar_bienvenida' %}" class="acc-form" style="border-style: dashed;">
+      {% csrf_token %}
+      <div class="acc-field">
+        <label>🧪 Probar notificaciones</label>
+        <small class="acc-help">
+          Envía el mensaje de bienvenida a tu número de WhatsApp registrado para
+          verificar que las notificaciones funcionan.
+        </small>
+      </div>
+      <button type="submit" class="acc-save acc-save-ghost">📱 Enviar mensaje de prueba</button>
+    </form>
   </div>
 </div>
 {% endblock %}

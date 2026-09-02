@@ -24,6 +24,16 @@ TIMEOUT_S = 15
 EVENTO_TOKEN_VENCIDO = 'token_betplay_vencido'
 EVENTO_TOKEN_OK = 'token_betplay_ok'
 
+MENSAJE_BIENVENIDA = (
+    '👋 ¡Hola! Soy *Predicta*, el sistema de apuestas inteligentes '
+    'de predicta.com.co 🤖\n\n'
+    'A partir de ahora recibirás por este canal mensajes de información: '
+    'alertas de tu cuenta, estado de tus apuestas y novedades importantes.\n\n'
+    '📌 Ten en cuenta que este es un canal solo de avisos: no leo ni respondo '
+    'mensajes por aquí.\n\n'
+    '¡Mucha suerte con tus apuestas! 🍀'
+)
+
 
 def normalizar_telefono(telefono):
     """Limpia y normaliza a formato internacional (57XXXXXXXXXX)."""
@@ -54,6 +64,30 @@ def whatsapp_enviar(telefono, mensaje):
         return False, f"HTTP {resp.status_code}: {resp.text[:200]}"
     except requests.RequestException as e:
         return False, f"error de conexión: {e}"
+
+
+def enviar_bienvenida(usuario):
+    """
+    Envía el mensaje de bienvenida al WhatsApp del usuario (auditado en
+    NotificacionLog, evento 'bienvenida').
+
+    Devuelve (estado, detalle) con estado ∈ {ENVIADO, ERROR, OMITIDO}.
+    """
+    tel = normalizar_telefono(usuario.telefono)
+    if not tel:
+        NotificacionLog.objects.create(
+            usuario=usuario, evento='bienvenida', destino='',
+            estado=NotificacionLog.ESTADO_OMITIDO,
+            detalle='sin teléfono registrado',
+        )
+        return NotificacionLog.ESTADO_OMITIDO, 'sin teléfono registrado'
+    ok, detalle = whatsapp_enviar(tel, MENSAJE_BIENVENIDA)
+    estado = NotificacionLog.ESTADO_ENVIADO if ok else NotificacionLog.ESTADO_ERROR
+    NotificacionLog.objects.create(
+        usuario=usuario, evento='bienvenida', destino=tel,
+        estado=estado, detalle=detalle,
+    )
+    return estado, detalle
 
 
 def notificar_usuario(usuario, evento, mensaje, estado_evento):

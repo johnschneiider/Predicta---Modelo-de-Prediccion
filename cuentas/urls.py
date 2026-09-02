@@ -9,6 +9,7 @@ urlpatterns = [
     path('dashboard/', views.VistaDashboard.as_view(), name='dashboard'),
     path('logout/', views.vista_logout, name='logout'),
     path('configuracion/', views.configuracion_cuenta, name='configuracion_cuenta'),
+    path('configuracion/enviar-bienvenida/', views.enviar_bienvenida_whatsapp, name='enviar_bienvenida'),
     
     # Panel de administración de usuarios (solo superusuarios)
     path('admin/usuarios/', views.VistaPanelUsuarios.as_view(), name='panel_usuarios'),

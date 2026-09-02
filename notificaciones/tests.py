@@ -121,3 +121,42 @@ class LandingWhatsAppTests(TestCase):
         resp = self.client.get(reverse('notificaciones:whatsapp_landing'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'Vincular WhatsApp')
+
+
+class BotonBienvenidaViewTests(TestCase):
+    """Botón de prueba en /cuentas/configuracion/ (2026-09-02, pedido de John)."""
+
+    def setUp(self):
+        self.usuario = Usuario.objects.create_user(
+            email='boton@test.com', username='boton', password='***',
+            telefono='3001234567',
+        )
+        self.client.login(username='boton@test.com', password='***')
+
+    def test_get_muestra_boton(self):
+        resp = self.client.get(reverse('cuentas:configuracion_cuenta'))
+        self.assertContains(resp, 'Enviar mensaje de prueba')
+        self.assertContains(resp, reverse('cuentas:enviar_bienvenida'))
+
+    @patch('notificaciones.services.whatsapp_enviar')
+    def test_post_envia_bienvenida_y_audita(self, mock_wa):
+        mock_wa.return_value = (True, 'enviado')
+        resp = self.client.post(reverse('cuentas:enviar_bienvenida'), follow=True)
+        self.assertContains(resp, 'Mensaje de bienvenida enviado')
+        mock_wa.assert_called_once()
+        log = NotificacionLog.objects.get(usuario=self.usuario, evento='bienvenida')
+        self.assertEqual(log.estado, NotificacionLog.ESTADO_ENVIADO)
+
+    def test_post_sin_telefono_omite(self):
+        self.usuario.telefono = ''
+        self.usuario.save(update_fields=['telefono'])
+        resp = self.client.post(reverse('cuentas:enviar_bienvenida'), follow=True)
+        self.assertContains(resp, 'No tienes un número de WhatsApp registrado')
+        log = NotificacionLog.objects.get(usuario=self.usuario, evento='bienvenida')
+        self.assertEqual(log.estado, NotificacionLog.ESTADO_OMITIDO)
+
+    def test_get_sin_post_no_envia(self):
+        self.client.get(reverse('cuentas:enviar_bienvenida'))
+        self.assertFalse(
+            NotificacionLog.objects.filter(usuario=self.usuario, evento='bienvenida').exists()
+        )

@@ -263,3 +263,37 @@ def configuracion_cuenta(request):
         'form': form,
         'usuario': request.user,
     })
+
+
+@login_required
+def enviar_bienvenida_whatsapp(request):
+    """
+    Botón de prueba de notificaciones (2026-09-02, pedido de John): envía el
+    mensaje de bienvenida al WhatsApp del PROPIO usuario (nadie puede mandar
+    mensajes a teléfonos ajenos). Auditado en NotificacionLog.
+    """
+    from notificaciones.models import NotificacionLog
+    from notificaciones.services import enviar_bienvenida
+
+    if request.method != 'POST':
+        return redirect('cuentas:configuracion_cuenta')
+
+    estado, detalle = enviar_bienvenida(request.user)
+    if estado == NotificacionLog.ESTADO_ENVIADO:
+        messages.success(
+            request,
+            '📱 ¡Mensaje de bienvenida enviado a tu WhatsApp! Revisa tu teléfono.',
+        )
+    elif estado == NotificacionLog.ESTADO_OMITIDO:
+        messages.error(
+            request,
+            '⚠️ No tienes un número de WhatsApp registrado. Guárdalo en el '
+            'formulario y vuelve a intentar.',
+        )
+    else:
+        messages.error(
+            request,
+            f'❌ No se pudo enviar el mensaje ({detalle}). Intenta de nuevo en '
+            'unos segundos.',
+        )
+    return redirect('cuentas:configuracion_cuenta')
