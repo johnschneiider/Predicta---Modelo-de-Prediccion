@@ -2,11 +2,12 @@
 Verifica el login de BetPlay de cada cuenta activa y notifica por WhatsApp
 a cada usuario cuando su ticket vence o queda inválido.
 
-Dedupe: solo notifica en la TRANSICIÓN a FALLO (no spamea a diario). Si el
-ticket vuelve a funcionar, el estado vuelve a OK y una nueva caída avisará
-de nuevo. Usuarios sin teléfono registrado: se omite el envío (auditado).
+Dedupe: solo notifica en la TRANSICIÓN a FALLO (no spamea en cada corrida). Si el
+ticket vuelve a funcionar, el estado vuelve a OK y una nueva caída avisará de
+nuevo. Usuarios sin teléfono registrado: se omite el envío (auditado).
 
-Cron sugerido: 07:10 UTC (después de run_auto_bets 06:10 y del sync 06:00).
+Cron (2026-09-02, pedido de John): 3 veces al día en hora colombiana —
+22:00, 06:00 y 13:00 COT → 03:00, 11:00 y 18:00 UTC.
 """
 
 from django.core.management.base import BaseCommand
@@ -39,11 +40,19 @@ class Command(BaseCommand):
                 )
                 self.stdout.write(f"✅ {usuario.email}: ticket OK")
             else:
+                nombre = usuario.first_name or usuario.username or 'usuario'
                 mensaje = (
-                    f"🔑 Hola {usuario.first_name or usuario.username}:\n"
-                    f"El ticket de BetPlay de tu cuenta en Predicta venció o es inválido. "
-                    f"El auto-betting NO apostará hasta que lo actualices.\n\n"
-                    f"👉 https://www.predicta.com.co/auto-betting/configuracion/"
+                    "🔐 *Predicta — Alerta de sesión BetPlay*\n\n"
+                    f"Hola {nombre}, le informamos que la sesión de su cuenta "
+                    "BetPlay en Predicta expiró o dejó de ser válida.\n\n"
+                    "Por seguridad, las apuestas automáticas quedaron en pausa "
+                    "para su cuenta hasta que la sesión se renueve.\n\n"
+                    "Para reactivarlas, actualice su ticket desde el panel de "
+                    "configuración:\n"
+                    "👉 https://www.predicta.com.co/auto-betting/configuracion/\n\n"
+                    "Si ya lo actualizó, puede ignorar este mensaje: el sistema "
+                    "verificará su sesión nuevamente en la próxima revisión programada.\n\n"
+                    "— Predicta · Monitoreo automático de sesiones"
                 )
                 resultado = notificar_usuario(
                     usuario, EVENTO_TOKEN_VENCIDO, mensaje, estado_evento='FALLO',
