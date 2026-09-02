@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configuración de mi cuenta — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+  .acc-container { max-width: 560px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .acc-header { text-align: center; margin-bottom: 1.6rem; }
+  .acc-header h2 { margin-bottom: 0.4rem; letter-spacing: -0.01em; }
+  .acc-header .subtitle {
+    color: var(--text-secondary); font-size: 0.9rem;
+    display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+  }
+  .acc-header .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-primary); box-shadow: 0 0 8px var(--accent-primary);
+    display: inline-block;
+  }
+  .acc-form {
+    background: var(--bg-surface);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem 1.6rem;
+    display: flex; flex-direction: column; gap: 1.1rem;
+  }
+  .acc-field { display: flex; flex-direction: column; gap: 0.35rem; }
+  .acc-field label {
+    font-weight: 700; font-size: 0.85rem; color: var(--text-primary);
+    letter-spacing: 0.01em;
+  }
+  .acc-input {
+    background: var(--bg-overlay);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-md, 8px);
+    color: var(--text-primary);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+    width: 100%;
+    transition: border-color .18s ease;
+    font-family: inherit;
+  }
+  .acc-input:focus {
+    outline: none; border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.12);
+  }
+  .acc-help { color: var(--text-secondary); font-size: 0.78rem; line-height: 1.4; }
+  .acc-error { color: var(--danger); font-size: 0.8rem; font-weight: 600; }
+  .acc-save {
+    margin-top: 0.4rem;
+    background: var(--accent-primary); color: #0a0a0a; border: none;
+    border-radius: var(--radius-full); padding: 0.7rem 1.3rem;
+    font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    transition: background .18s ease, transform .18s ease;
+  }
+  .acc-save:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .acc-note {
+    margin-top: 1.2rem;
+    background: rgba(0,229,255,0.05);
+    border: 0.5px solid rgba(0,229,255,0.22);
+    border-radius: var(--radius-md, 8px);
+    padding: 0.8rem 1rem;
+    color: var(--text-secondary); font-size: 0.82rem; line-height: 1.5;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="acc-container">
+  <div class="acc-header">
+    <h2>Configuración de mi cuenta</h2>
+    <div class="subtitle">
+      <span class="dot"></span>
+      {{ usuario.email }}
+    </div>
+  </div>
+
+  <form method="post" class="acc-form" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="acc-field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<small class="acc-help">{{ field.help_text|safe }}</small>{% endif %}
+        {% if field.errors %}<div class="acc-error">{{ field.errors|striptags }}</div>{% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="acc-save">💾 Guardar</button>
+  </form>
+
+  <div class="acc-note">
+    💡 Este número se usa para avisarte por WhatsApp cuando algo de tu cuenta lo requiera
+    (por ejemplo, el vencimiento del ticket de BetPlay). Si lo dejas vacío, no recibirás
+    notificaciones.
+  </div>
+</div>
+{% endblock %}

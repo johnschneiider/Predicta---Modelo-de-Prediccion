@@ -243,3 +243,23 @@ def vista_suspender_usuario(request, user_id):
     estado = 'suspendida' if not usuario.is_active else 'reactivada'
     messages.success(request, f'Cuenta de {usuario.get_full_name()} {estado} exitosamente.')
     return redirect('cuentas:panel_usuarios')
+
+@login_required
+def configuracion_cuenta(request):
+    """
+    Configuración de la cuenta del usuario (número de WhatsApp para
+    notificaciones). Cada usuario edita solo lo suyo.
+    """
+    from .forms import FormularioConfiguracionCuenta
+    if request.method == 'POST':
+        form = FormularioConfiguracionCuenta(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '✅ Configuración de cuenta guardada.')
+            return redirect('cuentas:configuracion_cuenta')
+    else:
+        form = FormularioConfiguracionCuenta(instance=request.user)
+    return render(request, 'cuentas/configuracion.html', {
+        'form': form,
+        'usuario': request.user,
+    })

@@ -36,6 +36,7 @@ urlpatterns = [
     path('ai/', include(('ai_predictions.urls', 'ai_predictions'), namespace='ai_predictions')),
     path('value-betting/', include(('value_betting.urls', 'value_betting'), namespace='value_betting')),
     path('auto-betting/', include(('auto_betting.urls', 'auto_betting'), namespace='auto_betting')),
+    path('notificaciones/', include(('notificaciones.urls', 'notificaciones'), namespace='notificaciones')),
 ]
 
 # Eliminado: rutas de basketball_data

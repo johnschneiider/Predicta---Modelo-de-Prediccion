@@ -84,3 +84,10 @@ db.sqlite3-shm
 # Backups locales con datos sensibles (dumps de BD, credenciales)
 backups_predicta_fix/
 .env.bak*
+
+# WhatsApp service (microservicio local) — no subir sesión ni dependencias
+whatsapp-service/.env
+whatsapp-service/node_modules/
+whatsapp-service/.wwebjs_auth/
+whatsapp-service/*.log
+whatsapp-service/logs/

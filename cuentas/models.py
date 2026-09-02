@@ -11,6 +11,11 @@ class Usuario(AbstractUser):
     avatar = models.URLField(blank=True, null=True, verbose_name="Avatar")
     fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
     is_verified = models.BooleanField(default=False, verbose_name="Verificado")
+    telefono = models.CharField(
+        max_length=20, blank=True, default='',
+        verbose_name="Número de WhatsApp (notificaciones)",
+        help_text="Con código de país. Ej. 573001234567. Sin teléfono no se reciben notificaciones.",
+    )
     
     # Usar email como campo de login
     USERNAME_FIELD = 'email'

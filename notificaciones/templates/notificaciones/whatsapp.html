@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}WhatsApp — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+  .wa-container { max-width: 560px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .wa-header { text-align: center; margin-bottom: 1.6rem; }
+  .wa-header h2 { margin-bottom: 0.4rem; }
+  .wa-header .subtitle {
+    color: var(--text-secondary); font-size: 0.9rem;
+    display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+  }
+  .wa-header .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-primary); box-shadow: 0 0 8px var(--accent-primary);
+    display: inline-block;
+  }
+
+  .wa-card {
+    background: var(--bg-surface);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg);
+    padding: 1.6rem;
+    display: flex; flex-direction: column; align-items: center; gap: 1.1rem;
+    text-align: center;
+  }
+  .wa-status {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    font-size: 0.8rem; font-weight: 700; letter-spacing: 0.03em;
+    padding: 0.35rem 0.9rem; border-radius: var(--radius-full);
+  }
+  .wa-status.abierto { background: rgba(198,241,53,0.12); color: var(--accent-primary); }
+  .wa-status.pendiente { background: rgba(255,209,102,0.12); color: var(--warning); }
+  .wa-status.error { background: rgba(239,68,68,0.12); color: var(--danger); }
+
+  .wa-qr-box {
+    background: #fff; border-radius: var(--radius-md); padding: 1rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .wa-qr-box img { width: 230px; height: 230px; image-rendering: pixelated; }
+  .wa-steps {
+    text-align: left; color: var(--text-secondary); font-size: 0.82rem;
+    line-height: 1.6; width: 100%;
+  }
+  .wa-steps ol { margin: 0; padding-left: 1.2rem; }
+  .wa-btn {
+    background: transparent; color: var(--danger);
+    border: 0.5px solid rgba(239,68,68,0.4); border-radius: var(--radius-full);
+    padding: 0.55rem 1.2rem; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+    transition: background .18s;
+  }
+  .wa-btn:hover { background: rgba(239,68,68,0.1); }
+  .wa-note {
+    margin-top: 1.2rem;
+    background: rgba(239,68,68,0.06);
+    border: 0.5px solid rgba(239,68,68,0.25);
+    border-radius: var(--radius-md, 8px);
+    padding: 0.8rem 1rem;
+    color: var(--text-secondary); font-size: 0.8rem; line-height: 1.5;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wa-container">
+  <div class="wa-header">
+    <h2>Vincular WhatsApp de notificaciones</h2>
+    <div class="subtitle">
+      <span class="dot"></span>
+      Solo visible para el administrador
+    </div>
+  </div>
+
+  <div class="wa-card" id="waCard">
+    <span class="wa-status pendiente" id="waStatus">… consultando estado</span>
+
+    <div id="waQrWrap" style="display:none;" class="wa-qr-box">
+      <img id="waQr" src="" alt="QR de vinculación">
+    </div>
+
+    <div id="waSteps" class="wa-steps" style="display:none;">
+      <ol>
+        <li>Abre WhatsApp en tu teléfono.</li>
+        <li>Ve a <strong>Ajustes → Dispositivos vinculados → Vincular un dispositivo</strong>.</li>
+        <li>Escanea este QR. La página confirmará la conexión sola.</li>
+      </ol>
+    </div>
+
+    <div id="waConnected" style="display:none;">
+      ✅ WhatsApp vinculado y operativo. Las notificaciones (vencimiento de
+      tickets, etc.) saldrán desde este número.
+    </div>
+
+    <form method="post" action="{% url 'notificaciones:whatsapp_logout' %}" id="waLogoutForm" style="display:none;">
+      {% csrf_token %}
+      <button type="submit" class="wa-btn">Desvincular WhatsApp</button>
+    </form>
+  </div>
+
+  <div class="wa-note">
+    <strong>⚠️ Ojo:</strong> este WhatsApp es el remitente de las notificaciones del sistema.
+    Si lo desvinculas, los usuarios dejarán de recibir avisos (vencimiento de ticket BetPlay)
+    hasta que vuelvas a vincularlo aquí.
+  </div>
+</div>
+
+<script>
+  (function () {
+    const statusEl = document.getElementById('waStatus');
+    const qrWrap = document.getElementById('waQrWrap');
+    const qrEl = document.getElementById('waQr');
+    const steps = document.getElementById('waSteps');
+    const connected = document.getElementById('waConnected');
+    const logoutForm = document.getElementById('waLogoutForm');
+    let timer = null;
+    let firstQR = true;
+
+    function setStatus(txt, cls) {
+      statusEl.textContent = txt;
+      statusEl.className = 'wa-status ' + cls;
+    }
+
+    async function poll() {
+      try {
+        const resp = await fetch("{% url 'notificaciones:whatsapp_estado' %}", { cache: 'no-store' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+
+        if (data.state === 'open') {
+          setStatus('● Conectado', 'abierto');
+          qrWrap.style.display = 'none';
+          steps.style.display = 'none';
+          connected.style.display = 'block';
+          logoutForm.style.display = 'block';
+          clearTimeout(timer);
+          return;
+        }
+
+        if (data.state === 'qr' && data.base64) {
+          setStatus('● Esperando escaneo', 'pendiente');
+          qrWrap.style.display = 'flex';
+          steps.style.display = 'block';
+          connected.style.display = 'none';
+          logoutForm.style.display = 'none';
+          if (firstQR) {
+            qrEl.src = data.base64;
+            firstQR = false;
+          } else if (qrEl.src !== data.base64) {
+            qrEl.src = data.base64;  // QR refrescado (renovación)
+          }
+        } else if (data.state === 'esperando') {
+          setStatus('● Generando QR…', 'pendiente');
+        } else {
+          setStatus('● Error en el servicio', 'error');
+        }
+      } catch (e) {
+        setStatus('● Error consultando el servicio', 'error');
+      }
+      timer = setTimeout(poll, 8000);
+    }
+
+    poll();
+  })();
+</script>
+{% endblock %}

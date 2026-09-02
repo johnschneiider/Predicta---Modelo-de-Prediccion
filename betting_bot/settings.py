@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'ai_predictions',
     'value_betting',
     'auto_betting',
+    'notificaciones',
 ]
 
 MIDDLEWARE = [

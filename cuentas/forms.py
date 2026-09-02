@@ -271,3 +271,41 @@ class FormularioCambiarContraseña(forms.Form):
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError("Las contraseñas no coinciden.")
         return password2
+
+class FormularioConfiguracionCuenta(forms.ModelForm):
+    """
+    Configuración de la cuenta del usuario: número de WhatsApp para
+    notificaciones (vencimiento de token BetPlay, etc.). Sin teléfono,
+    el servicio de notificaciones queda desactivado para ese usuario.
+    """
+
+    class Meta:
+        model = Usuario
+        fields = ['telefono']
+        widgets = {
+            'telefono': forms.TextInput(attrs={
+                'class': 'acc-input',
+                'placeholder': 'Ej. 573001234567',
+            }),
+        }
+        labels = {'telefono': 'Número de WhatsApp'}
+        help_texts = {
+            'telefono': (
+                'Con código de país (Colombia: 57 + número). Aquí recibirás '
+                'avisos como el vencimiento del ticket de BetPlay. Si lo dejas '
+                'vacío, no se te enviarán notificaciones.'
+            ),
+        }
+
+    def clean_telefono(self):
+        tel = (self.cleaned_data.get('telefono') or '').strip()
+        if not tel:
+            return ''
+        digits = ''.join(ch for ch in tel if ch.isdigit())
+        if len(digits) == 10 and digits.startswith('3'):
+            digits = '57' + digits
+        if len(digits) < 7 or len(digits) > 15:
+            raise forms.ValidationError(
+                'Número inválido. Usa el formato internacional (ej. 573001234567).'
+            )
+        return digits
