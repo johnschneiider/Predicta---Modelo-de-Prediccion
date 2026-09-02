@@ -110,12 +110,12 @@ class CapitalServicesTests(TestCase):
         self.assertIsNone(stake)
         self.assertEqual(motivo, 'sin_saldo')
 
-    def test_compuesto_stake_bajo_minimo_no_apuesta(self):
-        # Balance 10000, 2% = 200 < min 500 → no apostar.
+    def test_compuesto_bajo_minimo_usa_minimo(self):
+        # Balance 10000, 2% = 200 < min 500 → se apuesta el MÍNIMO (500 COP).
+        # Política 2026-09-02: el piso es un suelo operativo, no un freno.
         self._activar_compuesto(balance=10000)
         stake, motivo = resolve_stake(self.config)
-        self.assertIsNone(stake)
-        self.assertEqual(motivo, 'stake_minimo')
+        self.assertEqual((stake, motivo), (500000, 'compuesto'))
 
     def test_compuesto_stake_techo(self):
         # Balance 1.000.000, 10% = 100000 → techo 5000 COP.

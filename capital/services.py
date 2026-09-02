@@ -191,9 +191,10 @@ def resolve_stake(config):
     Devuelve (stake_kambi, motivo):
       - modo FIJO:         (stake normalizado, 'fijo')        → piso 500 COP.
       - modo COMPUESTO:    (stake * 1000, 'compuesto')        → % del balance.
+      - % < stake mínimo:  se usa el stake mínimo (2026-09-02: el piso es un
+                           suelo operativo, no un freno).
       - sin balance/ancla: (None, 'sin_balance')              → NO apostar.
       - balance ≤ 0:       (None, 'sin_saldo')                → NO apostar.
-      - % < stake mínimo:  (None, 'stake_minimo')             → NO apostar.
 
     `None` SIEMPRE significa "no colocar apuestas para este usuario" —
     protege de apostar sin saldo o con montos que el usuario no eligió.
@@ -213,10 +214,12 @@ def resolve_stake(config):
     if balance is None or balance <= 0:
         return None, 'sin_saldo'
 
-    # % del balance, normalizado a la política de números redondos.
+    # % del balance. Si queda por debajo del mínimo configurado, se usa el
+    # MÍNIMO como stake (2026-09-02, pedido de John): el piso es un suelo
+    # operativo — apostar el mínimo — no un freno que pause la cuenta.
     stake_cop = int(balance * cfg.porcentaje / 100.0)
     if stake_cop < cfg.stake_min_cop:
-        return None, 'stake_minimo'
+        stake_cop = cfg.stake_min_cop
     if stake_cop > cfg.stake_max_cop:
         stake_cop = cfg.stake_max_cop
     stake_cop = normalizar_stake_cop(stake_cop)
@@ -224,8 +227,6 @@ def resolve_stake(config):
     # techo duro al múltiplo inferior del máximo.
     if stake_cop > cfg.stake_max_cop:
         stake_cop = normalizar_stake_cop(cfg.stake_max_cop, hacia='abajo')
-        if stake_cop < cfg.stake_min_cop:
-            return None, 'stake_minimo'
 
     return int(stake_cop * 1000), 'compuesto'
 

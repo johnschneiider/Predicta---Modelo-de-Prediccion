@@ -249,7 +249,6 @@ class Command(BaseCommand):
             razones = {
                 'sin_balance': 'modo compuesto sin balance declarado',
                 'sin_saldo': 'balance paralelo agotado (≤ 0 COP)',
-                'stake_minimo': 'stake calculado por debajo del mínimo configurado',
             }
             self.stdout.write(
                 f"⛔ {owner.email}: sin apuestas ({razones.get(stake_motivo, stake_motivo)})."

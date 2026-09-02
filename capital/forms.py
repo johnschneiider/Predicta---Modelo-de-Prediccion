@@ -58,8 +58,8 @@ class CapitalConfigForm(forms.ModelForm):
             ),
             'stake_min_cop': (
                 'Piso de seguridad (mínimo global: 500 COP). Si el % calculado queda por '
-                'debajo de este valor, el sistema NO apuesta ese día. Se ajusta a números '
-                'redondos como el stake.'
+                'debajo de este valor, el sistema usa este mínimo como stake. Se ajusta '
+                'a números redondos como el stake.'
             ),
             'stake_max_cop': (
                 'Techo de seguridad. El stake nunca superará este valor aunque el balance '

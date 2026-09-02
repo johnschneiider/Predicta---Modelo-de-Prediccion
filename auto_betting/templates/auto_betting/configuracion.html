@@ -252,7 +252,7 @@
           {% if stake_resuelto_cop %}
             <span class="detalle">Próximo stake calculado: {{ stake_resuelto_cop|floatformat:0 }} COP por apuesta.</span>
           {% else %}
-            <div class="cfg-badge-pausa">⛔ Auto-betting en pausa para esta cuenta: sin saldo disponible o stake por debajo del mínimo. No se colocarán apuestas hasta que el balance lo permita.</div>
+            <div class="cfg-badge-pausa">⛔ Auto-betting en pausa para esta cuenta: sin balance declarado o saldo agotado. No se colocarán apuestas hasta que el balance lo permita.</div>
           {% endif %}
         {% endif %}
       </div>
