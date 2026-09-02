@@ -177,6 +177,11 @@ class ConfiguracionViewTests(TestCase):
         self.assertEqual(cap.modo, 'COMPUESTO')
         self.assertEqual(cap.balance_inicial, 250000)
         self.assertIsNotNone(cap.ancla)
+        # Regresión 2026-09-02: al cambiar de modo NO se pierde nada.
+        self.config.refresh_from_db()
+        self.assertEqual(self.config.ticket, 't')
+        self.assertEqual(self.config.punter_id, 'p')
+        self.assertEqual(self.config.stake, 500000)
 
     def test_compuesto_sin_balance_no_activa(self):
         resp = self._post(modo='COMPUESTO', balance_inicial='')
@@ -186,12 +191,14 @@ class ConfiguracionViewTests(TestCase):
 
     def test_volver_a_fijo_conserva_stake_y_ancla(self):
         self._post(modo='COMPUESTO', balance_inicial='250000')
-        self._post(modo='FIJO')
+        self._post(modo='FIJO', ticket='nuevo-ticket', punter_id='nuevo-id')
         cap = CapitalConfig.objects.get(usuario=self.usuario)
         self.config.refresh_from_db()
         self.assertEqual(cap.modo, 'FIJO')
         self.assertEqual(cap.balance_inicial, 250000)  # ancla conservada
         self.assertEqual(self.config.stake, 500000)    # stake fijo intacto
+        self.assertEqual(self.config.ticket, 'nuevo-ticket')  # datos se editan y persisten
+        self.assertEqual(self.config.punter_id, 'nuevo-id')
 
     def test_redeclarar_balance_crea_ajuste(self):
         self._post(modo='COMPUESTO', balance_inicial='250000')
