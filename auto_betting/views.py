@@ -271,6 +271,7 @@ def configuracion(request):
         if form.is_valid() and cap_form.is_valid():
             form.save()
             _guardar_capital(request, cap_form)
+            _avisar_ajustes_antiblqueo(request, form, cap_form)
             messages.success(request, '✅ Configuración de BetPlay y de capital guardada.')
             return redirect('auto_betting:configuracion')
     else:
@@ -299,6 +300,33 @@ def configuracion(request):
         'stake_resuelto_cop': (stake_kambi // 1000) if stake_kambi else None,
         'stake_motivo': motivo,
     })
+
+
+def _avisar_ajustes_antiblqueo(request, form, cap_form):
+    """
+    Política anti-bloqueo (2026-09-02): si el sistema normalizó un valor a
+    número redondo, se lo informa al usuario (transparencia sobre el stake
+    que realmente se usará).
+    """
+    def _fmt(v):
+        return f'{v:,}'.replace(',', '.')
+
+    ajustes = []
+    aj = getattr(form, '_stake_ajustado', None)
+    if aj:
+        ajustes.append(f'stake fijo {_fmt(aj[0])} → {_fmt(aj[1])} COP')
+    aj = getattr(cap_form, '_min_ajustado', None)
+    if aj:
+        ajustes.append(f'stake mínimo {_fmt(aj[0])} → {_fmt(aj[1])} COP')
+    aj = getattr(cap_form, '_max_ajustado', None)
+    if aj:
+        ajustes.append(f'stake máximo {_fmt(aj[0])} → {_fmt(aj[1])} COP')
+    if ajustes:
+        messages.info(
+            request,
+            '💡 Ajustado a números redondos (política anti-bloqueo): '
+            + '; '.join(ajustes) + '.',
+        )
 
 
 def _guardar_capital(request, cap_form):

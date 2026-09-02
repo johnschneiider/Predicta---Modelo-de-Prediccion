@@ -202,7 +202,7 @@
         {{ form.stake }}
         {% if form.stake.help_text %}<small class="cfg-help">{{ form.stake.help_text|safe }}</small>{% endif %}
         {% if form.stake.errors %}<div class="cfg-error">{{ form.stake.errors|striptags }}</div>{% endif %}
-        <small class="cfg-help cfg-stake-hint">💡 Escribe el valor en pesos colombianos (ej. 500 = quinientos pesos). El sistema hace la conversión interna automáticamente — no uses unidades Kambi.</small>
+        <small class="cfg-help cfg-stake-hint">💡 Escribe el valor en pesos colombianos (ej. 500 = quinientos pesos). Mínimo 500 COP. El sistema lo ajusta a números redondos (múltiplos de 100, 1.000, 10.000 según la magnitud) para no delatar automatización, y hace la conversión interna automáticamente — no uses unidades Kambi.</small>
       </div>
 
       {# Bloque: interés compuesto #}

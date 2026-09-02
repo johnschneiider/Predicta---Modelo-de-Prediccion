@@ -12,7 +12,10 @@ from auto_betting.models import AutoBetConfig, HistorialApuesta
 from cuentas.models import Usuario
 
 from .models import CapitalAjuste, CapitalConfig, CapitalLegada
-from .services import bankroll_cop, get_config, resolve_stake, snapshot_legadas
+from .services import (
+    bankroll_cop, get_config, normalizar_stake_cop, resolve_stake,
+    snapshot_legadas,
+)
 
 
 class CapitalServicesTests(TestCase):
@@ -76,8 +79,8 @@ class CapitalServicesTests(TestCase):
         self._historial('LOST', stake=2000000, payout=0)      # −2.000 COP
         self._historial('WON', stake=500000, payout=500000)   # +0 COP
         stake, _ = resolve_stake(self.config)
-        # 2% de 248.000 = 4.960 → floor a múltiplos de 100 → 4.900 COP
-        self.assertEqual(stake, 4900000)
+        # 2% de 248.000 = 4.960 → múltiplo de 100 más cercano → 5.000 COP
+        self.assertEqual(stake, 5000000)
 
     def test_open_descuenta_stake_en_tiempo_real(self):
         # OPEN colocado desde el ancla: el stake ya salió del balance (como
@@ -90,11 +93,11 @@ class CapitalServicesTests(TestCase):
         antigua.save()
         self.assertEqual(bankroll_cop(self.usuario), 100000 - 999)
         stake, _ = resolve_stake(self.config)
-        # 2% de 99.001 = 1.980,02 → floor a 100 → 1.900 COP
-        self.assertEqual(stake, 1900000)
+        # 2% de 99.001 = 1.980,02 → múltiplo de 100 más cercano → 2.000 COP
+        self.assertEqual(stake, 2000000)
 
-    def test_compuesto_redondea_abajo_a_multiplos_de_100(self):
-        # Balance 100123 → 2% = 2002.46 → 2000 COP.
+    def test_compuesto_redondea_a_numero_redondo(self):
+        # Balance 100123 → 2% = 2002.46 → 2000 COP (múltiplo de 100).
         self._activar_compuesto(balance=100123)
         stake, _ = resolve_stake(self.config)
         self.assertEqual(stake, 2000000)
@@ -128,8 +131,8 @@ class CapitalServicesTests(TestCase):
                                      motivo='Reconciliación')
         self.assertEqual(bankroll_cop(self.usuario), 262500)
         stake, _ = resolve_stake(self.config)
-        # 2% de 262.500 = 5.250 → floor a múltiplos de 100 → 5.200 COP
-        self.assertEqual(stake, 5200000)
+        # 2% de 262.500 = 5.250 → múltiplo de 100 más cercano → 5.300 COP
+        self.assertEqual(stake, 5300000)
 
     # ── apuestas legadas (OPEN al activar) ───────────────────────────────
     def test_legada_won_acredita_payout_completo(self):
@@ -282,11 +285,11 @@ class ConfiguracionViewTests(TestCase):
         from auto_betting.forms import AutoBetConfigForm
         form = AutoBetConfigForm(data={
             'ticket': 't', 'punter_id': 'p', 'cuota_minima': '2.0',
-            'stake': '1250', 'max_apuestas_diarias': '20',
+            'stake': '1200', 'max_apuestas_diarias': '20',
             'horas_adelante': '24', 'activo': 'on',
         })
         self.assertTrue(form.is_valid(), form.errors)
-        self.assertEqual(form.cleaned_data['stake'], 1250000)
+        self.assertEqual(form.cleaned_data['stake'], 1200000)
 
         # Valores inválidos no pasan.
         form2 = AutoBetConfigForm(data={
@@ -311,3 +314,79 @@ class ConfiguracionViewTests(TestCase):
         # El ancla original no se mueve.
         cap = CapitalConfig.objects.get(usuario=self.usuario)
         self.assertEqual(cap.balance_inicial, 250000)
+
+
+class NormalizacionStakeTests(TestCase):
+    """Política anti-bloqueo (2026-09-02): piso 500 COP y números redondos."""
+
+    def test_piso_global_500(self):
+        self.assertEqual(normalizar_stake_cop(0), 500)
+        self.assertEqual(normalizar_stake_cop(300), 500)
+
+    def test_multiplos_de_100_bajo_10000(self):
+        self.assertEqual(normalizar_stake_cop(525), 500)
+        self.assertEqual(normalizar_stake_cop(550), 600)
+        self.assertEqual(normalizar_stake_cop(9999), 10000)
+
+    def test_multiplos_de_1000(self):
+        self.assertEqual(normalizar_stake_cop(10850), 11000)
+        self.assertEqual(normalizar_stake_cop(49999), 50000)
+
+    def test_multiplos_de_10000(self):
+        self.assertEqual(normalizar_stake_cop(149999), 150000)
+        self.assertEqual(normalizar_stake_cop(1234567), 1200000)
+
+    def test_valores_ya_redondos_no_cambian(self):
+        for v in (500, 600, 9900, 10000, 11000, 150000):
+            self.assertEqual(normalizar_stake_cop(v), v)
+
+    def test_hacia_abajo_y_arriba(self):
+        self.assertEqual(normalizar_stake_cop(525, hacia='abajo'), 500)
+        self.assertEqual(normalizar_stake_cop(525, hacia='arriba'), 600)
+        self.assertEqual(normalizar_stake_cop(149999, hacia='abajo'), 140000)
+
+
+class ResolveStakeAntibloqueoTests(TestCase):
+    """El stake que SALE hacia BetPlay siempre es un número redondo."""
+
+    def setUp(self):
+        self.usuario = Usuario.objects.create_user(
+            email='anti@test.com', username='anti', password='pass123',
+        )
+        self.config = AutoBetConfig.objects.create(
+            usuario=self.usuario, ticket='t', punter_id='p', stake=500000,
+        )
+
+    def test_fijo_no_redondo_se_normaliza(self):
+        self.config.stake = 525000  # 525 COP (legacy)
+        self.config.save()
+        stake, motivo = resolve_stake(self.config)
+        self.assertEqual((stake, motivo), (500000, 'fijo'))
+
+    def test_fijo_stake_cero_no_apuesta(self):
+        self.config.stake = 0
+        self.config.save()
+        stake, motivo = resolve_stake(self.config)
+        self.assertIsNone(stake)
+        self.assertEqual(motivo, 'sin_saldo')
+
+    def test_form_fijo_rechaza_menor_a_500(self):
+        from auto_betting.forms import AutoBetConfigForm
+        form = AutoBetConfigForm(data={
+            'ticket': 't', 'punter_id': 'p', 'cuota_minima': '2.0',
+            'stake': '300', 'max_apuestas_diarias': '20',
+            'horas_adelante': '24', 'activo': 'on',
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('stake', form.errors)
+
+    def test_form_fijo_normaliza_525_a_500(self):
+        from auto_betting.forms import AutoBetConfigForm
+        form = AutoBetConfigForm(data={
+            'ticket': 't', 'punter_id': 'p', 'cuota_minima': '2.0',
+            'stake': '525', 'max_apuestas_diarias': '20',
+            'horas_adelante': '24', 'activo': 'on',
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['stake'], 500000)
+        self.assertEqual(form._stake_ajustado, (525, 500))

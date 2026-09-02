@@ -46,7 +46,7 @@ class AutoBetConfigForm(forms.ModelForm):
             'punter_id': forms.TextInput(attrs={'class': 'cfg-input', 'placeholder': 'Tu Punter ID de BetPlay'}),
             'cuota_minima': forms.NumberInput(attrs={'class': 'cfg-input', 'step': '0.05'}),
             'stake': forms.NumberInput(attrs={
-                'class': 'cfg-input', 'step': '100', 'min': '100',
+                'class': 'cfg-input', 'step': '100', 'min': '500',
                 'placeholder': 'Ej. 500 (quinientos pesos)',
             }),
             'max_apuestas_diarias': forms.NumberInput(attrs={'class': 'cfg-input'}),
@@ -64,7 +64,11 @@ class AutoBetConfigForm(forms.ModelForm):
             ),
             'punter_id': 'Tu Punter ID de BetPlay (identificador de cuenta).',
             'cuota_minima': 'Cuota mínima (>) para colocar una apuesta. Default 2.0.',
-            'stake': 'Monto real de cada apuesta en pesos colombianos.',
+            'stake': (
+                'Monto real de cada apuesta en pesos colombianos (mínimo 500). '
+                'Se ajusta a números redondos: múltiplos de 100 bajo 10.000 COP, '
+                'de 1.000 bajo 100.000, de 10.000 bajo 1.000.000, y así sucesivamente.'
+            ),
             'max_apuestas_diarias': 'Límite de apuestas por día (default 20).',
             'horas_adelante': 'Ventana de escaneo de partidos (horas hacia adelante). Default 24.',
             'activo': 'Activa/desactiva el auto-betting para tu cuenta.',
@@ -74,7 +78,13 @@ class AutoBetConfigForm(forms.ModelForm):
         """
         El usuario escribe COP (dinero real). La BD guarda unidades Kambi
         (COP × 1000), así que la conversión se hace aquí por detrás.
+
+        Política anti-bloqueo (John, 2026-09-02): mínimo 500 COP y números
+        redondos por magnitud. Si el valor no es redondo se ajusta al múltiplo
+        más cercano y la vista avisa al usuario (self._stake_ajustado).
         """
+        from capital.services import normalizar_stake_cop
+
         cop = self.cleaned_data.get('stake')
         if cop is None:
             return cop
@@ -84,7 +94,12 @@ class AutoBetConfigForm(forms.ModelForm):
             raise forms.ValidationError('Escribe un número válido en pesos.')
         if cop_int <= 0:
             raise forms.ValidationError('El stake debe ser mayor a 0 pesos.')
-        return cop_int * 1000
+        if cop_int < 500:
+            raise forms.ValidationError('El stake mínimo es 500 COP.')
+        normalizado = normalizar_stake_cop(cop_int)
+        if normalizado != cop_int:
+            self._stake_ajustado = (cop_int, normalizado)
+        return normalizado * 1000
 
 
 class MarketFilterConfigForm(forms.ModelForm):

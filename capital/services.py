@@ -24,6 +24,41 @@ from .models import CapitalConfig, CapitalAjuste, CapitalLegada
 # neutro (Kambi devuelve el stake; no genera P&L).
 _ESTADOS_ASENTADOS = ['WON', 'LOST']
 
+# Política anti-bloqueo (John, 2026-09-02): ningún stake por debajo de 500 COP
+# y siempre números "redondos" según su magnitud, para que las apuestas no
+# parezcan calculadas (surebets) ante la casa de apuestas.
+_STAKE_MIN_COP = 500
+
+
+def _step_cop(valor_cop):
+    """
+    Escalón de redondeo según la magnitud del stake (COP):
+      < 10.000     → 100      (500, 600, ..., 9.900)
+      < 100.000    → 1.000    (10.000, 11.000, ...)
+      < 1.000.000  → 10.000   (y así sucesivamente: 10^(n−2) con n dígitos).
+    """
+    return 10 ** max(len(str(int(valor_cop))) - 2, 2)
+
+
+def normalizar_stake_cop(stake_cop, hacia='cercano'):
+    """
+    Normaliza un stake en COP a la política de números redondos:
+      - piso global: 500 COP.
+      - múltiplos de 100 / 1.000 / 10.000 / ... según la magnitud.
+    Nunca produce valores "raros" (525, 10.850) que delaten automatización.
+
+    `hacia`: 'cercano' (default, empate hacia arriba), 'abajo' o 'arriba'.
+    """
+    stake_cop = int(stake_cop)
+    if stake_cop < _STAKE_MIN_COP:
+        return _STAKE_MIN_COP
+    step = _step_cop(stake_cop)
+    if hacia == 'abajo':
+        return (stake_cop // step) * step
+    if hacia == 'arriba':
+        return ((stake_cop + step - 1) // step) * step
+    return (stake_cop + step // 2) // step * step
+
 
 def get_config(usuario):
     """Devuelve (creando si no existe) la CapitalConfig del usuario."""
@@ -149,12 +184,16 @@ def resolve_stake(config):
     """
     Resuelve el stake (unidades Kambi, COP × 1000) para una AutoBetConfig.
 
+    Política anti-bloqueo (2026-09-02): TODO stake de salida pasa por
+    `normalizar_stake_cop` — mínimo 500 COP y múltiplos redondos por
+    magnitud (100 / 1.000 / 10.000 / ...).
+
     Devuelve (stake_kambi, motivo):
-      - modo FIJO:         (config.stake, 'fijo')            → sin cambios.
-      - modo COMPUESTO:    (stake * 1000, 'compuesto')       → % del balance.
-      - sin balance/ancla: (None, 'sin_balance')             → NO apostar.
-      - balance ≤ 0:       (None, 'sin_saldo')               → NO apostar.
-      - % < stake mínimo:  (None, 'stake_minimo')            → NO apostar.
+      - modo FIJO:         (stake normalizado, 'fijo')        → piso 500 COP.
+      - modo COMPUESTO:    (stake * 1000, 'compuesto')        → % del balance.
+      - sin balance/ancla: (None, 'sin_balance')              → NO apostar.
+      - balance ≤ 0:       (None, 'sin_saldo')                → NO apostar.
+      - % < stake mínimo:  (None, 'stake_minimo')             → NO apostar.
 
     `None` SIEMPRE significa "no colocar apuestas para este usuario" —
     protege de apostar sin saldo o con montos que el usuario no eligió.
@@ -162,7 +201,10 @@ def resolve_stake(config):
     cfg = get_config(config.usuario)
 
     if cfg.modo != CapitalConfig.MODO_COMPUESTO:
-        return int(config.stake), 'fijo'
+        stake_cop = int(config.stake) / 1000.0
+        if stake_cop <= 0:
+            return None, 'sin_saldo'
+        return int(normalizar_stake_cop(stake_cop) * 1000), 'fijo'
 
     if cfg.balance_inicial is None or cfg.ancla is None:
         return None, 'sin_balance'
@@ -171,15 +213,19 @@ def resolve_stake(config):
     if balance is None or balance <= 0:
         return None, 'sin_saldo'
 
-    # % del balance, redondeado hacia ABAJO a múltiplos de 100 COP
-    # (conservador: nunca apostar más de lo calculado).
+    # % del balance, normalizado a la política de números redondos.
     stake_cop = int(balance * cfg.porcentaje / 100.0)
-    stake_cop = (stake_cop // 100) * 100
-
     if stake_cop < cfg.stake_min_cop:
         return None, 'stake_minimo'
     if stake_cop > cfg.stake_max_cop:
         stake_cop = cfg.stake_max_cop
+    stake_cop = normalizar_stake_cop(stake_cop)
+    # Si el techo configurado no era redondo, el redondeo pudo pasarse:
+    # techo duro al múltiplo inferior del máximo.
+    if stake_cop > cfg.stake_max_cop:
+        stake_cop = normalizar_stake_cop(cfg.stake_max_cop, hacia='abajo')
+        if stake_cop < cfg.stake_min_cop:
+            return None, 'stake_minimo'
 
     return int(stake_cop * 1000), 'compuesto'
 

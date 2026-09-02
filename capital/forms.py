@@ -32,8 +32,8 @@ class CapitalConfigForm(forms.ModelForm):
                 'class': 'cfg-input', 'step': '100', 'min': '0',
                 'placeholder': 'Ej. 250000 (COP)',
             }),
-            'stake_min_cop': forms.NumberInput(attrs={'class': 'cfg-input', 'step': '100', 'min': '100'}),
-            'stake_max_cop': forms.NumberInput(attrs={'class': 'cfg-input', 'step': '100', 'min': '100'}),
+            'stake_min_cop': forms.NumberInput(attrs={'class': 'cfg-input', 'step': '100', 'min': '500'}),
+            'stake_max_cop': forms.NumberInput(attrs={'class': 'cfg-input', 'step': '100', 'min': '500'}),
         }
         labels = {
             'modo': '¿Cómo se calcula el monto de cada apuesta?',
@@ -57,11 +57,13 @@ class CapitalConfigForm(forms.ModelForm):
                 'sin mover el historial.'
             ),
             'stake_min_cop': (
-                'Piso de seguridad. Si el % calculado queda por debajo de este valor, '
-                'el sistema NO apuesta ese día (protege de apostar migajas o en saldo residual).'
+                'Piso de seguridad (mínimo global: 500 COP). Si el % calculado queda por '
+                'debajo de este valor, el sistema NO apuesta ese día. Se ajusta a números '
+                'redondos como el stake.'
             ),
             'stake_max_cop': (
-                'Techo de seguridad. El stake nunca superará este valor aunque el balance crezca.'
+                'Techo de seguridad. El stake nunca superará este valor aunque el balance '
+                'crezca. Se ajusta a números redondos como el stake.'
             ),
         }
 
@@ -70,6 +72,34 @@ class CapitalConfigForm(forms.ModelForm):
         # El balance declarado se gestiona manualmente en la vista; el campo
         # es opcional a nivel de formulario (la vista valida el primer alta).
         self.fields['balance_inicial'].required = False
+
+    def clean_stake_min_cop(self):
+        """Piso de stake: mínimo global 500 COP y número redondo por magnitud."""
+        from .services import normalizar_stake_cop
+        v = self.cleaned_data.get('stake_min_cop')
+        if v is None:
+            return v
+        v = int(v)
+        if v < 500:
+            raise forms.ValidationError('El mínimo global de apuesta es 500 COP.')
+        n = normalizar_stake_cop(v)
+        if n != v:
+            self._min_ajustado = (v, n)
+        return n
+
+    def clean_stake_max_cop(self):
+        """Techo de stake: número redondo por magnitud (como el stake)."""
+        from .services import normalizar_stake_cop
+        v = self.cleaned_data.get('stake_max_cop')
+        if v is None:
+            return v
+        v = int(v)
+        if v < 500:
+            raise forms.ValidationError('El máximo debe ser al menos 500 COP.')
+        n = normalizar_stake_cop(v)
+        if n != v:
+            self._max_ajustado = (v, n)
+        return n
 
     def clean(self):
         cleaned = super().clean()
@@ -91,8 +121,6 @@ class CapitalConfigForm(forms.ModelForm):
             if porcentaje is None or porcentaje <= 0 or porcentaje > 100:
                 self.add_error('porcentaje', 'El porcentaje debe estar entre 0.1 y 100.')
 
-        if stake_min is not None and stake_min < 100:
-            self.add_error('stake_min_cop', 'El mínimo debe ser al menos 100 COP.')
         if stake_max is not None and stake_min is not None and stake_max < stake_min:
             self.add_error('stake_max_cop', 'El máximo debe ser ≥ al mínimo.')
         return cleaned
