@@ -89,22 +89,57 @@ def payout_legadas_cop(usuario, desde=None):
     return int(pay / 1000.0)
 
 
+def _stakes_pendientes_autobet(usuario, ancla):
+    """
+    Stake (unidades Kambi) de apuestas del sistema colocadas DESDE el ancla
+    que aún NO están en HistorialApuesta (todavía no sincronizadas).
+
+    Evita doble conteo: si el cupón ya fue importado por el sync, el stake
+    se descuenta vía HistorialApuesta; aquí solo entran las pendientes de
+    sincronizar (recién colocadas).
+    """
+    from auto_betting.models import AutoBet
+
+    refs_hist = set(
+        HistorialApuesta.objects.filter(usuario=usuario, placed_date__gte=ancla)
+        .values_list('coupon_ref', flat=True)
+    )
+    qs = AutoBet.objects.filter(usuario=usuario, estado='OPEN', creado__gte=ancla)
+    if refs_hist:
+        qs = qs.exclude(coupon_ref__in=refs_hist)
+    return int(qs.aggregate(s=Sum('stake'))['s'] or 0)
+
+
 def bankroll_cop(usuario):
     """
-    Balance paralelo (COP) o None si el usuario no ha activado el modo
-    compuesto (sin balance declarado / sin ancla).
+    Balance paralelo en TIEMPO REAL (COP) o None si el usuario no ha activado
+    el modo compuesto.
 
     = balance_inicial
-      + profit de apuestas colocadas DESDE el ancla (payout − stake)
-      + payout completo de apuestas legadas (OPEN al ancla) ya asentadas
+      + payout de apuestas colocadas desde el ancla YA asentadas
+      − stake de TODAS las apuestas colocadas desde el ancla (asentadas y
+        pendientes: el stake se descuenta al colocar, como en la cuenta real)
+      − stake de apuestas del sistema recién colocadas aún sin sincronizar
+      + payout completo de apuestas legadas (OPEN al ancla) asentadas
       + ajustes manuales.
+
+    Efecto: al colocar una apuesta el balance BAJA (stake); al asentar WON
+    SUBE el payout completo (stake + ganancia) → el movimiento neto es la
+    ganancia real.
     """
     cfg = get_config(usuario)
     if cfg.balance_inicial is None or cfg.ancla is None:
         return None
+
+    qs = HistorialApuesta.objects.filter(usuario=usuario, placed_date__gte=cfg.ancla)
+    agg = qs.aggregate(st=Sum('stake'), pay=Sum('payout'))
+    movimiento_cop = int(((agg['pay'] or 0) - (agg['st'] or 0)) / 1000.0)
+    pendientes_cop = int(_stakes_pendientes_autobet(usuario, cfg.ancla) / 1000.0)
+
     return (
         int(cfg.balance_inicial)
-        + pnl_asentado_cop(usuario, cfg.ancla)
+        + movimiento_cop
+        - pendientes_cop
         + payout_legadas_cop(usuario, cfg.ancla)
         + ajustes_cop(usuario, cfg.ancla)
     )

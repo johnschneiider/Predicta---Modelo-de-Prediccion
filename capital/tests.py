@@ -79,16 +79,19 @@ class CapitalServicesTests(TestCase):
         # 2% de 248.000 = 4.960 → floor a múltiplos de 100 → 4.900 COP
         self.assertEqual(stake, 4900000)
 
-    def test_compuesto_ignora_open_y_apuestas_previas_al_ancla(self):
+    def test_open_descuenta_stake_en_tiempo_real(self):
+        # OPEN colocado desde el ancla: el stake ya salió del balance (como
+        # en la cuenta real). Antes del ancla: no cuenta (ya estaba incluido
+        # en el balance declarado).
         self._activar_compuesto(balance=100000)
-        # OPEN: no cuenta. Anterior al ancla: no cuenta.
-        self._historial('OPEN', stake=999000, payout=0)
-        antigua = self._historial('LOST', stake=999000, payout=0, days_ago=30)
-        antigua.placed_date = timezone.now() - timedelta(days=30)
+        self._historial('OPEN', stake=999000, payout=0)          # −999 COP
+        antigua = self._historial('OPEN', stake=888000, payout=0, days_ago=30)
+        antigua.placed_date = timezone.now() - timedelta(days=30)  # pre-ancla
         antigua.save()
-        self.assertEqual(bankroll_cop(self.usuario), 100000)
+        self.assertEqual(bankroll_cop(self.usuario), 100000 - 999)
         stake, _ = resolve_stake(self.config)
-        self.assertEqual(stake, 2000000)  # 2% de 100000 = 2000 COP
+        # 2% de 99.001 = 1.980,02 → floor a 100 → 1.900 COP
+        self.assertEqual(stake, 1900000)
 
     def test_compuesto_redondea_abajo_a_multiplos_de_100(self):
         # Balance 100123 → 2% = 2002.46 → 2000 COP.
@@ -129,7 +132,6 @@ class CapitalServicesTests(TestCase):
         self.assertEqual(stake, 5200000)
 
     # ── apuestas legadas (OPEN al activar) ───────────────────────────────
-
     def test_legada_won_acredita_payout_completo(self):
         # Apuesta OPEN previa al ancla: su stake ya estaba descontado del
         # balance declarado. Al asentar WON, la cuenta real recibe el payout
@@ -157,6 +159,48 @@ class CapitalServicesTests(TestCase):
         snapshot_legadas(self.usuario)  # sin OPEN previos → 0 legadas
         self._historial('WON', stake=800000, payout=1904000)  # profit +1104
         self.assertEqual(bankroll_cop(self.usuario), 50000 + 1104)
+
+    # ── stake descontado al colocar (tiempo real) ─────────────────────────
+
+    def _autobet_open(self, stake=800000, coupon_ref=777000001):
+        from auto_betting.models import AutoBet
+        return AutoBet.objects.create(
+            usuario=self.usuario, evento_id=1,
+            home_team='A', away_team='B', liga='L', start_time=timezone.now(),
+            mercado='M',
+            seleccion='X', cuota=2.0,
+            corners_predichos=0.0, predicta_prob=50.0,
+            confidence=0.0, edge=0.0, ev=0.0,
+            stake=stake, coupon_ref=coupon_ref, estado='OPEN',
+        )
+
+    def test_autobet_open_sin_sincronizar_descuenta(self):
+        # Apuesta recién colocada (AutoBet OPEN, aún sin sync): baja el balance.
+        self._activar_compuesto(balance=50000)
+        self._autobet_open(stake=800000)  # 800 COP
+        self.assertEqual(bankroll_cop(self.usuario), 50000 - 800)
+
+    def test_no_doble_conteo_al_sincronizar(self):
+        # Cuando el sync importa el cupón a HistorialApuesta, el stake no se
+        # descuenta dos veces (AutoBet se excluye por coupon_ref).
+        self._activar_compuesto(balance=50000)
+        self._autobet_open(stake=800000, coupon_ref=777000001)
+        self._historial('OPEN', stake=800000, payout=0)
+        hist = HistorialApuesta.objects.get(usuario=self.usuario, bet_status='OPEN',
+                                            coupon_ref__isnull=False)
+        hist.coupon_ref = 777000001
+        hist.save()
+        self.assertEqual(bankroll_cop(self.usuario), 50000 - 800)
+
+    def test_ganar_aumenta_balance_con_payout_completo(self):
+        # Colocada (desc cuenta stake) → WON (sube payout completo).
+        self._activar_compuesto(balance=50000)
+        apuesta = self._historial('OPEN', stake=800000, payout=0)
+        self.assertEqual(bankroll_cop(self.usuario), 50000 - 800)
+        apuesta.bet_status = 'WON'
+        apuesta.payout = 1904000
+        apuesta.save()
+        self.assertEqual(bankroll_cop(self.usuario), 50000 - 800 + 1904)
 
     # ── navegación / context processor ───────────────────────────────────
     def test_navbar_balance_solo_con_modo_activado(self):

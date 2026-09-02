@@ -297,7 +297,7 @@
         (b < 0 ? '-$' : '$') + Math.abs(b).toLocaleString('es-CO', {maximumFractionDigits: 0});
       document.getElementById('balanceDetalle').textContent =
         b < 0 ? 'Balance paralelo en negativo — se pausan las apuestas.'
-              : 'Balance paralelo actualizado con tu historial de apuestas.';
+              : 'Balance en tiempo real: descuenta lo apostado y suma lo ganado.';
     {% endif %}
   })();
 </script>
