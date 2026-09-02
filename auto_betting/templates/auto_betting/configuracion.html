@@ -121,6 +121,13 @@
   }
 
   .oculto { display: none !important; }
+  .cfg-stake-hint {
+    background: rgba(0,229,255,0.06);
+    border: 0.5px solid rgba(0,229,255,0.22);
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.7rem;
+    color: var(--text-primary);
+  }
 
   .cfg-balance-box {
     background: var(--bg-surface);
@@ -195,6 +202,7 @@
         {{ form.stake }}
         {% if form.stake.help_text %}<small class="cfg-help">{{ form.stake.help_text|safe }}</small>{% endif %}
         {% if form.stake.errors %}<div class="cfg-error">{{ form.stake.errors|striptags }}</div>{% endif %}
+        <small class="cfg-help cfg-stake-hint">💡 Escribe el valor en pesos colombianos (ej. 500 = quinientos pesos). El sistema hace la conversión interna automáticamente — no uses unidades Kambi.</small>
       </div>
 
       {# Bloque: interés compuesto #}

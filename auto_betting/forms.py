@@ -45,10 +45,16 @@ class AutoBetConfigForm(forms.ModelForm):
             }),
             'punter_id': forms.TextInput(attrs={'class': 'cfg-input', 'placeholder': 'Tu Punter ID de BetPlay'}),
             'cuota_minima': forms.NumberInput(attrs={'class': 'cfg-input', 'step': '0.05'}),
-            'stake': forms.NumberInput(attrs={'class': 'cfg-input'}),
+            'stake': forms.NumberInput(attrs={
+                'class': 'cfg-input', 'step': '100', 'min': '100',
+                'placeholder': 'Ej. 500 (quinientos pesos)',
+            }),
             'max_apuestas_diarias': forms.NumberInput(attrs={'class': 'cfg-input'}),
             'horas_adelante': forms.NumberInput(attrs={'class': 'cfg-input'}),
             'activo': forms.CheckboxInput(attrs={'class': 'cfg-check'}),
+        }
+        labels = {
+            'stake': 'Stake por apuesta (COP)',
         }
         help_texts = {
             'ticket': (
@@ -58,11 +64,27 @@ class AutoBetConfigForm(forms.ModelForm):
             ),
             'punter_id': 'Tu Punter ID de BetPlay (identificador de cuenta).',
             'cuota_minima': 'Cuota mínima (>) para colocar una apuesta. Default 2.0.',
-            'stake': 'Monto por apuesta en unidades Kambi: 500000 = 500 COP (divide entre 1000).',
+            'stake': 'Monto real de cada apuesta en pesos colombianos.',
             'max_apuestas_diarias': 'Límite de apuestas por día (default 20).',
             'horas_adelante': 'Ventana de escaneo de partidos (horas hacia adelante). Default 24.',
             'activo': 'Activa/desactiva el auto-betting para tu cuenta.',
         }
+
+    def clean_stake(self):
+        """
+        El usuario escribe COP (dinero real). La BD guarda unidades Kambi
+        (COP × 1000), así que la conversión se hace aquí por detrás.
+        """
+        cop = self.cleaned_data.get('stake')
+        if cop is None:
+            return cop
+        try:
+            cop_int = int(float(cop))
+        except (TypeError, ValueError):
+            raise forms.ValidationError('Escribe un número válido en pesos.')
+        if cop_int <= 0:
+            raise forms.ValidationError('El stake debe ser mayor a 0 pesos.')
+        return cop_int * 1000
 
 
 class MarketFilterConfigForm(forms.ModelForm):

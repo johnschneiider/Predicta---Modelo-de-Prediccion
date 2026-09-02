@@ -163,7 +163,8 @@ class ConfiguracionViewTests(TestCase):
     def _post(self, **extra):
         data = {
             'ticket': 't', 'punter_id': 'p', 'cuota_minima': '2.0',
-            'stake': '500000', 'max_apuestas_diarias': '20',
+            'stake': '500',  # COP real (el form convierte a Kambi ×1000)
+            'max_apuestas_diarias': '20',
             'horas_adelante': '24', 'activo': 'on',
             'modo': 'FIJO', 'porcentaje': '2.0', 'balance_inicial': '',
             'stake_min_cop': '500', 'stake_max_cop': '5000',
@@ -181,13 +182,15 @@ class ConfiguracionViewTests(TestCase):
         self.config.refresh_from_db()
         self.assertEqual(self.config.ticket, 't')
         self.assertEqual(self.config.punter_id, 'p')
-        self.assertEqual(self.config.stake, 500000)
+        self.assertEqual(self.config.stake, 500000)  # 500 COP → Kambi
 
     def test_compuesto_sin_balance_no_activa(self):
         resp = self._post(modo='COMPUESTO', balance_inicial='')
         cap = CapitalConfig.objects.get(usuario=self.usuario)
         self.assertEqual(cap.modo, 'FIJO')  # no se guardó
         self.assertContains(resp, 'debes indicar el balance actual')
+
+
 
     def test_volver_a_fijo_conserva_stake_y_ancla(self):
         self._post(modo='COMPUESTO', balance_inicial='250000')
@@ -196,9 +199,29 @@ class ConfiguracionViewTests(TestCase):
         self.config.refresh_from_db()
         self.assertEqual(cap.modo, 'FIJO')
         self.assertEqual(cap.balance_inicial, 250000)  # ancla conservada
-        self.assertEqual(self.config.stake, 500000)    # stake fijo intacto
+        self.assertEqual(self.config.stake, 500000)    # stake fijo intacto (500 COP → Kambi)
         self.assertEqual(self.config.ticket, 'nuevo-ticket')  # datos se editan y persisten
         self.assertEqual(self.config.punter_id, 'nuevo-id')
+
+    def test_stake_se_guarda_en_cop_y_convierte(self):
+        """El usuario escribe COP; el form convierte a unidades Kambi ×1000."""
+        from auto_betting.forms import AutoBetConfigForm
+        form = AutoBetConfigForm(data={
+            'ticket': 't', 'punter_id': 'p', 'cuota_minima': '2.0',
+            'stake': '1250', 'max_apuestas_diarias': '20',
+            'horas_adelante': '24', 'activo': 'on',
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['stake'], 1250000)
+
+        # Valores inválidos no pasan.
+        form2 = AutoBetConfigForm(data={
+            'ticket': 't', 'punter_id': 'p', 'cuota_minima': '2.0',
+            'stake': '0', 'max_apuestas_diarias': '20',
+            'horas_adelante': '24', 'activo': 'on',
+        })
+        self.assertFalse(form2.is_valid())
+        self.assertIn('stake', form2.errors)
 
     def test_redeclarar_balance_crea_ajuste(self):
         self._post(modo='COMPUESTO', balance_inicial='250000')

@@ -276,6 +276,11 @@ def configuracion(request):
     else:
         form = AutoBetConfigForm(instance=config)
         cap_form = CapitalConfigForm(instance=cap_config)
+        # El stake se muestra en COP (la BD guarda unidades Kambi ×1000).
+        form.initial['stake'] = (
+            config.stake // 1000 if config.stake % 1000 == 0
+            else round(config.stake / 1000, 2)
+        )
         # El campo de balance muestra el balance paralelo actual (referencia),
         # no el ancla original: así el usuario ve el número "vivo".
         actual = bankroll_cop(request.user)
