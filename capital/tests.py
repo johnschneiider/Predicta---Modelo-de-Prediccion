@@ -11,8 +11,8 @@ from django.utils import timezone
 from auto_betting.models import AutoBetConfig, HistorialApuesta
 from cuentas.models import Usuario
 
-from .models import CapitalAjuste, CapitalConfig
-from .services import bankroll_cop, get_config, resolve_stake
+from .models import CapitalAjuste, CapitalConfig, CapitalLegada
+from .services import bankroll_cop, get_config, resolve_stake, snapshot_legadas
 
 
 class CapitalServicesTests(TestCase):
@@ -127,6 +127,36 @@ class CapitalServicesTests(TestCase):
         stake, _ = resolve_stake(self.config)
         # 2% de 262.500 = 5.250 → floor a múltiplos de 100 → 5.200 COP
         self.assertEqual(stake, 5200000)
+
+    # ── apuestas legadas (OPEN al activar) ───────────────────────────────
+
+    def test_legada_won_acredita_payout_completo(self):
+        # Apuesta OPEN previa al ancla: su stake ya estaba descontado del
+        # balance declarado. Al asentar WON, la cuenta real recibe el payout
+        # completo → el paralelo debe sumar payout (no payout − stake).
+        legada = self._historial('OPEN', stake=800000, payout=0, days_ago=12)
+        self._activar_compuesto(balance=50000)  # ancla = now − 10 días
+        self.assertEqual(snapshot_legadas(self.usuario), 1)
+        legada.bet_status = 'WON'
+        legada.payout = 1904000
+        legada.save()
+        self.assertEqual(bankroll_cop(self.usuario), 50000 + 1904)
+
+    def test_legada_lost_no_descuenta_otra_vez(self):
+        # LOST: el stake ya salió del balance declarado → paralelo no cambia.
+        legada = self._historial('OPEN', stake=800000, payout=0, days_ago=12)
+        self._activar_compuesto(balance=50000)
+        snapshot_legadas(self.usuario)
+        legada.bet_status = 'LOST'
+        legada.save()
+        self.assertEqual(bankroll_cop(self.usuario), 50000)
+
+    def test_legada_no_duplica_apuestas_nuevas(self):
+        # Apuesta NUEVA (placed >= ancla) no entra como legada: cuenta profit.
+        self._activar_compuesto(balance=50000)
+        snapshot_legadas(self.usuario)  # sin OPEN previos → 0 legadas
+        self._historial('WON', stake=800000, payout=1904000)  # profit +1104
+        self.assertEqual(bankroll_cop(self.usuario), 50000 + 1104)
 
     # ── navegación / context processor ───────────────────────────────────
     def test_navbar_balance_solo_con_modo_activado(self):

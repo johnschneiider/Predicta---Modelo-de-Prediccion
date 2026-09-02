@@ -97,3 +97,33 @@ class CapitalAjuste(models.Model):
 
     def __str__(self):
         return f"{self.usuario.email}: {self.monto_cop:+,} COP ({self.motivo})"
+
+
+class CapitalLegada(models.Model):
+    """
+    Apuesta que estaba OPEN en el momento de activar el modo compuesto
+    (snapshot tomado al fijar el ancla).
+
+    Por qué existe: al declarar el balance, el stake de esas apuestas YA fue
+    descontado del balance real. Cuando asientan, la cuenta real recibe el
+    `payout` completo (no el profit payout−stake, porque el stake ya estaba
+    descontado del balance declarado). Kambi no expone fecha de asentamiento,
+    así que sin este snapshot es imposible reconstruir cuáles eran.
+    """
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='capital_legadas',
+        verbose_name="Usuario",
+    )
+    coupon_ref = models.BigIntegerField(verbose_name="Coupon ref de la apuesta legada")
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Apuesta legada (OPEN al activar)"
+        verbose_name_plural = "Apuestas legadas (OPEN al activar)"
+        unique_together = [('usuario', 'coupon_ref')]
+
+    def __str__(self):
+        return f"{self.usuario.email}: cupón {self.coupon_ref}"

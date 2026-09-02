@@ -328,6 +328,10 @@ def _guardar_capital(request, cap_form):
             # Primera activación: anclar balance + momento.
             cap.ancla = timezone.now()
             cap.balance_inicial = int(balance_input)
+            # Snapshot de apuestas OPEN: su payout completo se acreditará al
+            # asentar (su stake ya estaba descontado del balance declarado).
+            from capital.services import snapshot_legadas
+            snapshot_legadas(request.user)
         else:
             # Ya activo: el ancla/balance declarado son inmutables.
             cap.ancla = old_ancla

@@ -18,7 +18,7 @@ from django.utils import timezone
 
 from auto_betting.models import HistorialApuesta
 
-from .models import CapitalConfig, CapitalAjuste
+from .models import CapitalConfig, CapitalAjuste, CapitalLegada
 
 # Estados que cuentan como asentados (WON/LOST). OPEN no cuenta; VOID es
 # neutro (Kambi devuelve el stake; no genera P&L).
@@ -50,15 +50,64 @@ def ajustes_cop(usuario, desde=None):
     return int(qs.aggregate(s=Sum('monto_cop'))['s'] or 0)
 
 
+def snapshot_legadas(usuario):
+    """
+    Registra las apuestas OPEN del usuario en el momento de activar el modo
+    compuesto. Idempotente por (usuario, coupon_ref).
+    """
+    refs = list(
+        HistorialApuesta.objects.filter(usuario=usuario, bet_status='OPEN')
+        .values_list('coupon_ref', flat=True)
+    )
+    if refs:
+        CapitalLegada.objects.bulk_create(
+            [CapitalLegada(usuario=usuario, coupon_ref=r) for r in refs],
+            ignore_conflicts=True,
+        )
+    return len(refs)
+
+
+def payout_legadas_cop(usuario, desde=None):
+    """
+    Crédito de las apuestas legadas (OPEN al activar) que ya asentaron.
+
+    Se suma el `payout` COMPLETO (no profit): el stake ya estaba descontado
+    del balance declarado, así que al asentar la cuenta real recibe el payout
+    entero (WON) o nada (LOST); VOID devuelve el stake (= payout).
+    """
+    qs_leg = CapitalLegada.objects.filter(usuario=usuario)
+    if desde is not None:
+        qs_leg = qs_leg.filter(creado__gte=desde)
+    refs = list(qs_leg.values_list('coupon_ref', flat=True))
+    if not refs:
+        return 0
+    pay = HistorialApuesta.objects.filter(
+        usuario=usuario,
+        coupon_ref__in=refs,
+        bet_status__in=['WON', 'LOST', 'VOID'],
+    ).aggregate(s=Sum('payout'))['s'] or 0
+    return int(pay / 1000.0)
+
+
 def bankroll_cop(usuario):
     """
     Balance paralelo (COP) o None si el usuario no ha activado el modo
     compuesto (sin balance declarado / sin ancla).
+
+    = balance_inicial
+      + profit de apuestas colocadas DESDE el ancla (payout − stake)
+      + payout completo de apuestas legadas (OPEN al ancla) ya asentadas
+      + ajustes manuales.
     """
     cfg = get_config(usuario)
     if cfg.balance_inicial is None or cfg.ancla is None:
         return None
-    return int(cfg.balance_inicial) + pnl_asentado_cop(usuario, cfg.ancla) + ajustes_cop(usuario, cfg.ancla)
+    return (
+        int(cfg.balance_inicial)
+        + pnl_asentado_cop(usuario, cfg.ancla)
+        + payout_legadas_cop(usuario, cfg.ancla)
+        + ajustes_cop(usuario, cfg.ancla)
+    )
 
 
 def resolve_stake(config):
