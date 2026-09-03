@@ -608,6 +608,19 @@ TEAM_NAME_REPLACEMENTS = {
     'Al Hilal': 'Al-Hilal Saudi FC',
     'Al Nassr': 'Al-Nassr',
     'Al Taawon Buraidah': 'Al Taawon',
+
+    # ── 1. Lig (Turquía) ── 2026-09-03: mismo bug, detectado en auditoría
+    # ampliada tras el caso Al Feiha. 'Bodrumspor'/'Erokspor' (Kambi) daban
+    # mejor ratio fuzzy con equipos equivocados (Boluspor/Serik Spor) que con
+    # los reales (Bodrum FK/Esenler Erokspor). Partido Bodrumspor vs Erokspor
+    # (evento Kambi 1028885184, 2026-09-03 17:00 UTC) aún sin apuesta colocada.
+    'Bodrumspor': 'Bodrum FK',
+    'Erokspor': 'Esenler Erokspor',
+
+    # ── Copa Uruguay ── 2026-09-03: 'CA Progreso Montevideo' (Kambi) empataba
+    # ratio 0.667 con 'Racing Montevideo' Y 'Liverpool Montevideo'; ninguno es
+    # el equipo real (Progreso).
+    'CA Progreso Montevideo': 'Progreso',
 }
 
 
