@@ -593,6 +593,21 @@ TEAM_NAME_REPLACEMENTS = {
     # ── Ligue 2 ──
     'Dunkerque': 'Dunkerque',
     'Pau FC': 'Pau FC',
+
+    # ── Pro League (Arabia Saudí) — 2026-09-03: fix mapeo tras auditoría ──
+    # (partido Al Feiha vs Al-Kholood mapeado erróneamente a Al-Fateh vs Al
+    # Kholood; fuzzy con threshold 0.65 encontraba 'Al-Fateh' como mejor match
+    # incorrecto porque 'Al Feiha' y 'Al-Fayha' solo daban ratio 0.667, casi
+    # igual al ratio con 'Al-Fateh'. Kambi usa transliteraciones distintas a
+    # las de la BD de Predicta para varios equipos sauditas).
+    'Al Feiha': 'Al-Fayha',
+    'Al-Kholood': 'Al Kholood',
+    'Al Draih': 'Al Diriyah',
+    'Al Qadisiya': 'Al-Qadisiyah FC',
+    'Neom SC': 'NEOM',
+    'Al Hilal': 'Al-Hilal Saudi FC',
+    'Al Nassr': 'Al-Nassr',
+    'Al Taawon Buraidah': 'Al Taawon',
 }
 
 
