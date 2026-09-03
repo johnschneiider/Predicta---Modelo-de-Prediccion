@@ -461,6 +461,12 @@ def _get_tier_thresholds(cuota):
         return 0.50, 0.65, 0.20   # longshots: convicción alta + EV ≥ 20%
 
 
+# 2026-09-03 (auditoría P6, §19): cuota justa mínima por línea en tiros a
+# puerta Under. El modelo subestima ~2 SOT (RMSE 3.19 contra líneas cada
+# 0.5) y las cuotas cortas no pagan ese sesgo (WR Under histórico 27-40%).
+SHOTS_UNDER_FAIR_ODDS = {7.5: 2.53, 8.5: 1.92, 9.5: 1.56}
+
+
 def _add_candidate(candidates, market, offer, line, side, p, cuota_minima,
                    confidence=None, min_p=0.50, min_confidence=0.35,
                    enabled=True, sub_min_ev=0.0, sub_min_cuota=0.0, calib_cap=0.58,
@@ -485,19 +491,23 @@ def _add_candidate(candidates, market, offer, line, side, p, cuota_minima,
         if max_line and line > max_line:
             return
 
+    # 2026-09-03 (auditoría P6, §19): piso de cuota justa por línea en tiros
+    # a puerta Under (red de seguridad si el submercado se reabre).
+    if market == 'shots_on_target' and side == 'under' and line is not None:
+        fair_odds = SHOTS_UNDER_FAIR_ODDS.get(line)
+        if fair_odds and cuota < fair_odds:
+            return
+
     # Fase 4 — calibrar la probabilidad antes de evaluar (cap configurable)
     p_raw = p
-    # SOLUCIÓN DEFINITIVA (2026-08-31): los mercados servidos por el motor
-    # Poisson ridge (goles, tiros a puerta, córners) ya producen P honesta
-    # (validada walk-forward: ±5pp). La heurística shrinkage+cap era un
-    # remiendo para el λ roto; aplicarla aquí distorsionaría P honesta
-    # (el cap 0.58 truncaba la cola alta calibrada). Se conserva SOLO para
-    # mercados legacy (BTTS, 1X2) que no pasan por el motor.
-    ENGINE_MARKETS = {'goals', 'shots_on_target', 'corners'}
-    if market in ENGINE_MARKETS:
-        p = min(0.97, max(0.03, p))
-    else:
-        p = calibrate_probability(p, cap=calib_cap)
+    # 2026-09-03 (auditoría P2a): calibrar TODOS los mercados. El bypass de
+    # ENGINE_MARKETS asumía que el motor ridge producía P honesta, pero el
+    # ridge fue removido el 2026-09-01 (motor único = web, pipeline legacy
+    # Dixon-Coles). Con la P cruda de vuelta, la sobreconfianza regresó:
+    # WR real ~37% vs P 55-65% durante 7 días. Vuelve el shrinkage + cap
+    # para goles/tiros/córners.
+    p = calibrate_probability(p, cap=calib_cap)
+    p = min(0.97, max(0.03, p))
 
     # Filtro primario: P mínima absoluta (hard floor, no negociable)
     if p < min_p:

@@ -31,12 +31,63 @@ WARN_GAP_PP = 10.0
 MIN_SAMPLE = 5
 
 
+def _config_field_for(mercado, lado):
+    """Mapea (mercado, lado) del reporte a un campo `*_enabled` de MarketFilterConfig."""
+    m = (mercado or '').lower()
+    l = (lado or '').lower()
+    if 'goles' in m:
+        base = 'goals'
+    elif 'esquina' in m:
+        base = 'corners'
+    elif 'tiros' in m and 'puerta' in m:
+        base = 'shots_on_target'
+    elif 'marcar' in m or 'ambos' in m:
+        base = 'btts'
+    else:
+        return None
+    side = {'over': 'over', 'under': 'under', 'sí': 'si', 'no': 'no'}.get(l)
+    if not side:
+        return None
+    return f'{base}_{side}_enabled'
+
+
 class Command(BaseCommand):
     help = "Reporte de calibración WR real vs P declarada por submercado"
 
     def add_arguments(self, parser):
         parser.add_argument('--days', type=int, default=30)
         parser.add_argument('--email', type=str, default=None)
+
+    def _auto_disable_submarkets(self, keys):
+        """
+        P3b (2026-09-03): el monitor no solo alerta — deshabilita los
+        submercados 🔴/🟡 en MarketFilterConfig para que la corrida de las
+        06:10 no apueste sobre un submercado descalibrado.
+        """
+        from auto_betting.models import MarketFilterConfig
+        try:
+            cfg = MarketFilterConfig.get_solo()
+        except Exception as e:
+            logger.error(f'P3b: no se pudo leer MarketFilterConfig: {e}')
+            return
+        disabled = []
+        for key in keys:
+            mercado, _, lado = key.rpartition(' · ')
+            field = _config_field_for(mercado, lado)
+            if not field:
+                logger.warning(f'P3b: sin mapeo de config para "{key}"')
+                continue
+            if getattr(cfg, field, False):
+                setattr(cfg, field, False)
+                disabled.append(field)
+        if disabled:
+            cfg.actualizado_por = (
+                f'monitor calibración (P3b): {", ".join(disabled)} descalibrados'
+            )
+            cfg.save()
+            msg = f'🛑 P3b: submercados deshabilitados automáticamente: {", ".join(disabled)}'
+            self.stdout.write(self.style.ERROR('\n' + msg))
+            logger.error(msg)
 
     def handle(self, *args, **options):
         days = options['days']
@@ -144,6 +195,7 @@ class Command(BaseCommand):
             msg = "\n".join(msg_lines)
             self.stdout.write(self.style.ERROR("\n" + msg))
             logger.error(msg)
+            self._auto_disable_submarkets([x[0] for x in alerts] + [x[0] for x in warns])
         elif warns:
             # FIX 2026-08-31: los 🟡 (−10 a −20pp) también se reportan como
             # WARNING visible en logs (antes pasaban desapercibidos: tiros a
@@ -159,6 +211,7 @@ class Command(BaseCommand):
             msg = "\n".join(msg_lines)
             self.stdout.write(self.style.WARNING("\n" + msg))
             logger.warning(msg)
+            self._auto_disable_submarkets([x[0] for x in warns])
         else:
             self.stdout.write(self.style.SUCCESS(
                 "\n✅ Sin alertas de descalibración."

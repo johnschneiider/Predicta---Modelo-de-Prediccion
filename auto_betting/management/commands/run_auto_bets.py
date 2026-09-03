@@ -178,20 +178,32 @@ class Command(BaseCommand):
 
     def _pnl_sistema_hoy(self, owner, hoy):
         """
-        P&L neto (COP) de las apuestas del SISTEMA asentadas hoy, para el
-        usuario dado. Se calcula sobre HistorialApuesta (fuente de verdad de
-        resultados) filtrando is_system=True y placed_date de hoy.
-        Devuelve negativo cuando hay pérdida. Si no hay historial, devuelve 0.
+        P&L neto (COP) del sistema para el usuario, midiendo el sangrado del
+        día de HOY en tiempo real:
+          1. Asentadas HOY (WON/LOST con actualizado__date=hoy, sin importar
+             cuándo se colocaron — el sync actualiza bet_status y por tanto
+             `actualizado` al asentar).
+          2. Exposición OPEN contada como pérdida máxima (stake en riesgo).
+        Fix 2026-09-03 (auditoría): antes medía placed_date=hoy, que a las
+        06:10 (hora del lote diario) siempre es 0 → el stop-loss nunca
+        disparaba.
+        Devuelve negativo cuando hay pérdida. Sin historial → 0.
         """
         from auto_betting.models import HistorialApuesta
-        qs = HistorialApuesta.objects.filter(
+        settled = HistorialApuesta.objects.filter(
             usuario=owner, is_system=True,
-            placed_date__date=hoy, bet_status__in=['WON', 'LOST'],
+            actualizado__date=hoy, bet_status__in=['WON', 'LOST'],
         )
-        agg = qs.aggregate(st=Sum('stake'), pay=Sum('payout'))
+        agg = settled.aggregate(st=Sum('stake'), pay=Sum('payout'))
         stake = agg['st'] or 0
         payout = agg['pay'] or 0
-        return (payout - stake) / 1000.0
+        realizado = (payout - stake) / 1000.0
+        open_risk = (
+            HistorialApuesta.objects.filter(
+                usuario=owner, is_system=True, bet_status='OPEN',
+            ).aggregate(s=Sum('stake'))['s'] or 0
+        ) / 1000.0
+        return realizado - open_risk
 
     def _run_for_config(self, config):
         owner = config.usuario
