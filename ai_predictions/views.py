@@ -321,7 +321,8 @@ def process_predictions_background(session_key, home_team, away_team, league_id,
         logger.info("🎯 OFICIAL - Iniciando cálculo de predicción oficial en background")
         try:
             from .official_prediction_model import official_prediction_model
-            all_predictions_by_type = official_prediction_model.add_to_predictions(all_predictions_by_type)
+            all_predictions_by_type = official_prediction_model.add_to_predictions(
+                all_predictions_by_type, home_team=home_team, away_team=away_team, league=league)
             logger.info("🎯 OFICIAL - Predicción oficial agregada exitosamente en background")
         except Exception as e:
             logger.error(f"❌ OFICIAL - Error agregando predicción oficial en background: {e}")
@@ -597,7 +598,8 @@ class PredictionFormView(View):
                 logger.info("🎯 OFICIAL - Iniciando cálculo de predicción oficial")
                 try:
                     from .official_prediction_model import official_prediction_model
-                    all_predictions_by_type = official_prediction_model.add_to_predictions(all_predictions_by_type)
+                    all_predictions_by_type = official_prediction_model.add_to_predictions(
+                        all_predictions_by_type, home_team=home_team, away_team=away_team, league=league)
                     logger.info("🎯 OFICIAL - Predicción oficial agregada exitosamente")
                 except Exception as e:
                     logger.error(f"❌ OFICIAL - Error agregando predicción oficial: {e}")

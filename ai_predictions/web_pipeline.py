@@ -139,9 +139,10 @@ def build_web_predictions(home_team: str, away_team: str, league, prediction_typ
 
         all_predictions_by_type[pred_type] = predictions
 
-    # ── Agregar "Predicción Oficial" (igual que la web) ──
+    # ── Agregar "Predicción Oficial" (igual que la web) + híbrido xG (Fase 2) ──
     try:
-        all_predictions_by_type = official_prediction_model.add_to_predictions(all_predictions_by_type)
+        all_predictions_by_type = official_prediction_model.add_to_predictions(
+            all_predictions_by_type, home_team=home_team, away_team=away_team, league=league)
     except Exception as e:
         logger.error(f'web_pipeline: official_prediction_model falló: {e}')
 

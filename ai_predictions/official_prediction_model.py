@@ -173,15 +173,54 @@ class OfficialPredictionModel:
             logger.error(f"Error calculando probabilidades oficiales: {e}")
             return {'over_5': 0.5}
     
-    def add_to_predictions(self, all_predictions: Dict[str, List[Dict]]) -> Dict[str, List[Dict]]:
+    def _apply_xg_blend(self, official_pred, pred_type, home_team, away_team, league):
         """
-        Agregar predicción oficial a todas las predicciones existentes
-        
-        Args:
-            all_predictions: Diccionario con todas las predicciones
-            
-        Returns:
-            Diccionario con predicción oficial agregada
+        Fase 2 (2026-09-03, plan aprobado por John): híbrido xG para goles.
+        Si hay datos xG suficientes para el cruce, el λ oficial de goals_* se
+        combina: λ_final = w*λ_xg + (1-w)*λ_legacy, con w según cobertura
+        (0.35 con n=5 → 0.60 con n≥10). Validación 102 partidos: RMSE 2.10 →
+        1.74 (−17%). Sin datos xG: no cambia nada (Dixon-Coles puro).
+        """
+        if pred_type not in ('goals_total', 'goals_home', 'goals_away'):
+            return official_pred
+        if not home_team or not away_team or league is None:
+            return official_pred
+        try:
+            from .xg_goals_model import xg_goals_model
+            r = xg_goals_model.compute_lambda(home_team, away_team, league)
+            if not r:
+                return official_pred
+            lam_h, lam_a, n_min, _lg = r
+            base = float(official_pred['prediction'])
+            w = min(0.6, 0.1 + 0.05 * n_min)
+            if pred_type == 'goals_home':
+                xg_val = lam_h
+            elif pred_type == 'goals_away':
+                xg_val = lam_a
+            else:
+                xg_val = lam_h + lam_a
+            blended = w * xg_val + (1 - w) * base
+            official_pred['prediction'] = round(blended, 2)
+            official_pred.setdefault('details', {})['xg_blend'] = {
+                'w': round(w, 2),
+                'lam_xg': round(xg_val, 2),
+                'lam_base': round(base, 2),
+                'n_xg_min': n_min,
+            }
+            logger.info(
+                f"🎯 OFICIAL-XG {pred_type}: base {base:.2f} + xG {xg_val:.2f} "
+                f"(w={w:.2f}, n={n_min}) → {blended:.2f}"
+            )
+        except Exception as e:
+            logger.warning(f'OFICIAL-XG: blend no aplicado ({pred_type}): {e}')
+        return official_pred
+
+    def add_to_predictions(self, all_predictions: Dict[str, List[Dict]],
+                           home_team=None, away_team=None, league=None) -> Dict[str, List[Dict]]:
+        """
+        Agregar predicción oficial a todas las predicciones existentes.
+        Si se pasan home_team/away_team/league, se aplica el híbrido xG
+        (Fase 2) sobre el λ oficial de goles.
         """
         try:
             logger.info("🎯 OFICIAL - Agregando predicción oficial a resultados")
@@ -191,6 +230,8 @@ class OfficialPredictionModel:
             
             # Agregar a cada tipo de predicción
             for pred_type, official_pred in official_predictions.items():
+                official_pred = self._apply_xg_blend(
+                    official_pred, pred_type, home_team, away_team, league)
                 if pred_type in all_predictions:
                     # Agregar al final de la lista
                     all_predictions[pred_type].append(official_pred)
