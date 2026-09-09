@@ -5,33 +5,198 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Predicta — Edge Estadístico en Fútbol</title>
+    <script>document.documentElement.classList.add('js');</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/premium.css' %}?v=20260901">
+<style>
+/* ============================================================
+   LANDING v2 — Scoped overrides (solo esta página)
+   Tipografía display · icons inline · micro-animaciones · mockup
+============================================================ */
+:root {
+    --font-heading: 'Space Grotesk', 'DM Sans', -apple-system, 'Segoe UI', sans-serif;
+    --font-mono-ui: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* ── Tipografía display ── */
+.logo { font-family: var(--font-heading); font-weight: 700; letter-spacing: 0.05em; }
+h1 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: clamp(2.5rem, 7.5vw, 5.2rem);
+    line-height: 1.04;
+    letter-spacing: -0.025em;
+    max-width: 880px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1.25rem;
+}
+h1 em { color: var(--accent-primary); font-style: normal; }
+h2 { font-family: var(--font-heading); font-weight: 600; letter-spacing: -0.015em; line-height: 1.05; }
+.footer-cta h2 { font-weight: 700; }
+.step-num { font-family: var(--font-heading); font-weight: 700; }
+.stat-num { font-variant-numeric: tabular-nums; }
+
+/* ── Iconos del método (SVG inline Lucide) ── */
+.step-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--accent-subtle);
+    border: 0.5px solid var(--accent-border);
+    margin-bottom: 1rem;
+}
+.step-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: var(--accent-primary);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* ── Micro-animaciones: reveal al scroll ── */
+.js .reveal {
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+    will-change: opacity, transform;
+}
+.js .reveal.visible { opacity: 1; transform: none; }
+.step:nth-child(2) { transition-delay: 0.1s; }
+.step:nth-child(3) { transition-delay: 0.2s; }
+.step:nth-child(4) { transition-delay: 0.3s; }
+
+/* ── Botón Ingresar: scale + pulso de sombra ── */
+.btn-primary { transition: transform 0.18s ease, background 0.2s ease, box-shadow 0.2s ease; }
+.btn-primary:hover { transform: scale(1.03); animation: btnPulse 1.5s ease-out infinite; }
+.btn-nav { display: inline-block; transition: transform 0.18s ease, background 0.2s ease; }
+.btn-nav:hover { transform: scale(1.03); }
+@keyframes btnPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(198, 241, 53, 0.4); }
+    70%  { box-shadow: 0 0 0 16px rgba(198, 241, 53, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(198, 241, 53, 0); }
+}
+
+/* ── Preview del producto (mockup Telegram + calibración) ── */
+.product-preview { padding-top: 2rem; }
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+    align-items: stretch;
+}
+.phone-mock, .edge-mock {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+}
+.mock-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 1rem;
+    border-bottom: 0.5px solid var(--border-primary);
+    background: var(--bg-surface-alt);
+}
+.mock-dots { display: flex; gap: 5px; }
+.mock-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--border-secondary); display: block; }
+.mock-title { font-size: 0.72rem; letter-spacing: 0.08em; color: var(--text-secondary); text-transform: uppercase; }
+.mock-chat { padding: 1.2rem 1rem 1.4rem; background: linear-gradient(180deg, rgba(198, 241, 53, 0.03), transparent); }
+.chat-date { font-size: 0.68rem; color: var(--text-tertiary); text-align: center; margin-bottom: 1rem; letter-spacing: 0.08em; }
+.chat-bubble {
+    background: var(--bg-surface-alt);
+    border: 0.5px solid var(--border-secondary);
+    border-left: 2px solid var(--accent-primary);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+}
+.bubble-kicker { font-size: 0.7rem; letter-spacing: 0.1em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+.bubble-pick { font-family: var(--font-heading); font-weight: 700; font-size: 1.25rem; margin-bottom: 0.75rem; }
+.bubble-pick b { color: var(--accent-primary); }
+.bubble-rows { margin-bottom: 0.75rem; }
+.bubble-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    padding: 0.3rem 0;
+    border-bottom: 0.5px solid var(--border-subtle);
+}
+.bubble-row:last-child { border-bottom: none; }
+.mono { font-family: var(--font-mono-ui); font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.bubble-edge {
+    display: inline-block;
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    margin-bottom: 0.6rem;
+}
+.bubble-stake { font-size: 0.72rem; color: var(--text-tertiary); }
+.chat-delivery { display: flex; gap: 0.4rem; align-items: center; font-size: 0.7rem; color: var(--text-tertiary); letter-spacing: 0.05em; margin-top: 0.8rem; }
+.chat-delivery .ok { color: var(--accent-primary); }
+
+.edge-mock { padding: 1.6rem; display: flex; flex-direction: column; justify-content: space-between; }
+.edge-title { font-size: 0.72rem; letter-spacing: 0.12em; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 1.3rem; }
+.bar { margin-bottom: 1.1rem; }
+.bar-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem; }
+.bar-track { height: 6px; background: var(--border-primary); border-radius: 999px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--accent-primary); border-radius: 999px; }
+.bar-fill.dim { background: rgba(198, 241, 53, 0.35); }
+.edge-foot {
+    display: flex;
+    gap: 1rem;
+    border-top: 0.5px solid var(--border-primary);
+    padding-top: 1.1rem;
+    margin-top: 1.2rem;
+}
+.edge-foot > div { flex: 1; text-align: center; }
+.edge-foot .mono { font-size: 1.6rem; font-weight: 700; color: var(--accent-primary); display: block; line-height: 1.1; }
+.edge-foot .lbl { font-size: 0.66rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* ── Utilidades ── */
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ── Móvil: sin min-height fijo en el hero (evita aire muerto en pantallas altas) ── */
+@media (max-width: 600px) {
+    .hero { min-height: auto; }
+}
+
+/* ── Accesibilidad: reduce motion ── */
+@media (prefers-reduced-motion: reduce) {
+    .js .reveal { opacity: 1; transform: none; transition: none; }
+    .btn-primary:hover { animation: none; }
+    .step:nth-child(n) { transition-delay: 0s; }
+}
+</style>
 </head>
 <body>
 
-<!-- NAVEGACIÓN -->
-<nav>
-    <a href="/" class="logo">PREDIC<span>TA</span></a>
-    <div class="nav-links">
-        {% if user.is_authenticated %}
-            {% if navbar_balance %}
-            <div class="nav-balance {% if navbar_balance_negativo %}nav-balance-neg{% endif %}" aria-hidden="true">{{ navbar_balance }}</div>
-            {% endif %}
-            <a href="{% url 'ai_predictions:dashboard' %}" class="nav-link">Dashboard</a>
-            <a href="{% url 'ai_predictions:prediction_form' %}" class="nav-link">Predicciones</a>
-            <a href="{% url 'ai_predictions:prediction_history' %}" class="nav-link">Historial</a>
-            <a href="{% url 'football_data:dashboard' %}" class="nav-link">Datos</a>
-            <a href="{% url 'football_data:import' %}" class="nav-link">Importar</a>
-            <a href="{% url 'ai_predictions:scraper_corners' %}" class="nav-link">Scraper</a>
-            <a href="{% url 'cuentas:logout' %}" class="nav-link-salir">Salir</a>
-        {% else %}
-            <a href="#como" class="nav-link">Cómo funciona</a>
-            <a href="{% url 'cuentas:login' %}" class="btn-nav">Ingresar →</a>
-        {% endif %}
-    </div>
-</nav>
+<!-- NAVEGACIÓN (compartida con la app interna vía partials/navbar.html) -->
+{% include 'partials/navbar.html' %}
 
 <!-- HERO -->
 <div class="hero">
@@ -49,25 +214,83 @@
         {% endif %}
     </div>
 
-    <div class="stats-bar">
+    <div class="stats-bar" id="stats-bar">
         <div class="stat">
-            <div class="stat-num">73%</div>
+            <div class="stat-num" data-count="73" data-suffix="%" aria-hidden="true">73%</div>
+            <div class="sr-only">73%</div>
             <div class="stat-label">Accuracy promedio</div>
         </div>
         <div class="stat">
-            <div class="stat-num">12K+</div>
+            <div class="stat-num" data-count="12" data-suffix="K+" aria-hidden="true">12K+</div>
+            <div class="sr-only">12 mil</div>
             <div class="stat-label">Partidos analizados</div>
         </div>
         <div class="stat">
-            <div class="stat-num">+18%</div>
+            <div class="stat-num" data-count="18" data-prefix="+" data-suffix="%" aria-hidden="true">+18%</div>
+            <div class="sr-only">+18%</div>
             <div class="stat-label">ROI histórico</div>
         </div>
         <div class="stat">
-            <div class="stat-num">38</div>
+            <div class="stat-num" data-count="38" aria-hidden="true">38</div>
+            <div class="sr-only">38</div>
             <div class="stat-label">Ligas cubiertas</div>
         </div>
     </div>
 </div>
+
+<!-- PREVIEW DEL PRODUCTO -->
+<section class="product-preview" id="preview">
+    <div class="section-tag">Así llega el edge</div>
+    <h2>NO ES SUERTE.<br>ES CÁLCULO.</h2>
+    <p class="section-sub">Cada predicción llega con su cuota justa, probabilidad y edge calculado — a Telegram, WhatsApp y a la web.</p>
+
+    <div class="preview-grid">
+        <!-- Mockup: mensaje Telegram -->
+        <div class="phone-mock reveal">
+            <div class="mock-topbar">
+                <span class="mock-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="mock-title">PREDICTA · Telegram</span>
+            </div>
+            <div class="mock-chat">
+                <div class="chat-date">HOY · 14:32</div>
+                <div class="chat-bubble">
+                    <div class="bubble-kicker">Liga BetPlay · 19:30</div>
+                    <div class="bubble-pick">Millonarios vs Nacional → <b>1X2 LOCAL</b></div>
+                    <div class="bubble-rows">
+                        <div class="bubble-row"><span>Probabilidad</span><span class="mono">48%</span></div>
+                        <div class="bubble-row"><span>Cuota justa</span><span class="mono">2.08</span></div>
+                        <div class="bubble-row"><span>Cuota mercado</span><span class="mono">2.30</span></div>
+                    </div>
+                    <div class="bubble-edge">EDGE <span class="mono" style="color:inherit;">+10.6%</span></div>
+                    <div class="bubble-stake">Stake sugerido 1.5u · Confianza 7/10</div>
+                </div>
+                <div class="chat-delivery"><span class="ok">✓</span> Entregado: Telegram · WhatsApp · Web</div>
+            </div>
+        </div>
+
+        <!-- Mockup: calibración del modelo -->
+        <div class="edge-mock reveal">
+            <div class="edge-title">Calibración del modelo</div>
+            <div class="bar">
+                <div class="bar-label"><span>Local</span><span class="mono">48%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:48%;"></div></div>
+            </div>
+            <div class="bar">
+                <div class="bar-label"><span>Empate</span><span class="mono">27%</span></div>
+                <div class="bar-track"><div class="bar-fill dim" style="width:27%;"></div></div>
+            </div>
+            <div class="bar">
+                <div class="bar-label"><span>Visita</span><span class="mono">25%</span></div>
+                <div class="bar-track"><div class="bar-fill dim" style="width:25%;"></div></div>
+            </div>
+            <div class="edge-foot">
+                <div><span class="mono">73%</span><span class="lbl">accuracy</span></div>
+                <div><span class="mono">+18%</span><span class="lbl">ROI</span></div>
+                <div><span class="mono">38</span><span class="lbl">ligas</span></div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- CÓMO FUNCIONA -->
 <section id="como">
@@ -76,27 +299,55 @@
     <p class="section-sub">Nuestra IA procesa señales que el ojo humano no puede capturar a tiempo.</p>
 
     <div class="steps">
-        <div class="step">
+        <div class="step reveal">
             <div class="step-num">01</div>
-            <div class="step-icon">📡</div>
+            <div class="step-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.9 16.1C1 12.2 1 5.8 4.9 1.9"/>
+                    <path d="M7.8 4.7a6.14 6.14 0 0 0-.8 7.5"/>
+                    <circle cx="12" cy="9" r="2"/>
+                    <path d="M16.2 4.8c2 2 2.26 5.11.8 7.47"/>
+                    <path d="M19.1 1.9a9.96 9.96 0 0 1 0 14.1"/>
+                    <path d="M9.5 18h5"/>
+                    <path d="m8 22 4-11 4 11"/>
+                </svg>
+            </div>
             <h3>Datos en tiempo real</h3>
             <p>Ingestamos estadísticas de forma, lesiones, h2h, cuotas de mercado y clima de 38 ligas.</p>
         </div>
-        <div class="step">
+        <div class="step reveal">
             <div class="step-num">02</div>
-            <div class="step-icon">🧠</div>
+            <div class="step-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/>
+                    <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/>
+                    <path d="M9 13a4.5 4.5 0 0 0 3 4.5"/>
+                    <path d="M15 13a4.5 4.5 0 0 1-3 4.5"/>
+                    <path d="M9 6.5v2"/>
+                    <path d="M15 6.5v2"/>
+                </svg>
+            </div>
             <h3>Modelo predictivo</h3>
             <p>Ensemble de modelos entrenado con +150K partidos. Genera probabilidades calibradas por Brier Score.</p>
         </div>
-        <div class="step">
+        <div class="step reveal">
             <div class="step-num">03</div>
-            <div class="step-icon">⚡</div>
+            <div class="step-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
+                </svg>
+            </div>
             <h3>Edge detection</h3>
             <p>Comparamos nuestras probabilidades vs. cuotas del mercado. Solo publicamos cuando hay edge real (>5%).</p>
         </div>
-        <div class="step">
+        <div class="step reveal">
             <div class="step-num">04</div>
-            <div class="step-icon">📲</div>
+            <div class="step-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/>
+                    <path d="m21.854 2.147-10.94 10.939"/>
+                </svg>
+            </div>
             <h3>Delivery instantáneo</h3>
             <p>Recibes la predicción vía web + Telegram/WhatsApp. Tú apuestas donde quieras.</p>
         </div>
@@ -125,6 +376,74 @@
     <div>© 2026 Predicta.com.co · +18 · Juega con responsabilidad</div>
 </footer>
 
+<script>
+(function () {
+    'use strict';
+
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* ── Count-up en stats cuando entran al viewport ── */
+    function animateCount(el) {
+        var target = parseFloat(el.dataset.count);
+        var prefix = el.dataset.prefix || '';
+        var suffix = el.dataset.suffix || '';
+        if (reduceMotion || target === 0) {
+            el.textContent = prefix + target + suffix;
+            return;
+        }
+        var duration = 1200;
+        var start = performance.now();
+        function frame(now) {
+            var p = Math.min((now - start) / duration, 1);
+            var eased = 1 - Math.pow(1 - p, 3);
+            el.textContent = prefix + Math.round(target * eased) + suffix;
+            if (p < 1) requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+    }
+
+    var statsBar = document.getElementById('stats-bar');
+    if (statsBar && 'IntersectionObserver' in window) {
+        var statsObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    statsBar.querySelectorAll('.stat-num').forEach(animateCount);
+                    statsObserver.disconnect();
+                }
+            });
+        }, { threshold: 0.4 });
+        statsObserver.observe(statsBar);
+    }
+
+    /* ── Fade-in + slide-up al scroll ── */
+    var revealEls = document.querySelectorAll('.reveal');
+    if (revealEls.length && 'IntersectionObserver' in window) {
+        var revealObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+        revealEls.forEach(function (el) { revealObserver.observe(el); });
+    } else {
+        revealEls.forEach(function (el) { el.classList.add('visible'); });
+    }
+
+    /* ── Smooth scroll interno (incluye el enlace /#como del navbar compartido) ── */
+    document.querySelectorAll('a[href^="#"], a[href="/#como"]').forEach(function (anchor) {
+        anchor.addEventListener('click', function (e) {
+            var href = this.getAttribute('href');
+            var target = document.querySelector(href.indexOf('#') !== -1 ? href.slice(href.indexOf('#')) : null);
+            if (target) {
+                e.preventDefault();
+                target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+            }
+        });
+    });
+})();
+</script>
 
 </body>
 </html>
