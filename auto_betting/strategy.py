@@ -26,6 +26,56 @@ def poisson_over(line, lam):
     return max(0.0, 1.0 - cumul)
 
 
+# ── 2026-09-04 (auditoría SOT, decisión John): Negative Binomial ──
+# El SOT real es sobredisperso: var/media = 1.24 global (n=35.280, ventana
+# 730d), Poisson (var=media) subestima las colas. phi = mu^2/(var-mu).
+SOT_PHI_GLOBAL = 35.77  # phi por momentos sobre datos históricos reales
+# Shrinkage del lambda de SOT hacia la media de liga (el modelo usa medias
+# crudas de 20 partidos por equipo, RMSE ~3.5): 50% modelo + 50% liga.
+SOT_LAMBDA_SHRINK = 0.5
+SOT_GLOBAL_MEAN = 8.608  # media SOT global (ventana 730d, n=35.280)
+
+
+def negbin_over(line, lam, phi=None):
+    """P(X > line) con Negative Binomial (sobredispersión) — para SOT.
+
+    Media = lam, dispersión phi (default: SOT_PHI_GLOBAL).
+    Poisson es el límite phi -> inf.
+    """
+    try:
+        from scipy.stats import nbinom
+    except ImportError:
+        return poisson_over(line, lam)
+    if lam <= 0:
+        return 0.0
+    phi = phi or SOT_PHI_GLOBAL
+    k = int(math.floor(line))
+    n = max(1.0, phi)
+    p_geom = n / (n + lam)  # parametrización: media = n(1-p)/p = lam
+    return max(0.0, 1.0 - nbinom.cdf(k, n, p_geom))
+
+
+def devig_two_way(odds_a, odds_b):
+    """Probabilidades justas del par a/b sin el margen de la casa (devigging).
+
+    Devuelve (p_a, p_b) o (None, None) si falta un lado o una cuota es invalida.
+    """
+    if not odds_a or not odds_b or odds_a <= 1.0 or odds_b <= 1.0:
+        return None, None
+    inv_a, inv_b = 1.0 / odds_a, 1.0 / odds_b
+    total = inv_a + inv_b
+    return inv_a / total, inv_b / total
+
+
+def devig_three_way(odds_1, odds_x, odds_2):
+    """Probabilidades justas 1X2 sin margen. Devuelve (p1, px, p2) o (None, None, None)."""
+    if not all(o and o > 1.0 for o in (odds_1, odds_x, odds_2)):
+        return None, None, None
+    inv = [1.0 / o for o in (odds_1, odds_x, odds_2)]
+    total = sum(inv)
+    return inv[0] / total, inv[1] / total, inv[2] / total
+
+
 def _setup_django():
     import os, django
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'betting_bot.settings')
@@ -334,8 +384,32 @@ def get_official_predictions(home_team, away_team, league):
             'confidence': official['goals_total']['confidence'],
         }
     if 'shots_on_target' in official:
+        # ── 2026-09-04 (auditoría SOT): shrinkage del lambda hacia la media
+        # de liga. El lambda crudo del pipeline (medias de 20 partidos por
+        # equipo) tiene RMSE ~3.5 y subestima en unders. Media de liga real
+        # (ventana 730d, mismo corte que validate_market_data); fallback a la
+        # media global (8.608). Peso 50/50 (SOT_LAMBDA_SHRINK).
+        lam_raw = official['shots_on_target']['prediction']
+        try:
+            from football_data.models import Match
+            from django.utils import timezone as _tz2
+            from datetime import timedelta as _td2
+            from django.db.models import Avg as _Avg2, F as _F2
+            _cut2 = _tz2.now().date() - _td2(days=730)
+            _lig_avg = Match.objects.filter(
+                league=league, date__gte=_cut2,
+                hst__isnull=False, ast__isnull=False,
+            ).aggregate(avg=_Avg2(_F2('hst') + _F2('ast')))['avg']
+            league_mean = _lig_avg if (_lig_avg and _lig_avg > 0) else SOT_GLOBAL_MEAN
+        except Exception as e:
+            logger.warning(f'get_official_predictions - SOT league mean fallback: {e}')
+            league_mean = SOT_GLOBAL_MEAN
+        lam_shrunk = (1.0 - SOT_LAMBDA_SHRINK) * lam_raw + SOT_LAMBDA_SHRINK * league_mean
+        logger.info(
+            f'SOT shrinkage: lambda crudo {lam_raw:.2f} -> {lam_shrunk:.2f} '
+            f'(media liga {league_mean:.2f}) para {home_team} vs {away_team}')
         result['shots_on_target'] = {
-            'lambda': official['shots_on_target']['prediction'],
+            'lambda': lam_shrunk,
             'confidence': official['shots_on_target']['confidence'],
         }
     if 'corners_total' in official:
@@ -357,6 +431,24 @@ def get_official_predictions(home_team, away_team, league):
     # (El motor poisson_ratings sigue en el repo solo para análisis/backtests.)
 
     return result
+
+
+# 2026-09-04 (decisión de John): edge mínimo exigido entre la P calibrada
+# del modelo y la probabilidad JUSTA del mercado (devigged) para apostar.
+# 5pp es conservador; sin par de cuotas no hay referencia justa → no se apuesta.
+MIN_EDGE_VS_MARKET = 0.05
+
+# 2026-09-04 (decisión de John): distancia mínima entre el lambda del modelo
+# y la línea apostada. Apostar pegada al número esperado = moneda al aire con
+# vig (82% del volumen histórico de córners). Solo se apuesta cuando el
+# modelo DISCREPA materialmente de la línea. Escala por mercado: goles
+# (stdev ~1.4) más chico; córners/SOT (stdev ~3) más grande.
+MIN_LINE_DISTANCE = {
+    'goals': 0.40,
+    'corners': 0.75,
+    'shots_on_target': 0.75,
+}
+MIN_LINE_DISTANCE_DEFAULT = 0.75
 
 
 # ── Calibración de probabilidades (Fase 4) ──
@@ -396,8 +488,8 @@ MARKET_FILTERS = {
     'goals':           {'min_p': 0.50, 'min_confidence': 0.35},
     'btts':            {'min_p': 0.50, 'min_confidence': 0.35},
     'x12':             {'min_p': 0.50, 'min_confidence': 0.35},
-    'corners':         {'min_p': 0.56, 'min_confidence': 0.35},  # reduce ~67-71%
-    'shots_on_target': {'min_p': 0.56, 'min_confidence': 0.35},  # reduce 67%
+    'corners':         {'min_p': 0.45, 'min_confidence': 0.35},  # reduce ~67-71%
+    'shots_on_target': {'min_p': 0.45, 'min_confidence': 0.35},  # reduce 67%
 }
 
 
@@ -442,23 +534,52 @@ def get_global_config():
         return defaults
 
 
+def submarket_clv_health(mercado_label, n=30, threshold=-0.5):
+    """
+    CLV breaker (2026-09-04, paso 4 auditoría SOT): devuelve (ok, avg_clv, n)
+    para las últimas n apuestas asentadas de un mercado. Si el CLV promedio
+    móvil cae por debajo de `threshold`, el submercado se considera sin edge
+    y run_auto_bets lo salta ese día.
+
+    Umbral (2026-09-04, decisión John): -0.5 en vez de 0.0 — el CLV del modelo
+    viejo contaminaba la media móvil; con -0.5 solo bloquea sangrado claro,
+    no ruido histórico.
+    """
+    _setup_django()
+    try:
+        from auto_betting.models import HistorialApuesta
+        from django.db.models import Avg
+        qs = HistorialApuesta.objects.filter(
+            mercado__icontains=mercado_label, clv__isnull=False,
+        ).exclude(bet_status='OPEN').order_by('-placed_date')[:n]
+        if qs.count() == 0:
+            return True, None, 0
+        agg = qs.aggregate(avg=Avg('clv'))
+        avg_clv = agg['avg'] or 0.0
+        return avg_clv >= threshold, avg_clv, qs.count()
+    except Exception as e:
+        logger.error(f'submarket_clv_health error: {e}')
+        return True, None, 0
+
+
 # ── Selección unificada (por EV) ──
 
 def _get_tier_thresholds(cuota):
     """
     Umbrales escalonados por rango de cuota.
     Más cuota = más exigencia de confianza y EV.
-    P mínima es siempre 0.50 (hard floor); los tiers solo suben requisitos
-    de confidence y EV para cuotas más altas.
+    P mínima es 0.45 (hard floor relajado, 2026-09-04): el edge contra la
+    cuota justa del mercado (§24) es la defensa principal; el floor solo
+    descarta ruido extremo.
     """
     if cuota <= 2.99:
-        return 0.50, 0.35, 0.05   # cuota baja: confianza mínima, EV ≥ 5%
+        return 0.45, 0.35, 0.05   # cuota baja: confianza mínima, EV ≥ 5%
     elif cuota <= 3.99:
-        return 0.50, 0.45, 0.10   # más confianza + EV ≥ 10%
+        return 0.45, 0.45, 0.10   # más confianza + EV ≥ 10%
     elif cuota <= 5.99:
-        return 0.50, 0.55, 0.15   # cuota alta: señal fuerte + EV ≥ 15%
+        return 0.45, 0.55, 0.15   # cuota alta: señal fuerte + EV ≥ 15%
     else:
-        return 0.50, 0.65, 0.20   # longshots: convicción alta + EV ≥ 20%
+        return 0.45, 0.65, 0.20   # longshots: convicción alta + EV ≥ 20%
 
 
 # 2026-09-03 (auditoría P6, §19): cuota justa mínima por línea en tiros a
@@ -468,9 +589,10 @@ SHOTS_UNDER_FAIR_ODDS = {7.5: 2.53, 8.5: 1.92, 9.5: 1.56}
 
 
 def _add_candidate(candidates, market, offer, line, side, p, cuota_minima,
-                   confidence=None, min_p=0.50, min_confidence=0.35,
+                   confidence=None, min_p=0.45, min_confidence=0.35,
                    enabled=True, sub_min_ev=0.0, sub_min_cuota=0.0, calib_cap=0.58,
-                   min_line=0.0, max_line=0.0):
+                   min_line=0.0, max_line=0.0, fair_odds=None,
+                   min_edge_vs_market=MIN_EDGE_VS_MARKET):
     # Submercado apagado desde la config (ej. Córners Under, BTTS No)
     if not enabled:
         return
@@ -481,22 +603,6 @@ def _add_candidate(candidates, market, offer, line, side, p, cuota_minima,
     # Cuota mínima específica del submercado (0 = usa la global/cuota_minima)
     if sub_min_cuota and cuota < sub_min_cuota:
         return
-
-    # Fix 2026-08-31: filtro por línea (solo over/under, donde line no es None).
-    # min_line=9.5 en tiros-under elimina el sangrador de under 7.5/8.5
-    # (WR 27%/40% — el modelo subestima ~2 tiros a puerta).
-    if line is not None:
-        if min_line and line < min_line:
-            return
-        if max_line and line > max_line:
-            return
-
-    # 2026-09-03 (auditoría P6, §19): piso de cuota justa por línea en tiros
-    # a puerta Under (red de seguridad si el submercado se reabre).
-    if market == 'shots_on_target' and side == 'under' and line is not None:
-        fair_odds = SHOTS_UNDER_FAIR_ODDS.get(line)
-        if fair_odds and cuota < fair_odds:
-            return
 
     # Fase 4 — calibrar la probabilidad antes de evaluar (cap configurable)
     p_raw = p
@@ -520,16 +626,27 @@ def _add_candidate(candidates, market, offer, line, side, p, cuota_minima,
     effective_min_p = max(min_p, tier_min_p)
     if p < effective_min_p:
         return
-    ev = p * cuota - 1.0
+    # 2026-09-04 (decisión de John): la decisión se toma contra la CUOTA JUSTA
+    # del mercado (devigged). Sin par no hay referencia justa → se descarta
+    # (no se apuesta contra un precio sin benchmark). El edge mínimo exigido
+    # es sobre la probabilidad justa, no sobre la cuota con vig.
+    if not fair_odds or fair_odds <= 1.0:
+        logger.warning(
+            f'_add_candidate: sin cuota justa para {market} {side} {line} — descartado')
+        return
+    market_p = 1.0 / fair_odds
+    edge_vs_market = p - market_p
+    if edge_vs_market < min_edge_vs_market:
+        return
+    ev = p * fair_odds - 1.0
     # EV mínimo: el más exigente entre el tier por cuota y el del submercado.
     # Auditoría: bucket EV 10-20% = -54.9% ROI → exigir EV≥20% en cuotas bajas.
     effective_min_ev = max(tier_min_ev, sub_min_ev)
     if ev <= effective_min_ev:
         return
-    # Confidence: tomar el más exigente entre min_confidence y tier
-    effective_min_conf = max(min_confidence, tier_min_conf)
-    if confidence is not None and confidence < effective_min_conf:
-        return
+    # 2026-09-04 (simplificación de cadena, decisión John): filtro de
+    # confidence ELIMINADO — los modelos reportan confidences casi fijas
+    # (0.70-0.75 hardcodeadas) y no discriminan nada real.
     candidates.append({
         'market': market,
         'offer': offer,
@@ -539,6 +656,9 @@ def _add_candidate(candidates, market, offer, line, side, p, cuota_minima,
         'p': p,
         'p_raw': p_raw,  # guardar P original para logging
         'ev': ev,
+        'fair_odds': fair_odds,
+        'market_p': market_p,
+        'edge_vs_market': edge_vs_market,
         'confidence': confidence or 0,
     })
 
@@ -579,7 +699,7 @@ def _resolve_filters(market_filters, market_key, side, min_p, min_confidence):
     )
 
 
-def select_bets(markets_data, cuota_minima=2.0, min_p=0.50, min_confidence=0.35,
+def select_bets(markets_data, cuota_minima=2.0, min_p=0.45, min_confidence=0.35,
                 market_filters=None, calib_cap=0.58):
     """
     Selecciona apuestas por EV positivo + P >= min_p + confidence >= min_confidence.
@@ -608,11 +728,31 @@ def select_bets(markets_data, cuota_minima=2.0, min_p=0.50, min_confidence=0.35,
             lam = md.get('lambda')
             if lam is None:
                 continue
+            # 2026-09-04 (decisión de John): agrupar cuotas por línea para
+            # devigging del par over/under antes de evaluar cada oferta.
+            line_pairs = {}
+            for offer in odds:
+                _line = offer.get('line')
+                if _line is None:
+                    continue
+                _otype = offer.get('type', '')
+                _cuota = offer.get('odds_decimal', 0)
+                if _otype in ('OT_OVER', 'OT_UNDER') and _cuota > 1.0:
+                    line_pairs.setdefault(_line, {})[_otype] = _cuota
             for offer in odds:
                 line = offer.get('line')
                 if line is None:
                     continue
-                p_over = poisson_over(line, lam)
+                # 2026-09-04: distancia mínima lambda-línea. Líneas pegadas al
+                # número esperado (moneda al aire con vig) se descartan.
+                min_dist = MIN_LINE_DISTANCE.get(md['market'], MIN_LINE_DISTANCE_DEFAULT)
+                if abs(lam - line) < min_dist:
+                    continue
+                if md['market'] == 'shots_on_target':
+                    # 2026-09-04: SOT usa Negative Binomial (sobredispersión real)
+                    p_over = negbin_over(line, lam)
+                else:
+                    p_over = poisson_over(line, lam)
                 p_under = 1.0 - p_over
                 otype = offer.get('type', '')
                 if otype == 'OT_OVER':
@@ -621,15 +761,33 @@ def select_bets(markets_data, cuota_minima=2.0, min_p=0.50, min_confidence=0.35,
                     p, side = p_under, 'under'
                 else:
                     continue
+                pair = line_pairs.get(line, {})
+                p_fair_over, p_fair_under = devig_two_way(pair.get('OT_OVER'), pair.get('OT_UNDER'))
+                fair_p = p_fair_over if side == 'over' else p_fair_under
+                fair_odds = (1.0 / fair_p) if fair_p else None
                 eff_min_p, eff_min_conf, eff_enabled, eff_min_ev, eff_min_cuota, eff_min_line, eff_max_line = _resolve_filters(
                     market_filters, market_key, side, min_p, min_confidence)
                 _add_candidate(candidates, md['market'], offer, line, side, p, cuota_minima,
                               confidence=confidence, min_p=eff_min_p, min_confidence=eff_min_conf,
                               enabled=eff_enabled, sub_min_ev=eff_min_ev, sub_min_cuota=eff_min_cuota,
-                              calib_cap=calib_cap, min_line=eff_min_line, max_line=eff_max_line)
+                              calib_cap=calib_cap, min_line=eff_min_line, max_line=eff_max_line,
+                              fair_odds=fair_odds)
 
         elif mtype == 'x12':
             probs = md.get('probs') or {}
+            # 2026-09-04 (decisión de John): devigging 1X2 (tres vías)
+            c1 = cx = c2 = 0.0
+            for offer in odds:
+                _otype = offer.get('type', '')
+                _cuota = offer.get('odds_decimal', 0)
+                if _otype == 'OT_ONE' and _cuota > 1.0:
+                    c1 = _cuota
+                elif _otype == 'OT_CROSS' and _cuota > 1.0:
+                    cx = _cuota
+                elif _otype == 'OT_TWO' and _cuota > 1.0:
+                    c2 = _cuota
+            pf1, pfx, pf2 = devig_three_way(c1, cx, c2)
+            fair_map = {'1': pf1, 'X': pfx, '2': pf2}
             for offer in odds:
                 otype = offer.get('type', '')
                 if otype == 'OT_ONE':
@@ -642,31 +800,48 @@ def select_bets(markets_data, cuota_minima=2.0, min_p=0.50, min_confidence=0.35,
                     continue
                 if not p:
                     continue
+                fair_p = fair_map.get(side)
+                fair_odds = (1.0 / fair_p) if fair_p else None
                 eff_min_p, eff_min_conf, eff_enabled, eff_min_ev, eff_min_cuota, eff_min_line, eff_max_line = _resolve_filters(
                     market_filters, market_key, side, min_p, min_confidence)
                 _add_candidate(candidates, md['market'], offer, None, side, p, cuota_minima,
                               confidence=confidence, min_p=eff_min_p, min_confidence=eff_min_conf,
                               enabled=eff_enabled, sub_min_ev=eff_min_ev, sub_min_cuota=eff_min_cuota,
-                              calib_cap=calib_cap, min_line=eff_min_line, max_line=eff_max_line)
+                              calib_cap=calib_cap, min_line=eff_min_line, max_line=eff_max_line,
+                              fair_odds=fair_odds)
 
         elif mtype == 'btts':
             p_yes = md.get('p_yes')
             if p_yes is None:
                 continue
+            # 2026-09-04 (decisión de John): devigging Sí/No
+            c_yes = c_no = 0.0
+            for offer in odds:
+                _otype = offer.get('type', '')
+                _cuota = offer.get('odds_decimal', 0)
+                if _otype == 'OT_YES' and _cuota > 1.0:
+                    c_yes = _cuota
+                elif _otype == 'OT_NO' and _cuota > 1.0:
+                    c_no = _cuota
+            p_fair_yes, p_fair_no = devig_two_way(c_yes, c_no)
             for offer in odds:
                 otype = offer.get('type', '')
                 if otype == 'OT_YES':
                     p, side = p_yes, 'Sí'
+                    fair_p = p_fair_yes
                 elif otype == 'OT_NO':
                     p, side = 1.0 - p_yes, 'No'
+                    fair_p = p_fair_no
                 else:
                     continue
+                fair_odds = (1.0 / fair_p) if fair_p else None
                 eff_min_p, eff_min_conf, eff_enabled, eff_min_ev, eff_min_cuota, eff_min_line, eff_max_line = _resolve_filters(
                     market_filters, market_key, side, min_p, min_confidence)
                 _add_candidate(candidates, md['market'], offer, None, side, p, cuota_minima,
                               confidence=confidence, min_p=eff_min_p, min_confidence=eff_min_conf,
                               enabled=eff_enabled, sub_min_ev=eff_min_ev, sub_min_cuota=eff_min_cuota,
-                              calib_cap=calib_cap, min_line=eff_min_line, max_line=eff_max_line)
+                              calib_cap=calib_cap, min_line=eff_min_line, max_line=eff_max_line,
+                              fair_odds=fair_odds)
 
     candidates.sort(key=lambda x: x['ev'], reverse=True)
     return candidates

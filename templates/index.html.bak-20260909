@@ -1,0 +1,130 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicta — Edge Estadístico en Fútbol</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/premium.css' %}?v=20260901">
+</head>
+<body>
+
+<!-- NAVEGACIÓN -->
+<nav>
+    <a href="/" class="logo">PREDIC<span>TA</span></a>
+    <div class="nav-links">
+        {% if user.is_authenticated %}
+            {% if navbar_balance %}
+            <div class="nav-balance {% if navbar_balance_negativo %}nav-balance-neg{% endif %}" aria-hidden="true">{{ navbar_balance }}</div>
+            {% endif %}
+            <a href="{% url 'ai_predictions:dashboard' %}" class="nav-link">Dashboard</a>
+            <a href="{% url 'ai_predictions:prediction_form' %}" class="nav-link">Predicciones</a>
+            <a href="{% url 'ai_predictions:prediction_history' %}" class="nav-link">Historial</a>
+            <a href="{% url 'football_data:dashboard' %}" class="nav-link">Datos</a>
+            <a href="{% url 'football_data:import' %}" class="nav-link">Importar</a>
+            <a href="{% url 'ai_predictions:scraper_corners' %}" class="nav-link">Scraper</a>
+            <a href="{% url 'cuentas:logout' %}" class="nav-link-salir">Salir</a>
+        {% else %}
+            <a href="#como" class="nav-link">Cómo funciona</a>
+            <a href="{% url 'cuentas:login' %}" class="btn-nav">Ingresar →</a>
+        {% endif %}
+    </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+    <div class="badge"><span class="dot"></span> IA entrenada con +150,000 partidos</div>
+    <h1>APUESTA CON<br><em>EDGE REAL.</em><br>NO CON INTUICIÓN.</h1>
+    <p class="hero-sub">Predicciones 1X2 con probabilidades calibradas estadísticamente. Para apostadores en BetPlay, Wplay y Rushbet.</p>
+
+    <div class="hero-cta">
+        {% if user.is_authenticated %}
+            <a href="{% url 'ai_predictions:prediction_form' %}" class="btn-primary">Hacer Predicción</a>
+            <a href="{% url 'ai_predictions:dashboard' %}" class="btn-ghost">Ver Dashboard</a>
+        {% else %}
+            <a href="{% url 'cuentas:login' %}" class="btn-primary">Ingresar</a>
+            <a href="#como" class="btn-ghost">Cómo funciona</a>
+        {% endif %}
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat">
+            <div class="stat-num">73%</div>
+            <div class="stat-label">Accuracy promedio</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">12K+</div>
+            <div class="stat-label">Partidos analizados</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">+18%</div>
+            <div class="stat-label">ROI histórico</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">38</div>
+            <div class="stat-label">Ligas cubiertas</div>
+        </div>
+    </div>
+</div>
+
+<!-- CÓMO FUNCIONA -->
+<section id="como">
+    <div class="section-tag">El método</div>
+    <h2>DEL DATO A<br>LA APUESTA</h2>
+    <p class="section-sub">Nuestra IA procesa señales que el ojo humano no puede capturar a tiempo.</p>
+
+    <div class="steps">
+        <div class="step">
+            <div class="step-num">01</div>
+            <div class="step-icon">📡</div>
+            <h3>Datos en tiempo real</h3>
+            <p>Ingestamos estadísticas de forma, lesiones, h2h, cuotas de mercado y clima de 38 ligas.</p>
+        </div>
+        <div class="step">
+            <div class="step-num">02</div>
+            <div class="step-icon">🧠</div>
+            <h3>Modelo predictivo</h3>
+            <p>Ensemble de modelos entrenado con +150K partidos. Genera probabilidades calibradas por Brier Score.</p>
+        </div>
+        <div class="step">
+            <div class="step-num">03</div>
+            <div class="step-icon">⚡</div>
+            <h3>Edge detection</h3>
+            <p>Comparamos nuestras probabilidades vs. cuotas del mercado. Solo publicamos cuando hay edge real (>5%).</p>
+        </div>
+        <div class="step">
+            <div class="step-num">04</div>
+            <div class="step-icon">📲</div>
+            <h3>Delivery instantáneo</h3>
+            <p>Recibes la predicción vía web + Telegram/WhatsApp. Tú apuestas donde quieras.</p>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER CTA -->
+<div class="footer-cta">
+    <h2>EMPIEZA HOY.<br>PRIMERA SEMANA GRATIS.</h2>
+    <p>Sin tarjeta. Sin compromisos. Valida el edge tú mismo.</p>
+    {% if user.is_authenticated %}
+        <a href="{% url 'ai_predictions:prediction_form' %}" class="btn-primary" style="font-size:1rem;padding:1rem 2.5rem;">Hacer Predicción →</a>
+    {% else %}
+        <a href="{% url 'cuentas:login' %}" class="btn-primary" style="font-size:1rem;padding:1rem 2.5rem;">Ingresar →</a>
+    {% endif %}
+</div>
+
+<footer>
+    <div class="logo" style="font-size:1.2rem;">PREDIC<span>TA</span></div>
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+        <a href="#">Términos</a>
+        <a href="#">Privacidad</a>
+        <a href="#">Juego responsable</a>
+        <a href="#">Contacto</a>
+    </div>
+    <div>© 2026 Predicta.com.co · +18 · Juega con responsabilidad</div>
+</footer>
+
+
+</body>
+</html>

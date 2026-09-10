@@ -1,3 +1,4 @@
+import time
 """
 Servicios de notificaciones WhatsApp.
 
@@ -52,18 +53,25 @@ def whatsapp_enviar(telefono, mensaje):
     if not numero:
         return False, 'número inválido'
 
-    try:
-        resp = requests.post(
-            f"{WHATSAPP_SERVICE_URL}/message/sendText/{INSTANCE_NAME}",
-            headers={'Content-Type': 'application/json', 'X-Api-Key': API_KEY},
-            json={'number': numero, 'textMessage': {'text': mensaje}},
-            timeout=TIMEOUT_S,
-        )
-        if resp.status_code == 200:
-            return True, 'enviado'
-        return False, f"HTTP {resp.status_code}: {resp.text[:200]}"
-    except requests.RequestException as e:
-        return False, f"error de conexión: {e}"
+    for intento in range(3):
+        try:
+            resp = requests.post(
+                f"{WHATSAPP_SERVICE_URL}/message/sendText/{INSTANCE_NAME}",
+                headers={'Content-Type': 'application/json', 'X-Api-Key': API_KEY},
+                json={'number': numero, 'textMessage': {'text': mensaje}},
+                timeout=TIMEOUT_S,
+            )
+            if resp.status_code == 200:
+                return True, 'enviado'
+            if resp.status_code == 429 and intento < 2:
+                time.sleep(10 * (intento + 1))  # backoff 10s, 20s
+                continue
+            return False, f"HTTP {resp.status_code}: {resp.text[:200]}"
+        except requests.RequestException as e:
+            if intento < 2:
+                time.sleep(5)
+                continue
+            return False, f"error de conexión: {e}"
 
 
 def enviar_bienvenida(usuario):
@@ -90,10 +98,13 @@ def enviar_bienvenida(usuario):
     return estado, detalle
 
 
-def notificar_usuario(usuario, evento, mensaje, estado_evento):
+def notificar_usuario(usuario, evento, mensaje, estado_evento, forzar=False):
     """
     Notifica a un usuario SOLO si cambia el estado del evento (dedupe) y el
     usuario tiene teléfono. Auditado en NotificacionLog.
+
+    forzar=True: envía aunque el estado no haya cambiado (recordatorio
+    insistente, p. ej. token vencido en cada revisión programada).
 
     Devuelve 'enviado' | 'error' | 'omitido' | 'sin_cambios'.
     """
@@ -103,7 +114,7 @@ def notificar_usuario(usuario, evento, mensaje, estado_evento):
         usuario=usuario, evento=evento, defaults={'estado': ''},
     )
 
-    if prev.estado == estado_evento:
+    if prev.estado == estado_evento and not forzar:
         return 'sin_cambios'
 
     telefono = normalizar_telefono(usuario.telefono)

@@ -29,13 +29,20 @@ from auto_betting.services import (
     login, fetch_upcoming_matches,
     fetch_corners_odds, fetch_goals_odds,
     fetch_shots_on_target_odds, fetch_btts_odds,
-    validate_coupon, place_bet,
+    fetch_market_odds, validate_coupon, place_bet,
 )
 from auto_betting.strategy import (
     get_official_predictions, select_bets, get_market_filters, get_global_config,
+    submarket_clv_health,
 )
 
 logger = logging.getLogger('auto_betting')
+
+# 2026-09-04 (decisión John): anti-movimiento de línea. Si la cuota del
+# outcome subió >= este % desde que la evaluamos (la casa corrige en contra),
+# se aborta la apuesta. Caso real: Sparta Under 9.5 córners 2.02 -> 2.55 (+26%)
+# y Betis 2.12 -> 2.33 (+10%) — ambas perdidas con CLV -20.8/-9.0.
+LINE_MOVE_ABORT_PCT = 0.08
 
 MARKET_LABELS = {
     'corners': 'Total de Tiros de Esquina',
@@ -82,7 +89,7 @@ def map_teams(match, league):
     return home_result[0], away_result[0]
 
 
-def _build_market_data(match, home_team, away_team, league):
+def _build_market_data(match, home_team, away_team, league, sot_test=False):
     """
     Construye la lista de datos de mercado usando la Predicción Oficial de Predicta
     (promedio ponderado de todos los modelos, igual que /ai/predict/).
@@ -117,14 +124,35 @@ def _build_market_data(match, home_team, away_team, league):
         })
 
     # Tiros a puerta (shots on target) — el mercado real en BetPlay
+    # 2026-09-04: CLV breaker (paso 4 auditoría SOT). Si el CLV móvil de las
+    # últimas 30 apuestas asentadas del submercado es < 0, se salta hoy.
     if 'shots_on_target' in official:
-        sot = official['shots_on_target']
-        markets.append({
-            'market': 'shots_on_target', 'type': 'over_under',
-            'lambda': sot['lambda'],
-            'confidence': sot.get('confidence', 0.5),
-            'odds': fetch_shots_on_target_odds(match['event_id']),
-        })
+        clv_ok, avg_clv, n_clv = submarket_clv_health('Total de tiros a puerta', n=30)
+        if not clv_ok and not sot_test:
+            logger.warning(
+                f'CLV BREAKER: submercado tiros a puerta SALTADO hoy — '
+                f'CLV promedio {avg_clv:.2f} en {n_clv} apuestas asentadas '
+                f'({home_team} vs {away_team})')
+        elif not clv_ok and sot_test:
+            logger.warning(
+                f'CLV BREAKER BYPASS (--sot-test): tiros a puerta incluido a '
+                f'pesar de CLV {avg_clv:.2f} en {n_clv} asentadas — TEST de '
+                f'modelo nuevo ({home_team} vs {away_team})')
+            sot = official['shots_on_target']
+            markets.append({
+                'market': 'shots_on_target', 'type': 'over_under',
+                'lambda': sot['lambda'],
+                'confidence': sot.get('confidence', 0.5),
+                'odds': fetch_shots_on_target_odds(match['event_id']),
+            })
+        else:
+            sot = official['shots_on_target']
+            markets.append({
+                'market': 'shots_on_target', 'type': 'over_under',
+                'lambda': sot['lambda'],
+                'confidence': sot.get('confidence', 0.5),
+                'odds': fetch_shots_on_target_odds(match['event_id']),
+            })
 
     # Ambos marcan
     if 'both_teams_score' in official:
@@ -164,9 +192,19 @@ class Command(BaseCommand):
             '--email', type=str, default=None,
             help='Correo del usuario. Si se omite, ejecuta para todos los usuarios con config activa.',
         )
+        parser.add_argument(
+            '--today', action='store_true', default=False,
+            help='Solo partidos que arrancan HOY (fecha local Bogotá). El cron normal sigue con las 24h completas.',
+        )
+        parser.add_argument(
+            '--sot-test', action='store_true', default=False,
+            help='Bypass del CLV breaker SOLO para tiros a puerta en esta corrida (test de modelo nuevo). El cron no usa este flag.',
+        )
 
     def handle(self, *args, **options):
         email = options.get('email')
+        only_today = options.get('today', False)
+        sot_test = options.get('sot_test', False)
         configs = AutoBetConfig.objects.filter(activo=True).select_related('usuario')
         if email:
             configs = configs.filter(usuario__email=email)
@@ -174,38 +212,9 @@ class Command(BaseCommand):
             self.stderr.write("❌ No hay configuraciones activas. Crea AutoBetConfig en admin.")
             return
         for config in configs:
-            self._run_for_config(config)
+            self._run_for_config(config, only_today=only_today, sot_test=sot_test)
 
-    def _pnl_sistema_hoy(self, owner, hoy):
-        """
-        P&L neto (COP) del sistema para el usuario, midiendo el sangrado del
-        día de HOY en tiempo real:
-          1. Asentadas HOY (WON/LOST con actualizado__date=hoy, sin importar
-             cuándo se colocaron — el sync actualiza bet_status y por tanto
-             `actualizado` al asentar).
-          2. Exposición OPEN contada como pérdida máxima (stake en riesgo).
-        Fix 2026-09-03 (auditoría): antes medía placed_date=hoy, que a las
-        06:10 (hora del lote diario) siempre es 0 → el stop-loss nunca
-        disparaba.
-        Devuelve negativo cuando hay pérdida. Sin historial → 0.
-        """
-        from auto_betting.models import HistorialApuesta
-        settled = HistorialApuesta.objects.filter(
-            usuario=owner, is_system=True,
-            actualizado__date=hoy, bet_status__in=['WON', 'LOST'],
-        )
-        agg = settled.aggregate(st=Sum('stake'), pay=Sum('payout'))
-        stake = agg['st'] or 0
-        payout = agg['pay'] or 0
-        realizado = (payout - stake) / 1000.0
-        open_risk = (
-            HistorialApuesta.objects.filter(
-                usuario=owner, is_system=True, bet_status='OPEN',
-            ).aggregate(s=Sum('stake'))['s'] or 0
-        ) / 1000.0
-        return realizado - open_risk
-
-    def _run_for_config(self, config):
+    def _run_for_config(self, config, only_today=False, sot_test=False):
         owner = config.usuario
         self.stdout.write(f"\n👤 Usuario: {owner.email}")
 
@@ -235,20 +244,12 @@ class Command(BaseCommand):
         # SOLO de su propia config (/auto-betting/configuracion/). El piso global
         # (cuota_minima_global) ya no pisa la config per-user.
         cuota_minima_efectiva = config.cuota_minima
-        stop_loss_diario = gcfg.get('stop_loss_diario_cop', 0) or 0
         max_exp_evento = gcfg.get('max_exposicion_evento_cop', 0) or 0
         calib_cap = gcfg.get('calib_cap', 0.58) or 0.58
 
-        # Stop-loss diario: P&L (solo sistema) del día de HOY. Si ya cayó por
-        # debajo del umbral (negativo), no se colocan más apuestas.
-        if stop_loss_diario < 0:
-            pnl_hoy = self._pnl_sistema_hoy(owner, hoy)
-            if pnl_hoy <= stop_loss_diario:
-                self.stdout.write(
-                    f"🛑 Stop-loss diario activado: P&L hoy={pnl_hoy:,.0f} COP ≤ "
-                    f"{stop_loss_diario:,.0f} COP. Auto-betting detenido para {owner.email}."
-                )
-                return
+        # 2026-09-04 (decisión John): stop-loss diario GLOBAL eliminado.
+        # La administración de capital es responsabilidad de cada usuario
+        # (stake fijo o % del balance en su config, vía resolve_stake abajo).
 
         # Gestor de capital (2026-09-01): el stake puede ser FIJO (config.stake,
         # comportamiento histórico) o COMPUESTO (% del balance paralelo).
@@ -278,11 +279,42 @@ class Command(BaseCommand):
         token, routing_key = login(config.ticket, config.punter_id)
         if not token:
             self.stderr.write("❌ Login BetPlay falló. Verifica el ticket en AutoBetConfig.")
+            # WhatsApp: alerta al usuario (forzar=False → respeta dedupe del chequeo hourly)
+            try:
+                from notificaciones.services import notificar_usuario
+                from notificaciones.models import NotificacionEstado
+                est, _ = NotificacionEstado.objects.get_or_create(
+                    usuario=config.usuario, evento='token_betplay_vencido',
+                    defaults={'estado': ''}
+                )
+                if est.estado != 'FALLO':
+                    nombre = config.usuario.first_name or config.usuario.username or 'usuario'
+                    msg = (
+                        f"🔴 *Predicta — No se pudieron colocar tus apuestas*\n\n"
+                        f"Hola {nombre}, tu sesión BetPlay venció y el sistema "
+                        f"no pudo colocar tus apuestas automáticas de hoy.\n\n"
+                        f"Renueva tu ticket cuanto antes:\n"
+                        f"👉 https://www.predicta.com.co/auto-betting/configuracion/\n\n"
+                        f"— Predicta · Monitoreo automático"
+                    )
+                    notificar_usuario(config.usuario, 'token_betplay_vencido', msg,
+                                     estado_evento='FALLO', forzar=False)
+                    self.stdout.write("📱 WhatsApp enviado por ticket vencido.")
+            except Exception as e:
+                logger.error(f"No se pudo enviar WhatsApp por ticket vencido: {e}")
             return
 
         # 3. Partidos próximos
         matches = fetch_upcoming_matches(config.horas_adelante)
-        self.stdout.write(f"📋 {len(matches)} partidos en próximas {config.horas_adelante}h.")
+        if only_today:
+            from django.utils import timezone as _tz_now
+            _today_local = _tz_now.localdate()
+            matches = [
+                m for m in matches
+                if _tz_now.localtime(m['start_time']).date() == _today_local
+            ]
+        self.stdout.write(
+            f"📋 {len(matches)} partidos {'de HOY' if only_today else f'en próximas {config.horas_adelante}h'}.")
 
         apuestas_colocadas = 0
 
@@ -321,7 +353,7 @@ class Command(BaseCommand):
                 )
 
             # 4+5. Predicciones y cuotas
-            markets = _build_market_data(match, home_team, away_team, league)
+            markets = _build_market_data(match, home_team, away_team, league, sot_test=sot_test)
             if not markets:
                 continue
 
@@ -337,7 +369,7 @@ class Command(BaseCommand):
 
             candidates = select_bets(
                 markets, cuota_minima_efectiva,
-                min_p=0.50, min_confidence=0.35,
+                min_p=0.45, min_confidence=0.35,
                 market_filters=market_filters,
                 calib_cap=calib_cap,
             )
@@ -387,6 +419,28 @@ class Command(BaseCommand):
                 market_label = MARKET_LABELS.get(best['market'], best['market'])
                 seleccion = _seleccion_label(best)
                 pred_value = _pred_value(best, markets)
+
+                # 6b. Anti-movimiento de línea (2026-09-04, decisión John):
+                # re-fetchear la cuota actual de ESTE outcome. Si subió
+                # >= LINE_MOVE_ABORT_PCT desde la evaluación, la casa corrigió
+                # en contra y abortamos (apostar tarde contra el mercado).
+                try:
+                    _odds_now = fetch_market_odds(match['event_id'], market_label)
+                    _oid = outcome.get('outcome_id')
+                    _cuota_now = next(
+                        (o.get('odds_decimal') for o in _odds_now
+                         if o.get('outcome_id') == _oid), None)
+                    if _cuota_now and best['cuota'] > 0:
+                        _mov = (_cuota_now - best['cuota']) / best['cuota']
+                        if _mov >= LINE_MOVE_ABORT_PCT:
+                            self.stdout.write(
+                                f"  🚫 Línea movida en contra {_mov*100:+.1f}% "
+                                f"({best['cuota']} → {_cuota_now}) en {home_team} vs "
+                                f"{away_team} [{market_label} {seleccion}]. Apuesta abortada."
+                            )
+                            continue
+                except Exception as e:
+                    logger.warning(f"Anti-movimiento check error: {e}")
 
                 # 7. Validar
                 success, val_resp = validate_coupon(token, outcome, event_data, stake_kambi)

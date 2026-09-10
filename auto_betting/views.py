@@ -527,3 +527,76 @@ def run_manual(request):
                'resultado en el historial de apuestas BetPlay o en '
                'logs/auto_betting.log.',
     })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Horarios de Cron — gestión desde la web
+# ─────────────────────────────────────────────────────────────────────────────
+
+from .models import CronSchedule
+
+
+@login_required
+@user_passes_test(_es_admin_principal, login_url='auto_betting:configuracion')
+def cron_schedules(request):
+    """Lista y edita los horarios del pipeline de auto-betting.
+
+    GET  → muestra la tabla con todos los CronSchedule.
+    POST → actualiza hora/minuto/enabled de cada tarea.
+    """
+    if request.method == 'POST':
+        # Solo actualizar campos que vienen en el POST
+        updated = 0
+        for sched in CronSchedule.objects.all():
+            prefix = f'task_{sched.id}_'
+            hora_key = prefix + 'hora'
+            minuto_key = prefix + 'minuto'
+            cada_key = prefix + 'cada'
+            enabled_key = prefix + 'enabled'
+
+            changed = False
+            if hora_key in request.POST:
+                try:
+                    new_hora = int(request.POST[hora_key])
+                    if 0 <= new_hora <= 23 and new_hora != sched.hora_utc:
+                        sched.hora_utc = new_hora
+                        changed = True
+                except (ValueError, TypeError):
+                    pass
+            if minuto_key in request.POST:
+                try:
+                    new_minuto = int(request.POST[minuto_key])
+                    if 0 <= new_minuto <= 59 and new_minuto != sched.minuto_utc:
+                        sched.minuto_utc = new_minuto
+                        changed = True
+                except (ValueError, TypeError):
+                    pass
+            if cada_key in request.POST:
+                try:
+                    new_cada = int(request.POST[cada_key])
+                    if new_cada >= 0 and new_cada != sched.cada_n_minutos:
+                        sched.cada_n_minutos = new_cada
+                        changed = True
+                except (ValueError, TypeError):
+                    pass
+            # enabled: checkbox → viene "on" si está activo, ausente si no
+            new_enabled = enabled_key in request.POST
+            if new_enabled != sched.enabled:
+                sched.enabled = new_enabled
+                changed = True
+
+            if changed:
+                sched.actualizado_por = request.user.email
+                sched.save()
+                updated += 1
+
+        if updated > 0:
+            messages.success(request, f'✅ {updated} horario(s) actualizados. El próximo minuto el dispatcher los tomará.')
+        else:
+            messages.info(request, 'Sin cambios en los horarios.')
+        return redirect('auto_betting:cron_schedules')
+
+    schedules = CronSchedule.objects.all().order_by('hora_utc', 'minuto_utc')
+    return render(request, 'auto_betting/cron_schedules.html', {
+        'schedules': schedules,
+    })

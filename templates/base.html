@@ -305,53 +305,8 @@
 </head>
 <body>
 
-<!-- NAVEGACIÓN INTERNA -->
-<nav>
-    <a href="/" class="logo">PREDIC<span>TA</span></a>
-    <div class="nav-links">
-        {% if user.is_authenticated %}
-            {% if navbar_balance %}
-            <div class="nav-balance {% if navbar_balance_negativo %}nav-balance-neg{% endif %}" aria-hidden="true">{{ navbar_balance }}</div>
-            {% endif %}
-            <div class="user-menu">
-                <button class="user-menu-btn" id="userMenuBtn" type="button" aria-haspopup="true" aria-expanded="false">
-                    {% if user.avatar %}
-                        <img src="{{ user.avatar }}" class="user-avatar" alt="Avatar">
-                    {% else %}
-                        <span class="user-avatar-initials">{{ user.get_short_name|default:user.username|slice:":1"|upper }}</span>
-                    {% endif %}
-                    <span class="user-name">{{ user.get_short_name|default:user.username }}</span>
-                    <span class="user-caret">▾</span>
-                </button>
-                <div class="user-dropdown" id="userDropdown" role="menu">
-                    <a href="{% url 'ai_predictions:dashboard' %}" class="user-dropdown-item">📊 Dashboard</a>
-                    <a href="{% url 'ai_predictions:prediction_form' %}" class="user-dropdown-item">🔮 Predicciones</a>
-                    <a href="{% url 'ai_predictions:prediction_history' %}" class="user-dropdown-item">🕘 Historial</a>
-                    <a href="{% url 'ai_predictions:mis_apuestas' %}" class="user-dropdown-item">🎟️ Mis apuestas</a>
-                    <a href="{% url 'football_data:dashboard' %}" class="user-dropdown-item">📁 Datos</a>
-                    <a href="{% url 'football_data:matches_list' %}" class="user-dropdown-item">📋 Partidos</a>
-                    <a href="{% url 'football_data:import' %}" class="user-dropdown-item">⬆️ Importar</a>
-                    <a href="{% url 'ai_predictions:scraper_corners' %}" class="user-dropdown-item">🤖 Scraper</a>
-                    <a href="{% url 'value_betting:dashboard' %}" class="user-dropdown-item">💰 Value Bets</a>
-                    <a href="{% url 'auto_betting:historial' %}" class="user-dropdown-item">🎰 Apuestas BetPlay</a>
-                    <a href="{% url 'auto_betting:configuracion' %}" class="user-dropdown-item">⚙️ Config BetPlay</a>
-                    <a href="{% url 'cuentas:configuracion_cuenta' %}" class="user-dropdown-item">👤 Mi cuenta</a>
-                    {% if user.is_superuser %}
-                    <a href="{% url 'cuentas:panel_usuarios' %}" class="user-dropdown-item">👥 Usuarios</a>
-                    <a href="{% url 'auto_betting:configuracion_umbrales' %}" class="user-dropdown-item">🎯 Umbrales (Global)</a>
-                    <a href="{% url 'notificaciones:whatsapp_landing' %}" class="user-dropdown-item">📱 WhatsApp</a>
-                    {% endif %}
-                    <div class="user-dropdown-divider"></div>
-                    <a href="{% url 'cuentas:logout' %}" class="user-dropdown-item user-dropdown-item-danger">⏻ Salir</a>
-                </div>
-            </div>
-        {% else %}
-            <a href="/" class="nav-link">Inicio</a>
-            <a href="/#como" class="nav-link">Cómo funciona</a>
-            <a href="{% url 'cuentas:login' %}" class="btn-nav">Ingresar →</a>
-        {% endif %}
-    </div>
-</nav>
+<!-- NAVEGACIÓN (compartida con la landing vía partials/navbar.html) -->
+{% include 'partials/navbar.html' %}
 
 <!-- CONTENIDO PRINCIPAL -->
 <main class="main-content">
@@ -379,31 +334,6 @@
     </div>
     <div>© 2026 Predicta.com.co · +18 · Juega con responsabilidad</div>
 </footer>
-
-<script>
-(function() {
-    var btn = document.getElementById('userMenuBtn');
-    var menu = document.getElementById('userDropdown');
-    if (!btn || !menu) return;
-    btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        var isOpen = menu.classList.toggle('open');
-        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    });
-    document.addEventListener('click', function(e) {
-        if (!menu.contains(e.target) && !btn.contains(e.target)) {
-            menu.classList.remove('open');
-            btn.setAttribute('aria-expanded', 'false');
-        }
-    });
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            menu.classList.remove('open');
-            btn.setAttribute('aria-expanded', 'false');
-        }
-    });
-})();
-</script>
 
 </body>
 </html>

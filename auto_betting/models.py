@@ -31,6 +31,7 @@ class AutoBetConfig(models.Model):
 
     creado = models.DateTimeField(auto_now_add=True)
     actualizado = models.DateTimeField(auto_now=True)
+    ticket_actualizado = models.DateTimeField(null=True, blank=True, verbose_name="Ticket actualizado el")
 
     class Meta:
         verbose_name = "Configuración Auto-Betting"
@@ -38,6 +39,16 @@ class AutoBetConfig(models.Model):
 
     def __str__(self):
         return f"Auto-Betting Config (cuota>{self.cuota_minima}, stake={self.stake}, max={self.max_apuestas_diarias}/día)"
+
+    def save(self, *args, **kwargs):
+        """Track cuándo cambia el ticket para medir TTL y avisar antes de vencer."""
+        if self.pk:
+            old_ticket = AutoBetConfig.objects.filter(pk=self.pk).values_list('ticket', flat=True).first()
+            if old_ticket is not None and old_ticket != self.ticket:
+                self.ticket_actualizado = timezone.now()
+        elif self.ticket:
+            self.ticket_actualizado = timezone.now()
+        super().save(*args, **kwargs)
 
 
 
@@ -395,3 +406,70 @@ class OddsSnapshot(models.Model):
 
     def __str__(self):
         return f"outcome={self.outcome_id} | {self.market} | {self.odds_decimal} | {self.captured_at:%Y-%m-%d %H:%M}"
+
+
+class CronSchedule(models.Model):
+    """Horarios del pipeline de auto-betting.
+
+    Una sola fila por tarea (singleton por nombre). El management command
+    `run_scheduler` lee esta tabla cada minuto y ejecuta las tareas que
+    tocan a su hora. El crontab del VPS solo necesita una entrada:
+        * * * * * ... manage.py run_scheduler
+
+    Esto permite gestionar todos los horarios desde la web
+    (/auto-betting/configuracion/umbrales/) sin tocar el crontab.
+    """
+
+    TAREA_CHOICES = [
+        ('api_football_daily', 'Sync diario API-Football (sync_daily + populate_legacy)'),
+        ('sync_bet_history', 'Sync de resultados desde Kambi (bet_status)'),
+        ('calibration_report', 'Reporte de calibración (WR real vs P declarada)'),
+        ('run_auto_bets', 'Auto-betting (colocar apuestas)'),
+        ('capture_closing_odds', 'Captura de cuotas de cierre (CLV)'),
+        ('sync_bet_history_vespertino', 'Sync vespertino de resultados'),
+        ('api_football_backfill', 'Backfill 2 temporadas (reset cuota 00:00 UTC)'),
+        ('check_betplay_tokens', 'Verificación de tickets BetPlay'),
+    ]
+
+    tarea = models.CharField(max_length=64, unique=True, choices=TAREA_CHOICES, verbose_name="Tarea")
+    hora_utc = models.IntegerField(verbose_name="Hora UTC (0-23)")
+    minuto_utc = models.IntegerField(default=0, verbose_name="Minuto UTC (0-59)")
+    cada_n_minutos = models.IntegerField(default=0, verbose_name="Repetir cada N minutos (0=solo a la hora fija)")
+    enabled = models.BooleanField(default=True, verbose_name="Activo")
+    descripcion = models.CharField(max_length=300, blank=True, default="", verbose_name="Descripción")
+    ultimo_run = models.DateTimeField(null=True, blank=True, verbose_name="Último ejecución")
+    actualizado = models.DateTimeField(auto_now=True, verbose_name="Actualizado")
+    actualizado_por = models.CharField(max_length=200, blank=True, default="", verbose_name="Actualizado por")
+
+    class Meta:
+        verbose_name = "Horario de Cron"
+        verbose_name_plural = "Horarios de Cron"
+        ordering = ['hora_utc', 'minuto_utc']
+
+    def __str__(self):
+        if self.cada_n_minutos > 0:
+            return f"{self.tarea} (cada {self.cada_n_minutos}min)"
+        return f"{self.tarea} ({self.hora_utc:02d}:{self.minuto_utc:02d} UTC)"
+
+    @classmethod
+    def get_or_create_defaults(cls):
+        """Crea las filas por defecto si no existen. Idempotente."""
+        defaults = [
+            ('api_football_backfill', 0, 0, 0, True, 'Reset cuota API + backfill 2 temporadas'),
+            ('api_football_daily', 10, 0, 0, True, 'sync_daily + populate_legacy (BD fresca)'),
+            ('sync_bet_history', 10, 15, 0, True, 'Sync bet_status desde Kambi (pre-apuestas)'),
+            ('calibration_report', 10, 20, 0, True, 'WR real vs P declarada (7 días)'),
+            ('run_auto_bets', 10, 30, 0, True, 'Colocar apuestas (BD fresca, mercados abiertos)'),
+            ('sync_bet_history_vespertino', 23, 0, 0, True, 'Sync vespertino (resultados tarde/noche)'),
+            ('sync_bet_history_pre', 10, 25, 0, True, 'Sync pre-apuestas (balance fresco para stake %)'),
+            ('capture_closing_odds', 0, 0, 15, True, 'Snapshots para CLV (cada 15 min)'),
+            ('check_betplay_tokens', 3, 0, 0, True, 'Verificación tickets BetPlay (03:00, 11:00, 18:00 UTC)'),
+        ]
+        for nombre, hora, minuto, cada, enabled, desc in defaults:
+            obj, created = cls.objects.get_or_create(
+                tarea=nombre,
+                defaults={'hora_utc': hora, 'minuto_utc': minuto, 'cada_n_minutos': cada,
+                          'enabled': enabled, 'descripcion': desc}
+            )
+            if created:
+                print(f"  + {nombre}: {hora:02d}:{minuto:02d} UTC (cada {cada}min)" if cada else f"  + {nombre}: {hora:02d}:{minuto:02d} UTC")

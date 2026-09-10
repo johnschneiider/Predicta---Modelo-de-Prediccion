@@ -13,4 +13,5 @@ urlpatterns = [
     path('configuracion/', views.configuracion, name='configuracion'),
     path('configuracion/umbrales/', views.configuracion_umbrales, name='configuracion_umbrales'),
     path('configuracion/umbrales/run/', views.run_manual, name='run_manual'),
+    path('configuracion/horarios/', views.cron_schedules, name='cron_schedules'),
 ]

@@ -17,7 +17,10 @@ from django.utils import timezone as django_timezone
 from django.db import transaction
 
 from football_data.models import League, Match
-from auto_betting.strategy import validate_market_data, calibrate_probability, _get_tier_thresholds
+from auto_betting.strategy import (
+    validate_market_data, calibrate_probability, _get_tier_thresholds,
+    devig_two_way, devig_three_way,
+)
 from .models import KambiMatch, KambiBetOffer, ValueOpportunity, ScanRun
 from .mapping import map_league, normalize_team_name, fuzzy_match_team
 
@@ -492,21 +495,69 @@ def build_bet_instruction(bet_offer: KambiBetOffer) -> str:
 #  COMPARACIÓN CUOTA vs PREDICCIÓN
 # ════════════════════════════════════════════════════════════
 
-def compute_value_bet(bet_offer: KambiBetOffer, full_prediction: Dict) -> Optional[ValueOpportunity]:
+
+def _fair_odds_for_offer(bet_offer: KambiBetOffer, market_odds_map: Optional[Dict] = None) -> Optional[float]:
+    """Cuota justa (sin margen de la casa) para el outcome de bet_offer.
+
+    Devigging con el par completo: over/under de la misma línea, Sí/No,
+    o 1X2 (tres vías). `market_odds_map` = {(criterion_label, line):
+    {outcome_type: odds_decimal}}. Si no se pasa, consulta la DB (fallback).
+    Devuelve None si no hay par válido para quitar el vig.
+    """
+    if market_odds_map is None:
+        market_odds_map = {}
+        for s in KambiBetOffer.objects.filter(
+                match=bet_offer.match,
+                criterion_label=bet_offer.criterion_label,
+                line=bet_offer.line,
+                odds_decimal__gt=1.0):
+            market_odds_map.setdefault(
+                (s.criterion_label, s.line), {})[s.outcome_type] = s.odds_decimal
+
+    sides = market_odds_map.get((bet_offer.criterion_label, bet_offer.line), {})
+    my_type = bet_offer.outcome_type
+
+    if my_type in ('OT_OVER', 'OT_UNDER'):
+        p_over, p_under = devig_two_way(sides.get('OT_OVER'), sides.get('OT_UNDER'))
+        p = p_over if my_type == 'OT_OVER' else p_under
+        return (1.0 / p) if p else None
+
+    if my_type in ('OT_YES', 'OT_NO'):
+        p_yes, p_no = devig_two_way(sides.get('OT_YES'), sides.get('OT_NO'))
+        p = p_yes if my_type == 'OT_YES' else p_no
+        return (1.0 / p) if p else None
+
+    if my_type in ('OT_ONE', 'OT_CROSS', 'OT_TWO'):
+        p1, px, p2 = devig_three_way(
+            sides.get('OT_ONE'), sides.get('OT_CROSS'), sides.get('OT_TWO'))
+        p = {'OT_ONE': p1, 'OT_CROSS': px, 'OT_TWO': p2}.get(my_type)
+        return (1.0 / p) if p else None
+
+    return None
+
+
+def compute_value_bet(bet_offer: KambiBetOffer, full_prediction: Dict,
+
+                      market_odds_map: Optional[Dict] = None) -> Optional[ValueOpportunity]:
     """Compara la cuota de BetPlay con la predicción de Predicta.
-    
+
     Aplica los mismos filtros que auto_betting (select_bets/_add_candidate):
     - Cuota >= 2.0 (MIN_ODDS)
     - Calibración de probabilidad (shrinkage)
     - P >= 50% (hard floor)
     - Tiers por cuota: confidence mínima y EV mínimo escalonados
     - EV > 0
+    - 2026-09-04 (decisión de John): el EV y el edge se calculan contra la
+      CUOTA JUSTA del mercado (devigged), no contra la cuota con vig.
     """
     cuota = bet_offer.odds_decimal
     if cuota <= 0 or cuota < MIN_ODDS:
         return None
-    
-    betplay_prob = 1.0 / cuota if cuota > 0 else 0
+
+    # ── 2026-09-04: cuota justa (devigging del par/multivía) ──
+    fair_odds = _fair_odds_for_offer(bet_offer, market_odds_map)
+    # Probabilidad implícita del mercado SIN vig (justa). Fallback: cruda.
+    betplay_prob = (1.0 / fair_odds) if fair_odds else (1.0 / cuota if cuota > 0 else 0)
     
     raw_prob = extract_probability_from_prediction(bet_offer, full_prediction)
     
@@ -526,8 +577,9 @@ def compute_value_bet(bet_offer: KambiBetOffer, full_prediction: Dict) -> Option
     if predicta_prob < effective_min_p:
         return None
     
-    # ── EV mínimo del tier ──
-    ev = (predicta_prob * cuota) - 1.0
+    # ── EV mínimo del tier (contra CUOTA JUSTA si hay par; si no, la real) ──
+    ev_cuota = fair_odds if fair_odds else cuota
+    ev = (predicta_prob * ev_cuota) - 1.0
     if ev <= tier_min_ev:
         return None
     
@@ -537,7 +589,7 @@ def compute_value_bet(bet_offer: KambiBetOffer, full_prediction: Dict) -> Option
     if confidence < effective_min_conf:
         return None
     
-    # ── Edge para display ──
+    # ── Edge para display (contra la probabilidad JUSTA del mercado) ──
     edge = (predicta_prob - betplay_prob) * 100
     is_value = True  # Si pasó todos los filtros, es value
     
@@ -917,9 +969,17 @@ def run_scan() -> ScanRun:
             
             predictions_count += 1
             
-            # Comparar cada cuota con la predicción
+            # 2026-09-04: mapa de cuotas por (criterion_label, line) para devigging
+            market_odds_map = {}
             for bo in bet_offers:
-                opp = compute_value_bet(bo, full_prediction)
+                if not bo.odds_decimal or bo.odds_decimal <= 1.0:
+                    continue
+                key = (bo.criterion_label, bo.line)
+                market_odds_map.setdefault(key, {})[bo.outcome_type] = bo.odds_decimal
+
+            # Comparar cada cuota con la predicción (EV contra cuota justa)
+            for bo in bet_offers:
+                opp = compute_value_bet(bo, full_prediction, market_odds_map)
                 if opp:
                     all_opportunities.append(opp)
                     if opp.is_value:

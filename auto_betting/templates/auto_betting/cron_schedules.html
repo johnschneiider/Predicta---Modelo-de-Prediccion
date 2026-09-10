@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Horarios del Pipeline — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cron-container { max-width: 820px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .cron-header { text-align: center; margin-bottom: 1.6rem; }
+  .cron-header h2 { margin-bottom: 0.4rem; letter-spacing: -0.01em; }
+  .cron-header .subtitle {
+    color: var(--text-secondary); font-size: 0.9rem;
+    display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+  }
+  .cron-header .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-primary); box-shadow: 0 0 8px var(--accent-primary);
+    display: inline-block;
+  }
+
+  .cron-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-surface);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .cron-table th {
+    text-align: left;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    white-space: nowrap;
+  }
+  .cron-table td {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    border-bottom: 0.5px solid rgba(255,255,255,0.05);
+    vertical-align: middle;
+  }
+  .cron-table tr:last-child td { border-bottom: none; }
+  .cron-table tr.disabled td { opacity: 0.45; }
+  .cron-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .cron-tarea { font-weight: 600; }
+  .cron-desc { font-size: 0.76rem; color: var(--text-secondary); }
+  .cron-hora-input {
+    background: var(--bg-overlay);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    color: var(--text-primary);
+    padding: 0.35rem 0.5rem;
+    font-size: 0.85rem;
+    width: 56px;
+    text-align: center;
+    font-family: inherit;
+  }
+  .cron-hora-input:focus { outline: none; border-color: var(--accent-primary); }
+  .cron-check { width: 18px; height: 18px; accent-color: var(--accent-primary); cursor: pointer; }
+  .cron-ultimo { font-size: 0.72rem; color: var(--text-secondary); white-space: nowrap; }
+  .cron-save {
+    margin-top: 1.2rem;
+    background: var(--accent-primary); color: #0a0a0a; border: none;
+    border-radius: var(--radius-full); padding: 0.7rem 1.3rem;
+    font-size: 0.9rem; font-weight: 700; cursor: pointer;
+  }
+  .cron-save:hover { background: var(--accent-hover); }
+  .cron-back {
+    display: inline-block; margin-top: 1rem;
+    color: var(--text-secondary); font-size: 0.85rem; text-decoration: none;
+  }
+  .cron-back:hover { color: var(--accent-primary); }
+  .cron-note {
+    margin-top: 1.2rem;
+    background: rgba(0,229,255,0.06);
+    border: 0.5px solid rgba(0,229,255,0.25);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    color: var(--text-secondary); font-size: 0.82rem; line-height: 1.5;
+  }
+  .cron-tz-info {
+    display: flex; gap: 1.5rem; justify-content: center;
+    margin-top: 0.8rem; flex-wrap: wrap;
+  }
+  .cron-tz-info span {
+    font-size: 0.78rem; color: var(--text-secondary);
+    background: var(--bg-surface); padding: 0.3rem 0.7rem;
+    border-radius: 6px; border: 0.5px solid rgba(255,255,255,0.07);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cron-container">
+  <div class="cron-header">
+    <h2>⏰ Horarios del Pipeline</h2>
+    <div class="subtitle">
+      <span class="dot"></span>
+      Gestión de cron desde la web — el dispatcher los lee cada minuto
+    </div>
+    <div class="cron-tz-info">
+      <span>🕐 UTC</span>
+      <span>🇨🇴 Colombia = UTC − 5</span>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div style="text-align:center; margin-bottom:1rem; color: var(--text-secondary); font-size:0.85rem;">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <table class="cron-table">
+      <thead>
+        <tr>
+          <th>Tarea</th>
+          <th>Hora UTC</th>
+          <th>Min UTC</th>
+          <th>Cada N min</th>
+          <th>Activo</th>
+          <th>Último run</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in schedules %}
+        <tr class="{% if not s.enabled %}disabled{% endif %}">
+          <td>
+            <div class="cron-tarea">{{ s.tarea }}</div>
+            {% if s.descripcion %}<div class="cron-desc">{{ s.descripcion }}</div>{% endif %}
+          </td>
+          <td>
+            <input type="number" min="0" max="23"
+                   class="cron-hora-input"
+                   name="task_{{ s.id }}_hora"
+                   value="{{ s.hora_utc }}">
+          </td>
+          <td>
+            <input type="number" min="0" max="59"
+                   class="cron-hora-input"
+                   name="task_{{ s.id }}_minuto"
+                   value="{{ s.minuto_utc }}">
+          </td>
+          <td>
+            <input type="number" min="0" max="1440"
+                   class="cron-hora-input"
+                   style="width:72px"
+                   name="task_{{ s.id }}_cada"
+                   value="{{ s.cada_n_minutos }}"
+                   title="0 = solo a la hora fija. >0 = repetir cada N minutos">
+          </td>
+          <td style="text-align:center;">
+            <input type="checkbox" class="cron-check"
+                   name="task_{{ s.id }}_enabled"
+                   {% if s.enabled %}checked{% endif %}>
+          </td>
+          <td>
+            {% if s.ultimo_run %}
+              <span class="cron-ultimo">{{ s.ultimo_run|date:"d/m H:i" }} UTC</span>
+            {% else %}
+              <span class="cron-ultimo">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div style="margin-top:1rem;">
+      <button type="submit" class="cron-save">💾 Guardar horarios</button>
+      <a href="{% url 'auto_betting:configuracion_umbrales' %}" class="cron-back" style="margin-left:1rem;">
+        ← Volver a umbrales
+      </a>
+    </div>
+  </form>
+
+  <div class="cron-note">
+    <strong>ℹ️ Cómo funciona:</strong> el crontab del VPS ejecuta
+    <code>manage.py run_scheduler</code> cada minuto. El dispatcher lee esta
+    tabla y lanza las tareas que tocan a su hora/minuto. Cambiar un horario
+    aquí y guardar toma efecto en <strong>1 minuto</strong> — sin tocar el
+    crontab del sistema.<br><br>
+    <strong>Hora UTC:</strong> 10:30 UTC = 05:30 Colombia (UTC−5).<br>
+    <strong>Cada N min:</strong> 0 = ejecuta solo a la hora fija. 15 = ejecuta
+    cada 15 minutos (ignora hora/minuto).<br>
+    <strong>Activo:</strong> desmarcar pausa la tarea sin borrarla.
+  </div>
+</div>
+{% endblock %}

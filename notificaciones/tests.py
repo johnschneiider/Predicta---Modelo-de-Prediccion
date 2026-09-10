@@ -80,6 +80,24 @@ class NotificacionesServiceTests(TestCase):
         self.assertEqual(mock_env.call_count, 2)
 
     @patch('notificaciones.services.whatsapp_enviar', return_value=(True, 'enviado'))
+    def test_forzar_envia_aunque_no_haya_cambio_de_estado(self, mock_env):
+        # Primera vez FALLO → envía.
+        r = notificar_usuario(self.usuario, EVENTO_TOKEN_VENCIDO, 'msg', 'FALLO')
+        self.assertEqual(r, 'enviado')
+
+        # Mismo estado, forzar=True → vuelve a enviar (recordatorio insistente).
+        r = notificar_usuario(
+            self.usuario, EVENTO_TOKEN_VENCIDO, 'msg', 'FALLO', forzar=True,
+        )
+        self.assertEqual(r, 'enviado')
+        self.assertEqual(mock_env.call_count, 2)
+
+        # Sin forzar el dedupe sigue intacto.
+        r = notificar_usuario(self.usuario, EVENTO_TOKEN_VENCIDO, 'msg', 'FALLO')
+        self.assertEqual(r, 'sin_cambios')
+        self.assertEqual(mock_env.call_count, 2)
+
+    @patch('notificaciones.services.whatsapp_enviar', return_value=(True, 'enviado'))
     def test_sin_telefono_omite_y_no_marca_estado(self, mock_env):
         self.usuario.telefono = ''
         self.usuario.save()
