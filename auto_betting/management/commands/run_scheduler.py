@@ -47,6 +47,9 @@ COMANDOS = {
     'check_betplay_tokens': [
         'venv/bin/python', 'manage.py', 'check_betplay_tokens',
     ],
+    'build_showcase_pick': [
+        'venv/bin/python', 'manage.py', 'build_showcase_pick',
+    ],
 }
 
 # Logs por tarea
@@ -60,6 +63,7 @@ LOGS = {
     'api_football_daily': 'logs/api_football.log',
     'api_football_backfill': 'logs/api_football.log',
     'run_auto_bets': 'logs/auto_betting.log',
+    'build_showcase_pick': 'logs/showcase.log',
 }
 
 # Tareas que NO deben solaparse (pgrep pattern para guard anti-concurrencia)
@@ -67,6 +71,7 @@ ANTI_CONCURRENCY = {
     'run_auto_bets': 'manage.py run_auto_bets',
     'api_football_daily': 'manage.py sync_daily',
     'api_football_backfill': 'manage.py backfill',
+    'build_showcase_pick': 'manage.py build_showcase_pick',
 }
 
 

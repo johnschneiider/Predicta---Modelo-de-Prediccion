@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AutoBetConfig, AutoBet, DailyCounter, HistorialApuesta, OddsSnapshot, MarketFilterConfig
+from .models import AutoBetConfig, AutoBet, DailyCounter, HistorialApuesta, OddsSnapshot, MarketFilterConfig, ShowcasePick
 
 
 @admin.register(AutoBetConfig)
@@ -50,3 +50,10 @@ class OddsSnapshotAdmin(admin.ModelAdmin):
     search_fields = ['outcome_id', 'event_id', 'market']
     ordering = ['-captured_at']
     readonly_fields = ['captured_at']
+
+
+@admin.register(ShowcasePick)
+class ShowcasePickAdmin(admin.ModelAdmin):
+    list_display = ['generado', 'home_team', 'away_team', 'liga', 'mercado', 'seleccion', 'cuota', 'prob', 'edge']
+    ordering = ['-generado']
+    readonly_fields = ['generado']

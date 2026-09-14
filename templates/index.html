@@ -252,43 +252,56 @@ h2 { font-family: var(--font-heading); font-weight: 600; letter-spacing: -0.015e
                 <span class="mock-title">PREDICTA · Telegram</span>
             </div>
             <div class="mock-chat">
-                <div class="chat-date">HOY · 14:32</div>
+                {% if showcase %}
+                <div class="chat-date">{{ showcase.chat_label }}</div>
                 <div class="chat-bubble">
-                    <div class="bubble-kicker">Liga BetPlay · 19:30</div>
-                    <div class="bubble-pick">Millonarios vs Nacional → <b>1X2 LOCAL</b></div>
+                    <div class="bubble-kicker">{{ showcase.liga }} · {{ showcase.kickoff_short }}</div>
+                    <div class="bubble-pick">{{ showcase.home_team }} vs {{ showcase.away_team }} → <b>{{ showcase.seleccion }}</b></div>
                     <div class="bubble-rows">
-                        <div class="bubble-row"><span>Probabilidad</span><span class="mono">48%</span></div>
-                        <div class="bubble-row"><span>Cuota justa</span><span class="mono">2.08</span></div>
-                        <div class="bubble-row"><span>Cuota mercado</span><span class="mono">2.30</span></div>
+                        <div class="bubble-row"><span>Probabilidad</span><span class="mono">{{ showcase.prob_display }}</span></div>
+                        <div class="bubble-row"><span>Cuota justa</span><span class="mono">{{ showcase.cuota_justa_display }}</span></div>
+                        <div class="bubble-row"><span>Cuota mercado</span><span class="mono">{{ showcase.cuota_display }}</span></div>
                     </div>
-                    <div class="bubble-edge">EDGE <span class="mono" style="color:inherit;">+10.6%</span></div>
-                    <div class="bubble-stake">Stake sugerido 1.5u · Confianza 7/10</div>
+                    <div class="bubble-edge">EDGE <span class="mono" style="color:inherit;">{{ showcase.edge_str }}</span></div>
+                    <div class="bubble-stake">Confianza {{ showcase.confianza_10 }}/10</div>
                 </div>
                 <div class="chat-delivery"><span class="ok">✓</span> Entregado: Telegram · WhatsApp · Web</div>
+                {% else %}
+                <div class="chat-date">PRÓXIMA SEÑAL</div>
+                <div class="chat-bubble">
+                    <div class="bubble-kicker">Motor de predicción</div>
+                    <div class="bubble-pick">Analizando los próximos partidos…</div>
+                    <div class="bubble-stake">La siguiente señal con valor aparecerá aquí.</div>
+                </div>
+                {% endif %}
             </div>
         </div>
 
+        {% if showcase %}
         <!-- Mockup: calibración del modelo -->
         <div class="edge-mock reveal">
             <div class="edge-title">Calibración del modelo</div>
+            {% if showcase.x12_local and showcase.x12_empate and showcase.x12_visita %}
             <div class="bar">
-                <div class="bar-label"><span>Local</span><span class="mono">48%</span></div>
-                <div class="bar-track"><div class="bar-fill" style="width:48%;"></div></div>
+                <div class="bar-label"><span>{{ showcase.home_team }}</span><span class="mono">{{ showcase.x12_local_display }}</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:{{ showcase.x12_local|floatformat:1 }}%;"></div></div>
             </div>
             <div class="bar">
-                <div class="bar-label"><span>Empate</span><span class="mono">27%</span></div>
-                <div class="bar-track"><div class="bar-fill dim" style="width:27%;"></div></div>
+                <div class="bar-label"><span>Empate</span><span class="mono">{{ showcase.x12_empate_display }}</span></div>
+                <div class="bar-track"><div class="bar-fill dim" style="width:{{ showcase.x12_empate|floatformat:1 }}%;"></div></div>
             </div>
             <div class="bar">
-                <div class="bar-label"><span>Visita</span><span class="mono">25%</span></div>
-                <div class="bar-track"><div class="bar-fill dim" style="width:25%;"></div></div>
+                <div class="bar-label"><span>{{ showcase.away_team }}</span><span class="mono">{{ showcase.x12_visita_display }}</span></div>
+                <div class="bar-track"><div class="bar-fill dim" style="width:{{ showcase.x12_visita|floatformat:1 }}%;"></div></div>
             </div>
+            {% endif %}
             <div class="edge-foot">
                 <div><span class="mono">73%</span><span class="lbl">accuracy</span></div>
                 <div><span class="mono">+18%</span><span class="lbl">ROI</span></div>
                 <div><span class="mono">38</span><span class="lbl">ligas</span></div>
             </div>
         </div>
+        {% endif %}
     </div>
 </section>
 

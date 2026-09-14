@@ -501,3 +501,100 @@ class CronSchedule(models.Model):
             )
             if created:
                 print(f"  + {nombre}: {hora:02d}:{minuto:02d} UTC (cada {cada}min)" if cada else f"  + {nombre}: {hora:02d}:{minuto:02d} UTC")
+
+
+
+class ShowcasePick(models.Model):
+    """Partido destacado de la portada: vitrina con datos reales del motor.
+
+    Lo genera `manage.py build_showcase_pick` (dispatcher, cada 30 min) y la
+    portada muestra la fila más reciente cuyo partido todavía no ha empezado.
+    """
+
+    home_team = models.CharField(max_length=200, verbose_name="Equipo local")
+    away_team = models.CharField(max_length=200, verbose_name="Equipo visitante")
+    liga = models.CharField(max_length=200, verbose_name="Liga")
+    start_time = models.DateTimeField(verbose_name="Inicio del partido (UTC)")
+
+    mercado = models.CharField(max_length=100, verbose_name="Mercado")
+    seleccion = models.CharField(max_length=120, verbose_name="Selección")
+    linea = models.FloatField(null=True, blank=True, verbose_name="Línea")
+
+    cuota = models.FloatField(verbose_name="Cuota de mercado (BetPlay)")
+    cuota_justa = models.FloatField(null=True, blank=True, verbose_name="Cuota justa (1/P del modelo)")
+    fair_odds = models.FloatField(null=True, blank=True, verbose_name="Cuota justa devig (referencia)")
+    prob = models.FloatField(null=True, blank=True, verbose_name="Probabilidad calibrada (%)")
+    prob_raw = models.FloatField(null=True, blank=True, verbose_name="Probabilidad sin calibrar (%)")
+    prob_mercado = models.FloatField(null=True, blank=True, verbose_name="Probabilidad implícita de mercado (%)")
+    edge = models.FloatField(null=True, blank=True, verbose_name="Edge vs cuota de mercado (%)")
+    ev = models.FloatField(null=True, blank=True, verbose_name="EV vs cuota justa devig (%)")
+    confianza = models.FloatField(null=True, blank=True, verbose_name="Confianza del modelo (0-1)")
+
+    x12_local = models.FloatField(null=True, blank=True, verbose_name="1X2 local (%)")
+    x12_empate = models.FloatField(null=True, blank=True, verbose_name="1X2 empate (%)")
+    x12_visita = models.FloatField(null=True, blank=True, verbose_name="1X2 visitante (%)")
+
+    evento_id = models.BigIntegerField(null=True, blank=True, verbose_name="Evento Kambi")
+    generado = models.DateTimeField(auto_now_add=True, verbose_name="Generado")
+
+    class Meta:
+        verbose_name = "Partido destacado de la portada"
+        verbose_name_plural = "Partidos destacados de la portada"
+        ordering = ['-generado']
+
+    def __str__(self):
+        return f"{self.home_team} vs {self.away_team} — {self.seleccion} (@{self.cuota})"
+
+    # ── Presentación (portada) ──
+    @property
+    def kickoff_short(self):
+        """Hora local (Bogotá) del inicio; agrega día cuando no es hoy."""
+        loc = timezone.localtime(self.start_time)
+        delta = (loc.date() - timezone.localdate()).days
+        prefijo = 'HOY ' if delta == 0 else ('MAÑANA ' if delta == 1 else f'{loc:%d/%m} ')
+        return f'{prefijo}{loc:%H:%M}'
+
+    @property
+    def chat_label(self):
+        """Marca temporal del 'mensaje' (momento en que se generó la señal)."""
+        loc = timezone.localtime(self.generado)
+        delta = (loc.date() - timezone.localdate()).days
+        if delta == 0:
+            prefijo = 'HOY'
+        elif delta == -1:
+            prefijo = 'AYER'
+        else:
+            prefijo = f'{loc:%d/%m}'
+        return f'{prefijo} · {loc:%H:%M}'
+
+    @property
+    def prob_display(self):
+        return f'{self.prob:.1f}%' if self.prob is not None else '—'
+
+    @property
+    def cuota_display(self):
+        return f'{self.cuota:.2f}' if self.cuota else '—'
+
+    @property
+    def cuota_justa_display(self):
+        return f'{self.cuota_justa:.2f}' if self.cuota_justa else '—'
+
+    @property
+    def edge_str(self):
+        return f'{self.edge:+.1f}%' if self.edge is not None else '—'
+
+    @property
+    def confianza_10(self):
+        return f'{self.confianza * 10:.1f}' if self.confianza is not None else '—'
+
+    @property
+    def x12_local_display(self):
+        return f'{self.x12_local:.0f}%' if self.x12_local is not None else '—'
+
+    @property
+    def x12_empate_display(self):
+        return f'{self.x12_empate:.0f}%' if self.x12_empate is not None else '—'
+
+    @property
+    def x12_visita_display(self):
+        return f'{self.x12_visita:.0f}%' if self.x12_visita is not None else '—'
