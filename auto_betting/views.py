@@ -415,6 +415,7 @@ def configuracion_umbrales(request):
         ('Goles', [('goals_over', 'Over'), ('goals_under', 'Under')]),
         ('Córners', [('corners_over', 'Over'), ('corners_under', 'Under')]),
         ('Tiros a puerta', [('shots_on_target_over', 'Over'), ('shots_on_target_under', 'Under')]),
+        ('Remates totales', [('remates_over', 'Over'), ('remates_under', 'Under')]),
         ('Ambos marcan (BTTS)', [('btts_si', 'Sí'), ('btts_no', 'No')]),
     ]
     filas = []
@@ -452,6 +453,14 @@ def configuracion_umbrales(request):
         {'field': form['shots_on_target_over_min_line'], 'label': 'Tiros Over — línea mínima',
          'help': 'Bloquea Over de línea menor a este valor. 0 = sin filtro.'},
         {'field': form['shots_on_target_over_max_line'], 'label': 'Tiros Over — línea máxima',
+         'help': 'Tope superior para Over. 0 = sin tope.'},
+        {'field': form['remates_under_min_line'], 'label': 'Remates Under — línea mínima',
+         'help': 'Bloquea Under de línea menor a este valor. 0 = sin filtro.'},
+        {'field': form['remates_under_max_line'], 'label': 'Remates Under — línea máxima',
+         'help': 'Tope superior para Under. 0 = sin tope.'},
+        {'field': form['remates_over_min_line'], 'label': 'Remates Over — línea mínima',
+         'help': 'Bloquea Over de línea menor a este valor. 0 = sin filtro.'},
+        {'field': form['remates_over_max_line'], 'label': 'Remates Over — línea máxima',
          'help': 'Tope superior para Over. 0 = sin tope.'},
     ]
 

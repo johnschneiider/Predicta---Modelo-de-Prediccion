@@ -35,6 +35,10 @@ SOT_PHI_GLOBAL = 35.77  # phi por momentos sobre datos históricos reales
 SOT_LAMBDA_SHRINK = 0.5
 SOT_GLOBAL_MEAN = 8.608  # media SOT global (ventana 730d, n=35.280)
 
+# 2026-09-14: remates totales (motor v2.3) — phi de sobredispersión medido
+# sobre datos históricos reales (auditoría 2026-09-13, misma ventana que SOT).
+REM_TOTAL_SHOTS_PHI = 42.36
+
 
 def negbin_over(line, lam, phi=None):
     """P(X > line) con Negative Binomial (sobredispersión) — para SOT.
@@ -447,6 +451,7 @@ MIN_LINE_DISTANCE = {
     'goals': 0.40,
     'corners': 0.75,
     'shots_on_target': 0.75,
+    'remates': 0.75,
 }
 MIN_LINE_DISTANCE_DEFAULT = 0.75
 
@@ -603,6 +608,13 @@ def _add_candidate(candidates, market, offer, line, side, p, cuota_minima,
     # Cuota mínima específica del submercado (0 = usa la global/cuota_minima)
     if sub_min_cuota and cuota < sub_min_cuota:
         return
+    # 2026-09-14: filtro por línea (min_line/max_line) — se pasaba desde la
+    # config por submercado pero no se aplicaba. 0 = sin tope.
+    if line is not None:
+        if min_line and line < min_line:
+            return
+        if max_line and line > max_line:
+            return
 
     # Fase 4 — calibrar la probabilidad antes de evaluar (cap configurable)
     p_raw = p
@@ -751,6 +763,10 @@ def select_bets(markets_data, cuota_minima=2.0, min_p=0.45, min_confidence=0.35,
                 if md['market'] == 'shots_on_target':
                     # 2026-09-04: SOT usa Negative Binomial (sobredispersión real)
                     p_over = negbin_over(line, lam)
+                elif md['market'] == 'remates':
+                    # 2026-09-14 (motor remates v2.3): NegBin phi=42.36
+                    # (sobredispersión real de remates totales).
+                    p_over = negbin_over(line, lam, phi=REM_TOTAL_SHOTS_PHI)
                 else:
                     p_over = poisson_over(line, lam)
                 p_under = 1.0 - p_over

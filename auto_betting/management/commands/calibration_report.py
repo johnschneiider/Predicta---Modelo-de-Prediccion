@@ -41,6 +41,10 @@ def _config_field_for(mercado, lado):
         base = 'corners'
     elif 'tiros' in m and 'puerta' in m:
         base = 'shots_on_target'
+    elif m.startswith('total de tiros (resuelta'):
+        # Remates totales: 'Total de Tiros (Resuelta usando Opta Data)'
+        # (solo el mercado TOTAL; las variantes 'por parte de X' no mapean)
+        base = 'remates'
     elif 'marcar' in m or 'ambos' in m:
         base = 'btts'
     else:

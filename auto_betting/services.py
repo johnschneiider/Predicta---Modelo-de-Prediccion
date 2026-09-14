@@ -200,6 +200,7 @@ def fetch_upcoming_matches(hours_ahead=24):
 def fetch_market_odds(event_id, market_label):
     """
     Trae las cuotas over/under de un mercado específico (por label exacto) de un evento.
+    `market_label` también acepta una lista/tupla de labels (una sola llamada HTTP).
     Devuelve lista de dicts: {betoffer_id, outcome_id, label, odds, odds_decimal, line, type, status, ...}
     """
     import requests
@@ -207,6 +208,8 @@ def fetch_market_odds(event_id, market_label):
     params = {"channel_id": 1, "client_id": 200, "lang": "es_CO", "market": "CO",
               "useCombined": "true", "useCombinedLive": "true"}
     headers = {"Accept": "application/json", "Origin": "https://betplay.com.co", "Referer": "https://betplay.com.co/"}
+
+    labels = tuple(market_label) if isinstance(market_label, (list, tuple, set)) else (market_label,)
 
     try:
         r = requests.get(url, params=params, timeout=20, headers=headers)
@@ -218,7 +221,7 @@ def fetch_market_odds(event_id, market_label):
     offers = []
     for bo in r.json().get("betOffers", []):
         crit = bo.get("criterion", {})
-        if crit.get("label") != market_label:
+        if crit.get("label") not in labels:
             continue
         for o in bo.get("outcomes", []):
             if o.get("status") != "OPEN":
@@ -268,18 +271,21 @@ def fetch_goals_odds(event_id):
 
 
 def fetch_total_shots_odds(event_id):
-    """Cuotas over/under de 'remates totales' (total de disparos, Opta)."""
-    # La etiqueta exacta varía; probamos variantes conocidas.
-    for label in [
+    """Cuotas over/under de 'remates totales' (total de disparos, Opta).
+
+    Label REAL de BetPlay (auditoría 2026-09-13, BUG A): 'Total de Tiros
+    (Resuelta usando Opta Data)'. Variantes legacy incluidas por
+    compatibilidad. UNA sola llamada HTTP para todos los labels
+    (motor remates v2.3 — el mercado existe en ~3% de eventos; evitar
+    5 llamadas por evento sin mercado).
+    """
+    return fetch_market_odds(event_id, [
+        "Total de Tiros (Resuelta usando Opta Data)",
         "Número total de disparos (Resuelta usando Opta Data)",
         "Total de disparos (Resuelta usando Opta Data)",
         "Número total de tiros (Resuelta usando Opta Data)",
         "Total de tiros (Resuelta usando Opta Data)",
-    ]:
-        odds = fetch_market_odds(event_id, label)
-        if odds:
-            return odds
-    return []
+    ])
 
 
 def fetch_x12_odds(event_id):
@@ -467,6 +473,7 @@ def _capture_snapshot_for_apuesta(ap, now=None):
         'Total de Tiros de Esquina',
         'Total de goles',
         'Total de tiros a puerta',
+        'Total de Tiros (Resuelta usando Opta Data)',
         'Resultado Final',
         'Ambos Equipos Marcarán',
     ]:

@@ -114,6 +114,22 @@ class MarketFilterConfig(models.Model):
     shots_on_target_over_min_line = models.FloatField(default=0.0, verbose_name="Tiros a puerta Over — Línea mínima")
     shots_on_target_over_max_line = models.FloatField(default=0.0, verbose_name="Tiros a puerta Over — Línea máxima (0=sin tope)")
 
+    # Remates totales (motor v2.3, integración 2026-09-14 — decisión John)
+    remates_over_min_p = models.FloatField(default=0.50, verbose_name="Remates totales Over — P mínima")
+    remates_over_min_confidence = models.FloatField(default=0.35, verbose_name="Remates totales Over — Confianza mínima")
+    remates_over_enabled = models.BooleanField(default=True, verbose_name="Remates totales Over — Activo")
+    remates_over_min_ev = models.FloatField(default=0.0, verbose_name="Remates totales Over — EV mínimo")
+    remates_over_min_cuota = models.FloatField(default=0.0, verbose_name="Remates totales Over — Cuota mínima (0=usa global)")
+    remates_over_min_line = models.FloatField(default=0.0, verbose_name="Remates totales Over — Línea mínima")
+    remates_over_max_line = models.FloatField(default=0.0, verbose_name="Remates totales Over — Línea máxima (0=sin tope)")
+    remates_under_min_p = models.FloatField(default=0.50, verbose_name="Remates totales Under — P mínima")
+    remates_under_min_confidence = models.FloatField(default=0.35, verbose_name="Remates totales Under — Confianza mínima")
+    remates_under_enabled = models.BooleanField(default=True, verbose_name="Remates totales Under — Activo")
+    remates_under_min_ev = models.FloatField(default=0.0, verbose_name="Remates totales Under — EV mínimo")
+    remates_under_min_cuota = models.FloatField(default=0.0, verbose_name="Remates totales Under — Cuota mínima (0=usa global)")
+    remates_under_min_line = models.FloatField(default=0.0, verbose_name="Remates totales Under — Línea mínima")
+    remates_under_max_line = models.FloatField(default=0.0, verbose_name="Remates totales Under — Línea máxima (0=sin tope)")
+
     # Ambos equipos marcan (BTTS)
     btts_si_min_p = models.FloatField(default=0.52, verbose_name="BTTS Sí — P mínima")
     btts_si_min_confidence = models.FloatField(default=0.35, verbose_name="BTTS Sí — Confianza mínima")
@@ -194,6 +210,18 @@ class MarketFilterConfig(models.Model):
                 'enabled': self.shots_on_target_under_enabled, 'min_ev': self.shots_on_target_under_min_ev,
                 'min_cuota': self.shots_on_target_under_min_cuota,
                 'min_line': self.shots_on_target_under_min_line, 'max_line': self.shots_on_target_under_max_line,
+            },
+            'remates_over': {
+                'min_p': self.remates_over_min_p, 'min_confidence': self.remates_over_min_confidence,
+                'enabled': self.remates_over_enabled, 'min_ev': self.remates_over_min_ev,
+                'min_cuota': self.remates_over_min_cuota,
+                'min_line': self.remates_over_min_line, 'max_line': self.remates_over_max_line,
+            },
+            'remates_under': {
+                'min_p': self.remates_under_min_p, 'min_confidence': self.remates_under_min_confidence,
+                'enabled': self.remates_under_enabled, 'min_ev': self.remates_under_min_ev,
+                'min_cuota': self.remates_under_min_cuota,
+                'min_line': self.remates_under_min_line, 'max_line': self.remates_under_max_line,
             },
             'btts_si': {
                 'min_p': self.btts_si_min_p, 'min_confidence': self.btts_si_min_confidence,

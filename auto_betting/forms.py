@@ -10,6 +10,7 @@ _SUBMERCADOS = [
     'goals_over', 'goals_under',
     'corners_over', 'corners_under',
     'shots_on_target_over', 'shots_on_target_under',
+    'remates_over', 'remates_under',
     'btts_si', 'btts_no',
 ]
 _GLOBALES = [
@@ -20,6 +21,8 @@ _GLOBALES = [
 _LINE_FIELDS = [
     'shots_on_target_over_min_line', 'shots_on_target_over_max_line',
     'shots_on_target_under_min_line', 'shots_on_target_under_max_line',
+    'remates_over_min_line', 'remates_over_max_line',
+    'remates_under_min_line', 'remates_under_max_line',
 ]
 
 

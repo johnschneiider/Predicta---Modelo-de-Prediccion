@@ -28,7 +28,7 @@ from auto_betting.models import AutoBetConfig, AutoBet, DailyCounter
 from auto_betting.services import (
     login, fetch_upcoming_matches,
     fetch_corners_odds, fetch_goals_odds,
-    fetch_shots_on_target_odds, fetch_btts_odds,
+    fetch_shots_on_target_odds, fetch_btts_odds, fetch_total_shots_odds,
     fetch_market_odds, validate_coupon, place_bet,
 )
 from auto_betting.strategy import (
@@ -47,6 +47,7 @@ LINE_MOVE_ABORT_PCT = 0.08
 MARKET_LABELS = {
     'corners': 'Total de Tiros de Esquina',
     'shots_on_target': 'Total de tiros a puerta',
+    'remates': 'Total de Tiros (Resuelta usando Opta Data)',  # motor v2.3 (integrado 2026-09-14)
     'goals': 'Total de goles',
     'total_shots': 'Número total de disparos',  # legacy, no se usa
     'x12': 'Resultado Final',
@@ -98,6 +99,39 @@ def _build_market_data(match, home_team, away_team, league, sot_test=False):
     Mercarios activos: córners, goles, remates totales, BTTS.
     """
     markets = []
+
+    # ── Remates totales — MOTOR v2.3 (integración 2026-09-14, decisión John) ──
+    # Independiente del pipeline legacy por nombres: ancla por IDs de
+    # API-Football (sin fuzzy de clubes) + GBM v2.3 calibrado. Las compuertas
+    # de cada usuario y de edge se aplican igual (select_bets: devig, edge
+    # vs cuota justa >= 5pp, tiers por cuota, EV mínimo, distancia línea-λ y
+    # filtros del submercado remates_over/under de MarketFilterConfig).
+    try:
+        # Orden: primero las cuotas (1 llamada, barato); el modelo solo se
+        # ejecuta si el evento realmente tiene el mercado (≈3% de eventos).
+        _odds_rem = fetch_total_shots_odds(match['event_id'])
+        if _odds_rem:
+            from auto_betting.remates_engine import predict_remates_for_kambi
+            rp = predict_remates_for_kambi(match)
+            if rp:
+                clv_ok, avg_clv, n_clv = submarket_clv_health(
+                    'Total de Tiros (Resuelta usando Opta Data)', n=30)
+                if not clv_ok:
+                    logger.warning(
+                        f'CLV BREAKER: remates totales SALTADO — CLV promedio '
+                        f'{avg_clv:.2f} en {n_clv} asentadas ({home_team} vs {away_team})')
+                else:
+                    markets.append({
+                        'market': 'remates', 'type': 'over_under',
+                        'lambda': rp['lambda'],
+                        'confidence': 0.5,
+                        'odds': _odds_rem,
+                    })
+                    logger.info(
+                        f'remates_v2: λ={rp["lambda"]} para {home_team} vs {away_team} '
+                        f'(fixture {rp["fixture_api_id"]}, n={rp["n_home"]}/{rp["n_away"]})')
+    except Exception as e:
+        logger.error(f'remates_v2: error en {home_team} vs {away_team}: {e}')
 
     official = get_official_predictions(home_team, away_team, league)
     if not official:

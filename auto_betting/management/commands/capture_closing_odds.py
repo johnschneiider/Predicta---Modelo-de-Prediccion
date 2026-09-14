@@ -25,6 +25,7 @@ MERCADOS_PRIORITARIOS = [
     "Total de Tiros de Esquina",
     "Total de goles",
     "Total de tiros a puerta",
+    "Total de Tiros (Resuelta usando Opta Data)",
     "Resultado Final",
     "Ambos Equipos Marcarán",
 ]
