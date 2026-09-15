@@ -609,3 +609,66 @@ def cron_schedules(request):
     return render(request, 'auto_betting/cron_schedules.html', {
         'schedules': schedules,
     })
+
+@login_required
+def paperbet_dashboard(request):
+    """Panel PAPERBET: apuestas en papel de los motores independientes (sin dinero real)."""
+    from django.db.models import Sum, Count, Q
+    from .models import PaperBet
+
+    bets = PaperBet.objects.all()
+    settled = bets.exclude(estado='OPEN')
+
+    def agg(qs):
+        n = qs.count()
+        won = qs.filter(estado='WON').count()
+        stake = qs.aggregate(s=Sum('stake'))['s'] or 0
+        payout = qs.aggregate(p=Sum('payout'))['p'] or 0
+        return {
+            'n': n, 'won': won, 'lost': n - won,
+            'wr': round(won / n * 100, 1) if n else None,
+            'stake': stake, 'net': payout - stake,
+            'roi': round((payout - stake) / stake * 100, 1) if stake else None,
+        }
+
+    global_stats = agg(settled)
+    open_count = bets.filter(estado='OPEN').count()
+
+    por_motor = []
+    for motor in bets.values_list('motor', flat=True).distinct():
+        if not motor:
+            continue
+        st = agg(settled.filter(motor=motor))
+        st['motor'] = motor
+        st['open'] = bets.filter(motor=motor, estado='OPEN').count()
+        por_motor.append(st)
+    por_motor.sort(key=lambda x: -(x['net']))
+
+    por_mercado = []
+    for mercado in bets.values_list('mercado', flat=True).distinct():
+        st = agg(settled.filter(mercado=mercado))
+        st['mercado'] = mercado
+        st['open'] = bets.filter(mercado=mercado, estado='OPEN').count()
+        por_mercado.append(st)
+    por_mercado.sort(key=lambda x: -(x['net']))
+
+    recientes = bets.order_by('-creado')[:120]
+
+    from .models import PaperParlay
+    parlays = PaperParlay.objects.all()
+    par_settled = parlays.exclude(estado='OPEN')
+    par_stats = agg(par_settled)
+    par_open = parlays.filter(estado='OPEN').count()
+    # comparativa: mismas patas en single (stake 10k cada pata vs 10k la combinada)
+    par_recientes = parlays.order_by('-creado')[:40]
+
+    return render(request, 'auto_betting/paperbet.html', {
+        'global_stats': global_stats,
+        'open_count': open_count,
+        'por_motor': por_motor,
+        'por_mercado': por_mercado,
+        'recientes': recientes,
+        'par_stats': par_stats,
+        'par_open': par_open,
+        'par_recientes': par_recientes,
+    })

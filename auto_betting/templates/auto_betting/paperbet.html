@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Paperbet — Motores Independientes (Papel) — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+  .pb-container { max-width: 1240px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .pb-header { text-align: center; margin-bottom: 1.2rem; }
+  .pb-header h2 { margin-bottom: 0.4rem; letter-spacing: -0.01em; }
+  .pb-header .subtitle { color: var(--text-secondary); font-size: 0.88rem; }
+  .pb-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.8rem; margin: 1rem 0 1.6rem; }
+  .pb-card {
+    background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.10);
+    border-radius: var(--radius); padding: 0.9rem 1rem; text-align: center;
+  }
+  .pb-card .v { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
+  .pb-card .l { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pos { color: #2ecc71; } .neg { color: #e74c3c; }
+  .pb-table-wrap { overflow-x: auto; margin-bottom: 2rem; }
+  table.pb { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  table.pb th {
+    text-align: left; padding: 0.55rem 0.7rem; color: var(--text-secondary);
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+  }
+  table.pb td { padding: 0.5rem 0.7rem; border-bottom: 0.5px solid rgba(255,255,255,0.05); }
+  .badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: var(--radius-full); font-size: 0.72rem; font-weight: 700; }
+  .badge-won { background: rgba(46,204,113,0.16); color: #2ecc71; }
+  .badge-lost { background: rgba(231,76,60,0.16); color: #e74c3c; }
+  .badge-open { background: rgba(241,196,15,0.16); color: #f1c40f; }
+  .pb-section-title { margin: 1.6rem 0 0.6rem; font-size: 1.05rem; font-weight: 700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pb-container">
+  <div class="pb-header">
+    <h2>📄 Paperbet — Motores Independientes</h2>
+    <div class="subtitle">Apuestas en papel (sin dinero real) de los motores btts_v2 · goles_v2 · sot_v2 · x12_v2 — cuotas reales Kambi.</div>
+  </div>
+
+  <div class="pb-cards">
+    <div class="pb-card"><div class="v">{{ global_stats.n }}</div><div class="l">Liquidadas</div></div>
+    <div class="pb-card"><div class="v">{{ global_stats.wr|default:'—' }}%</div><div class="l">Winrate</div></div>
+    <div class="pb-card"><div class="v">{{ global_stats.roi|default:'—' }}%</div><div class="l">ROI</div></div>
+    <div class="pb-card"><div class="v {% if global_stats.net >= 0 %}pos{% else %}neg{% endif %}">{{ global_stats.net|floatformat:0 }}</div><div class="l">Net (COP)</div></div>
+    <div class="pb-card"><div class="v">{{ open_count }}</div><div class="l">Pendientes</div></div>
+  </div>
+
+  <div class="pb-section-title">Por motor</div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Motor</th><th>Liquidadas</th><th>W</th><th>L</th><th>WR</th><th>Stake</th><th>Net</th><th>ROI</th><th>Pendientes</th></tr>
+      {% for r in por_motor %}
+      <tr>
+        <td><strong>{{ r.motor }}</strong></td>
+        <td>{{ r.n }}</td><td class="pos">{{ r.won }}</td><td class="neg">{{ r.lost }}</td>
+        <td>{{ r.wr|default:'—' }}%</td><td>{{ r.stake|floatformat:0 }}</td>
+        <td class="{% if r.net >= 0 %}pos{% else %}neg{% endif %}">{{ r.net|floatformat:0 }}</td>
+        <td class="{% if r.roi >= 0 %}pos{% else %}neg{% endif %}">{{ r.roi|default:'—' }}%</td>
+        <td>{{ r.open }}</td>
+      </tr>
+      {% empty %}<tr><td colspan="9">Aún no hay apuestas paper.</td></tr>{% endfor %}
+    </table>
+  </div>
+
+  <div class="pb-section-title">Por mercado</div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Mercado</th><th>Liquidadas</th><th>W</th><th>L</th><th>WR</th><th>Stake</th><th>Net</th><th>ROI</th><th>Pendientes</th></tr>
+      {% for r in por_mercado %}
+      <tr>
+        <td><strong>{{ r.mercado }}</strong></td>
+        <td>{{ r.n }}</td><td class="pos">{{ r.won }}</td><td class="neg">{{ r.lost }}</td>
+        <td>{{ r.wr|default:'—' }}%</td><td>{{ r.stake|floatformat:0 }}</td>
+        <td class="{% if r.net >= 0 %}pos{% else %}neg{% endif %}">{{ r.net|floatformat:0 }}</td>
+        <td class="{% if r.roi >= 0 %}pos{% else %}neg{% endif %}">{{ r.roi|default:'—' }}%</td>
+        <td>{{ r.open }}</td>
+      </tr>
+      {% empty %}<tr><td colspan="9">—</td></tr>{% endfor %}
+    </table>
+  </div>
+
+  <div class="pb-section-title">🎯 Combinadas (cuota objetivo ~2.0 — patas con EV≥0 de eventos distintos)</div>
+  <div class="pb-cards">
+    <div class="pb-card"><div class="v">{{ par_stats.n }}</div><div class="l">Combinadas liquidadas</div></div>
+    <div class="pb-card"><div class="v">{{ par_stats.wr|default:'—' }}%</div><div class="l">Winrate</div></div>
+    <div class="pb-card"><div class="v">{{ par_stats.roi|default:'—' }}%</div><div class="l">ROI</div></div>
+    <div class="pb-card"><div class="v {% if par_stats.net >= 0 %}pos{% else %}neg{% endif %}">{{ par_stats.net|floatformat:0 }}</div><div class="l">Net (COP)</div></div>
+    <div class="pb-card"><div class="v">{{ par_open }}</div><div class="l">Pendientes</div></div>
+    <div class="pb-card"><div class="v {% if par_stats.roi > global_stats.roi %}pos{% else %}neg{% endif %}">{{ global_stats.roi|default:'—' }}%</div><div class="l">ROI singles (mismos motores)</div></div>
+  </div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Creada</th><th>Pata 1</th><th>Pata 2</th><th>Cuota</th><th>P</th><th>EV</th><th>Estado</th><th>Resultado</th><th>Payout</th></tr>
+      {% for p in par_recientes %}
+      <tr>
+        <td>{{ p.creado|date:'m-d H:i' }}</td>
+        <td>{% with l=p.legs.0 %}{{ l.home|truncatechars:12 }} vs {{ l.away|truncatechars:12 }} — {{ l.seleccion }} ({{ l.motor }}){% endwith %}</td>
+        <td>{% with l=p.legs.1 %}{{ l.home|truncatechars:12 }} vs {{ l.away|truncatechars:12 }} — {{ l.seleccion }} ({{ l.motor }}){% endwith %}</td>
+        <td>{{ p.cuota|floatformat:2 }}</td>
+        <td>{{ p.prob|floatformat:2 }}</td>
+        <td class="{% if p.ev >= 0 %}pos{% else %}neg{% endif %}">{{ p.ev|floatformat:2 }}</td>
+        <td>
+          {% if p.estado == 'WON' %}<span class="badge badge-won">GANADA</span>
+          {% elif p.estado == 'LOST' %}<span class="badge badge-lost">PERDIDA</span>
+          {% elif p.estado == 'VOID' %}<span class="badge badge-open">ANULADA</span>
+          {% else %}<span class="badge badge-open">PENDIENTE</span>{% endif %}
+        </td>
+        <td>{{ p.resultado_real|default:'—' }}</td>
+        <td class="{% if p.net >= 0 %}pos{% else %}neg{% endif %}">{{ p.payout|floatformat:0|default:'—' }}</td>
+      </tr>
+      {% empty %}<tr><td colspan="9">Aún no hay combinadas. Se arman cuando existen singles con EV≥0 compatibles.</td></tr>{% endfor %}
+    </table>
+  </div>
+
+  <div class="pb-section-title">Últimas apuestas paper</div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Creada</th><th>Partido</th><th>Liga</th><th>Motor</th><th>Mercado</th><th>Selección</th><th>Línea</th><th>Cuota</th><th>P</th><th>EV</th><th>CLV</th><th>Estado</th><th>Resultado</th><th>Payout</th></tr>
+      {% for b in recientes %}
+      <tr>
+        <td>{{ b.creado|date:'m-d H:i' }}</td>
+        <td>{{ b.home_team }} vs {{ b.away_team }}</td>
+        <td>{{ b.liga }}</td>
+        <td>{{ b.motor }}</td>
+        <td>{{ b.mercado|truncatechars:26 }}</td>
+        <td>{{ b.seleccion }}</td>
+        <td>{{ b.linea|default:'—' }}</td>
+        <td>{{ b.cuota|floatformat:2 }}</td>
+        <td>{{ b.prob|floatformat:2 }}</td>
+        <td class="{% if b.ev >= 0 %}pos{% else %}neg{% endif %}">{{ b.ev|floatformat:2 }}</td>
+        <td class="{% if b.clv_pct >= 0 %}pos{% else %}neg{% endif %}">{{ b.clv_pct|default:'—' }}</td>
+        <td>
+          {% if b.estado == 'WON' %}<span class="badge badge-won">GANADA</span>
+          {% elif b.estado == 'LOST' %}<span class="badge badge-lost">PERDIDA</span>
+          {% else %}<span class="badge badge-open">PENDIENTE</span>{% endif %}
+        </td>
+        <td>{{ b.resultado_real|default:'—' }}</td>
+        <td class="{% if b.net >= 0 %}pos{% else %}neg{% endif %}">{{ b.payout|floatformat:0|default:'—' }}</td>
+      </tr>
+      {% empty %}<tr><td colspan="13">Aún no hay apuestas paper. Corre <code>manage.py run_paper_bets</code>.</td></tr>{% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -846,7 +846,13 @@ def select_bets(markets_data, cuota_minima=2.0, min_p=0.45, min_confidence=0.35,
                     p, side = p_yes, 'Sí'
                     fair_p = p_fair_yes
                 elif otype == 'OT_NO':
-                    p, side = 1.0 - p_yes, 'No'
+                    # FIX A (2026-09-15, orden John): solo apostar "No" si el
+                    # modelo favorece No (p_no >= 0.50). Antes con min_p 0.45 el
+                    # bot apostaba contra su propia lectura (ej. Sí 53% y aun así No).
+                    p_no = 1.0 - p_yes
+                    if p_no < 0.50:
+                        continue
+                    p, side = p_no, 'No'
                     fair_p = p_fair_no
                 else:
                     continue

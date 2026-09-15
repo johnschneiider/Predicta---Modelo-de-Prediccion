@@ -169,13 +169,14 @@ class DixonColesModel:
             away_defense = np.mean(away_defense_data) if away_defense_data and len(away_defense_data) >= MIN_MATCHES else league_home_avg
             
             # Calcular lambda usando el enfoque Dixon-Coles
-            # lambda_home = (ataque_local / media_liga) * (defensa_visitante / media_liga) * media_liga
-            raw_lambda_home = (home_attack / league_home_avg) * (away_defense / league_away_avg) * league_home_avg
-            raw_lambda_away = (away_attack / league_away_avg) * (home_defense / league_home_avg) * league_away_avg
-            
-            # Aplicar ventaja de local/visitante
-            raw_lambda_home *= 1.15  # ~15% ventaja local
-            raw_lambda_away *= 0.95  # ~5% desventaja visitante
+            # FIX λ (walk-forward 2026-09-12, aplicado 2026-09-15 orden John):
+            # divisores normalizados por el lado correcto — away_defense se mide en
+            # goles de LOCAL (fthg) → dividir por media LOCAL; home_defense se mide en
+            # goles de VISITANTE (ftag) → dividir por media VISITANTE.
+            # Antes estaban cruzados → λ total inflado +20.5%.
+            # Multiplicadores fijos 1.15/0.95 eliminados (agravaban la inflación).
+            raw_lambda_home = home_attack * away_defense / league_home_avg
+            raw_lambda_away = away_attack * home_defense / league_away_avg
             
             # ── FIX 1: Piso de λ por liga ──
             # Si el λ calculado es menor que el promedio real de la liga, usar el promedio de liga como piso

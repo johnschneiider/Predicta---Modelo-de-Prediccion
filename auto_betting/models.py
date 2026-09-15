@@ -598,3 +598,90 @@ class ShowcasePick(models.Model):
     @property
     def x12_visita_display(self):
         return f'{self.x12_visita:.0f}%' if self.x12_visita is not None else '—'
+
+
+class PaperBet(models.Model):
+    """Apuesta en PAPEL (paperbet): motores independientes, sin dinero real.
+    Registra pick, cuota capturada, probabilidad del motor y resultado real.
+    """
+    ESTADO_CHOICES = [('OPEN', 'Pendiente'), ('WON', 'Ganada'), ('LOST', 'Perdida'), ('VOID', 'Anulada')]
+
+    creado = models.DateTimeField(auto_now_add=True)
+    evento_id = models.CharField(max_length=30, blank=True)
+    start_time = models.DateTimeField(null=True, blank=True)
+    home_team = models.CharField(max_length=120, blank=True)
+    away_team = models.CharField(max_length=120, blank=True)
+    liga = models.CharField(max_length=120, blank=True)
+    mercado = models.CharField(max_length=120)
+    motor = models.CharField(max_length=40, blank=True)
+    seleccion = models.CharField(max_length=120)
+    linea = models.FloatField(null=True, blank=True)
+    cuota = models.FloatField(null=True, blank=True)
+    prob = models.FloatField(null=True, blank=True)      # probabilidad calibrada del motor
+    ev = models.FloatField(null=True, blank=True)        # prob*cuota - 1
+    closing_odds = models.FloatField(null=True, blank=True)  # cuota de cierre (CLV)
+    stake = models.IntegerField(default=10000)           # COP virtuales
+    estado = models.CharField(max_length=8, choices=ESTADO_CHOICES, default='OPEN', db_index=True)
+    resultado_real = models.CharField(max_length=20, blank=True)   # ej. '2-1' / 'Sí' / 'Home'
+    payout = models.FloatField(null=True, blank=True)
+    settled_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Apuesta paper'
+        verbose_name_plural = 'Apuestas paper'
+        indexes = [models.Index(fields=['estado', 'motor'])]
+
+    def __str__(self):
+        return f'[PAPER] {self.home_team} vs {self.away_team} — {self.mercado} {self.seleccion} ({self.estado})'
+
+    @property
+    def clv_pct(self):
+        if self.closing_odds and self.cuota:
+            return round((self.cuota - self.closing_odds) / self.closing_odds * 100, 2)
+        return None
+
+    @property
+    def net(self):
+        if self.estado == 'WON' and self.payout:
+            return self.payout - self.stake
+        if self.estado == 'LOST':
+            return -self.stake
+        return 0
+
+
+class PaperParlay(models.Model):
+    """Combinada en PAPEL: 2 picks con edge de los motores, cuota objetivo ~2.0.
+    legs = [{'paperbet_id','evento_id','home','away','mercado','seleccion','linea','cuota','prob','motor'}, ...]
+    """
+    ESTADO_CHOICES = [('OPEN', 'Pendiente'), ('WON', 'Ganada'), ('LOST', 'Perdida'), ('VOID', 'Anulada')]
+
+    creado = models.DateTimeField(auto_now_add=True)
+    legs = models.JSONField(default=list)
+    cuota = models.FloatField(null=True, blank=True)       # producto de cuotas
+    prob = models.FloatField(null=True, blank=True)        # producto de probabilidades
+    ev = models.FloatField(null=True, blank=True)          # prob*cuota - 1
+    stake = models.IntegerField(default=10000)             # COP virtuales
+    estado = models.CharField(max_length=8, choices=ESTADO_CHOICES, default='OPEN', db_index=True)
+    resultado_real = models.CharField(max_length=40, blank=True)  # ej. '2/2'
+    payout = models.FloatField(null=True, blank=True)
+    settled_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Combinada paper'
+        verbose_name_plural = 'Combinadas paper'
+
+    def __str__(self):
+        evs = [l.get('evento_id', '?') for l in (self.legs or [])]
+        return f'[PARLAY] {evs} ({self.estado})'
+
+    @property
+    def net(self):
+        if self.estado == 'WON' and self.payout:
+            return self.payout - self.stake
+        if self.estado == 'LOST':
+            return -self.stake
+        return 0
+
+    @property
+    def resumen(self):
+        return ' + '.join(f"{l.get('home','?')[:10]} vs {l.get('away','?')[:10]} ({l.get('seleccion','?')})" for l in (self.legs or []))

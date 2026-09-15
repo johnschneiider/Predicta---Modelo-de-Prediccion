@@ -53,6 +53,11 @@ class OfficialPredictionModel:
                 valid_predictions = []
                 for pred in predictions_list:
                     if isinstance(pred, dict) and 'prediction' in pred:
+                        # FIX B (2026-09-15, orden John): modelos sin datos reales
+                        # (total_matches == 0) no votan en el promedio oficial.
+                        if pred.get('total_matches') == 0:
+                            logger.info(f"🎯 OFICIAL - {pred.get('model_name', 'Unknown')} sin datos (total_matches=0) → excluido del promedio de {pred_type}")
+                            continue
                         try:
                             pred_value = float(pred['prediction'])
                             if not np.isnan(pred_value) and pred_value > 0:
@@ -232,6 +237,7 @@ class OfficialPredictionModel:
             for pred_type, official_pred in official_predictions.items():
                 official_pred = self._apply_xg_blend(
                     official_pred, pred_type, home_team, away_team, league)
+                official_predictions[pred_type] = official_pred
                 if pred_type in all_predictions:
                     # Agregar al final de la lista
                     all_predictions[pred_type].append(official_pred)
@@ -240,7 +246,24 @@ class OfficialPredictionModel:
                     # Crear nueva entrada
                     all_predictions[pred_type] = [official_pred]
                     logger.info(f"🎯 OFICIAL - Creado nuevo tipo {pred_type}")
-            
+
+            # ── FIX C (2026-09-15, orden John): BTTS oficial derivado de los λ
+            # finales de goles (local/visitante) → coherencia total web/bot:
+            # P(ambos marcan) = (1 - e^-λ_h) * (1 - e^-λ_a).
+            if ('both_teams_score' in official_predictions
+                    and 'goals_home' in official_predictions
+                    and 'goals_away' in official_predictions):
+                import math
+                lam_h = float(official_predictions['goals_home']['prediction'])
+                lam_a = float(official_predictions['goals_away']['prediction'])
+                p_bts = (1.0 - math.exp(-lam_h)) * (1.0 - math.exp(-lam_a))
+                p_bts = max(0.02, min(0.98, p_bts))
+                bts = official_predictions['both_teams_score']
+                bts['prediction'] = round(p_bts, 4)
+                bts['probabilities'] = {'both_score': round(p_bts, 4), 'no_both_score': round(1.0 - p_bts, 4)}
+                bts.setdefault('details', {})['derived_from'] = {'lam_home': round(lam_h, 3), 'lam_away': round(lam_a, 3)}
+                logger.info(f"🎯 OFICIAL-BTTS derivado de goles: λ_h={lam_h:.2f} λ_a={lam_a:.2f} → P={p_bts:.4f}")
+
             logger.info(f"🎯 OFICIAL - Predicción oficial agregada a {len(official_predictions)} tipos")
             return all_predictions
             
