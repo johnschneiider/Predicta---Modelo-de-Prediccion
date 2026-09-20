@@ -374,6 +374,12 @@ class HistorialApuesta(models.Model):
     # Clasificación sistema vs manual
     is_system = models.BooleanField(default=False, verbose_name="Apuesta del sistema")
 
+    # Estructura del cupón: 1 = simple, >1 = combinada (n.º de patas).
+    # NULL = aún sin verificar (p. ej. ticket vencido en el momento del sync).
+    # El inspector NUNCA alerta sobre cupones combinados: el estado global
+    # (LOST/WON) no es atribuible a la pata almacenada (solo se guarda la 1ª).
+    coupon_legs = models.IntegerField(null=True, blank=True, verbose_name="Patas del cupón (1=simple)")
+
     creado = models.DateTimeField(auto_now_add=True)
     actualizado = models.DateTimeField(auto_now=True)
 
@@ -457,6 +463,7 @@ class CronSchedule(models.Model):
         ('sync_bet_history_vespertino', 'Sync vespertino de resultados'),
         ('api_football_backfill', 'Backfill 2 temporadas (reset cuota 00:00 UTC)'),
         ('check_betplay_tokens', 'Verificación de tickets BetPlay'),
+        ('inspect_bets', 'Inspector de apuestas (verificación de liquidaciones)'),
     ]
 
     tarea = models.CharField(max_length=64, unique=True, choices=TAREA_CHOICES, verbose_name="Tarea")
@@ -492,6 +499,7 @@ class CronSchedule(models.Model):
             ('sync_bet_history_pre', 10, 25, 0, True, 'Sync pre-apuestas (balance fresco para stake %)'),
             ('capture_closing_odds', 0, 0, 15, True, 'Snapshots para CLV (cada 15 min)'),
             ('check_betplay_tokens', 3, 0, 0, True, 'Verificación tickets BetPlay (03:00, 11:00, 18:00 UTC)'),
+            ('inspect_bets', 0, 0, 360, True, 'Inspector: verifica liquidaciones cada 6h (00/06/12/18 UTC)'),
         ]
         for nombre, hora, minuto, cada, enabled, desc in defaults:
             obj, created = cls.objects.get_or_create(

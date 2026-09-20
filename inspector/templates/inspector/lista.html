@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Inspector de apuestas — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+  .insp-container { max-width: 1100px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .insp-header h2 { margin-bottom: 0.35rem; }
+  .insp-header p { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.4rem; }
+  .insp-cards { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+  .insp-card {
+    background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius-md); padding: 0.9rem 1.2rem; min-width: 150px;
+  }
+  .insp-card .n { font-size: 1.5rem; font-weight: 700; }
+  .insp-card .l { font-size: 0.78rem; color: var(--text-secondary); }
+  .insp-filters { margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .insp-filters a {
+    font-size: 0.82rem; padding: 0.35rem 0.8rem; border-radius: 999px;
+    border: 0.5px solid rgba(255,255,255,0.12); color: var(--text-primary); text-decoration: none;
+  }
+  .insp-filters a.on { background: var(--accent-primary); color: #111; font-weight: 600; }
+  table.insp { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  table.insp th { text-align: left; color: var(--text-secondary); font-weight: 500;
+    padding: 0.5rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  table.insp td { padding: 0.55rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+    vertical-align: top; }
+  .tag { font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 999px; }
+  .tag.ok { background: rgba(198,241,53,0.12); color: var(--accent-primary); }
+  .tag.revisar { background: rgba(239,68,68,0.15); color: #ef4444; }
+  .tag.nv { background: rgba(255,209,102,0.12); color: #ffd166; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="insp-container">
+  <div class="insp-header">
+    <h2>🔎 Inspector de apuestas</h2>
+    <p>Verificación automática de liquidaciones (BetPlay/Kambi vs datos API-Football).
+       Las discrepancias generan aviso al usuario y solicitud de revisión manual.</p>
+  </div>
+
+  <div class="insp-cards">
+    <div class="insp-card"><div class="n">{{ total }}</div><div class="l">Inspecciones totales</div></div>
+    <div class="insp-card"><div class="n">{{ conteos.OK|default:0 }}</div><div class="l">Legítimas (OK)</div></div>
+    <div class="insp-card"><div class="n">{{ conteos.REVISAR|default:0 }}</div><div class="l">A revisión manual</div></div>
+    <div class="insp-card"><div class="n">{{ conteos.NO_VERIFICABLE|default:0 }}</div><div class="l">No verificables</div></div>
+  </div>
+
+  <div class="insp-filters">
+    <a href="?veredicto=" class="{% if not filtro %}on{% endif %}">Todas</a>
+    <a href="?veredicto=REVISAR" class="{% if filtro == 'REVISAR' %}on{% endif %}">A revisión</a>
+    <a href="?veredicto=OK" class="{% if filtro == 'OK' %}on{% endif %}">Legítimas</a>
+    <a href="?veredicto=NO_VERIFICABLE" class="{% if filtro == 'NO_VERIFICABLE' %}on{% endif %}">No verificables</a>
+  </div>
+
+  <table class="insp">
+    <thead>
+      <tr>
+        <th>Fecha</th><th>Veredicto</th><th>Partido</th><th>Mercado / Selección</th>
+        <th>Estado</th><th>Detalle</th><th>Avisos</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in inspecciones %}
+      <tr>
+        <td>{{ i.creado|date:"d/m H:i" }}</td>
+        <td>
+          {% if i.veredicto == 'OK' %}<span class="tag ok">OK</span>
+          {% elif i.veredicto == 'REVISAR' %}<span class="tag revisar">REVISAR</span>
+          {% else %}<span class="tag nv">NO VERIF.</span>{% endif %}
+        </td>
+        <td>{{ i.apuesta.home_team }} vs {{ i.apuesta.away_team }}<br>
+            <small style="color:var(--text-secondary)">{{ i.apuesta.usuario.email }}</small></td>
+        <td>{{ i.apuesta.mercado|truncatechars:40 }}<br>{{ i.apuesta.seleccion }}</td>
+        <td>{{ i.estado_kambi }}{% if i.estado_esperado %} → {{ i.estado_esperado }}{% endif %}</td>
+        <td>{{ i.detalle|truncatechars:90 }}</td>
+        <td>{% if i.aviso_usuario %}👤{% endif %}{% if i.aviso_admin %} 🛡️{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" style="color:var(--text-secondary)">Sin inspecciones todavía.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

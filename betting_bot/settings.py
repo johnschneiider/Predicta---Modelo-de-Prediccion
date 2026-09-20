@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'value_betting',
     'auto_betting',
     'notificaciones',
+    'inspector',
 ]
 
 MIDDLEWARE = [
@@ -275,6 +276,11 @@ LOGGING = {
             'propagate': False,
         },
         'ai_predictions': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'inspector': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': False,

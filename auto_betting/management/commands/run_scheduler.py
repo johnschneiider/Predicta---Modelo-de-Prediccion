@@ -50,6 +50,9 @@ COMANDOS = {
     'build_showcase_pick': [
         'venv/bin/python', 'manage.py', 'build_showcase_pick',
     ],
+    'inspect_bets': [
+        'venv/bin/python', 'manage.py', 'inspect_bets',
+    ],
 }
 
 # Logs por tarea
@@ -64,6 +67,7 @@ LOGS = {
     'api_football_backfill': 'logs/api_football.log',
     'run_auto_bets': 'logs/auto_betting.log',
     'build_showcase_pick': 'logs/showcase.log',
+    'inspect_bets': 'logs/inspector.log',
 }
 
 # Tareas que NO deben solaparse (pgrep pattern para guard anti-concurrencia)
@@ -72,6 +76,7 @@ ANTI_CONCURRENCY = {
     'api_football_daily': 'manage.py sync_daily',
     'api_football_backfill': 'manage.py backfill',
     'build_showcase_pick': 'manage.py build_showcase_pick',
+    'inspect_bets': 'manage.py inspect_bets',
 }
 
 
@@ -92,7 +97,13 @@ class Command(BaseCommand):
             if sched.cada_n_minutos > 0:
                 # Tarea recurrente (ej. cada 15 min)
                 total_minutes = current_hour * 60 + current_minute
-                should_run = (total_minutes % sched.cada_n_minutos) == 0
+                # Ancla horaria (2026-09-20, decisión John): run_auto_bets usa
+                # hora_utc/minuto_utc como offset para conservar el barrido
+                # histórico de las 03:00 UTC (cada_n_minutos=720 → 03:00 y
+                # 15:00 UTC, dos barridos/día). Las demás tareas recurrentes
+                # mantienen el ancla en medianoche UTC (offset 0).
+                offset = (sched.hora_utc * 60 + sched.minuto_utc) if sched.tarea == 'run_auto_bets' else 0
+                should_run = ((total_minutes - offset) % sched.cada_n_minutos) == 0
             else:
                 # Tarea de hora fija
                 should_run = (current_hour == sched.hora_utc and current_minute == sched.minuto_utc)

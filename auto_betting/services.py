@@ -409,6 +409,20 @@ def _parse_iso(s):
         return None
 
 
+def _count_coupon_legs(c):
+    """Número de patas del cupón (1=simple; >1=combinada).
+
+    Evidencia (2026-09-20): los cupones combinados traen varios elementos en
+    'couponRows'/'outcomes'/'events' (y a veces 'bets'), pero el sync solo
+    persiste el primero de cada lista. Guardar el conteo permite al inspector
+    excluir combinadas de la verificación automática.
+    """
+    def _n(x):
+        return len(x) if isinstance(x, (list, tuple)) else 0
+    return max(1, _n(c.get('couponRows')), _n(c.get('outcomes')),
+               _n(c.get('events')), _n(c.get('bets')))
+
+
 def _parse_coupon(c):
     """Convierte un coupon del API a un dict plano para HistorialApuesta."""
     b = c.get('bets', [{}])[0] if c.get('bets') else {}
@@ -444,6 +458,7 @@ def _parse_coupon(c):
         'linea': linea,
         'sport': ev.get('sport', ''),
         'liga': liga,
+        'coupon_legs': _count_coupon_legs(c),
     }
 
 
