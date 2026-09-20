@@ -58,6 +58,15 @@ class Command(BaseCommand):
                 if sc > best_s:
                     best_s = sc; best = f
             if best is None or best_s < 1.4:
+                # Partido sin fixture en API (liga fuera de cobertura del plan).
+                # Pasadas 40h del start_time sin poder liquidar → VOID (stake devuelto).
+                if timezone.now() - bet.start_time > timedelta(hours=40):
+                    bet.estado = 'VOID'
+                    bet.resultado_real = 'sin cobertura API'
+                    bet.payout = bet.stake
+                    bet.settled_at = timezone.now()
+                    bet.save(update_fields=['estado', 'resultado_real', 'payout', 'settled_at'])
+                    n_ok += 1
                 continue
             status = best['fixture']['status']['short']
             if status not in ('FT', 'AET', 'PEN'):
@@ -89,8 +98,9 @@ class Command(BaseCommand):
                 sel = bet.seleccion
                 won = (sel in ('1', 'Home', 'OT_1') and r == '1') or (sel in ('X', 'Draw', 'OT_X') and r == 'X') or (sel in ('2', 'Away', 'OT_2') and r == '2')
                 resultado = f'{gh}-{ga} ({r})'
-            elif 'tiros a puerta' in mkt:
+            elif 'tiros a puerta' in mkt or mkt == 'Total de Tiros de Esquina':
                 fid = best['fixture']['id']
+                stat_key = 'Shots on Goal' if 'tiros a puerta' in mkt else 'Corner Kicks'
                 if fid not in sot_cache:
                     try:
                         sd = c.fixtures_statistics(fid)
@@ -102,7 +112,7 @@ class Command(BaseCommand):
                 if sd:
                     for t in sd.get('response', []):
                         st = {s_['type']: s_['value'] for s_ in (t.get('statistics') or [])}
-                        v = st.get('Shots on Goal')
+                        v = st.get(stat_key)
                         if v is None:
                             tot = None; break
                         tot = (tot or 0) + int(v)
@@ -110,7 +120,7 @@ class Command(BaseCommand):
                     n_open += 1
                     continue
                 won = tot > bet.linea if 'Más' in bet.seleccion else tot < bet.linea
-                resultado = f'SOT {tot}'
+                resultado = f'{stat_key} {tot}'
             if won is None:
                 continue
             bet.estado = 'WON' if won else 'LOST'
