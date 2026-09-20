@@ -90,7 +90,7 @@ def enviar_aviso_admin_grupo(inspections, admin_user):
     """
     first = inspections[0]
     bet0 = first.apuesta
-    n_afectados = len({i.apuesta.coupon_ref for i in inspections})
+    n_afectados = len(inspections)  # filas listadas (una por cupón/usuario afectado)
     if first.direccion == 'perdida_dudosa':
         titulo = 'Posible apuesta PERDIDA mal liquidada'
     else:
@@ -101,11 +101,11 @@ def enviar_aviso_admin_grupo(inspections, admin_user):
         b = insp.apuesta
         _odds = b.bet_odds if b.bet_odds else b.played_odds
         _odds_txt = f"cuota {_odds:g}" if _odds else "cuota s/d"
+        _stake_txt = f'{b.stake / 1000:,.0f}'.replace(',', '.')
+        _tipo = 'sistema' if b.is_system else 'manual'
         lineas.append(
             f"• {b.usuario.email} — cupón {b.coupon_ref} "
-            f"({'sistema' if b.is_system else 'manual'}, {_odds_txt}, "
-            f"stake {b.stake / 1000:,.0f} COP)"
-            .replace(',', '.')
+            f"({_tipo}, {_odds_txt}, stake {_stake_txt} COP)"
         )
     mkt_low = (bet0.mercado or '').lower()
     caveat = ''
@@ -115,7 +115,7 @@ def enviar_aviso_admin_grupo(inspections, admin_user):
 
     msg = (
         f'🚨 *Inspector Predicta — Revisión manual*\n\n'
-        f'{titulo} ({n_afectados} cupón{"es" if n_afectados > 1 else ""})\n'
+        f'{titulo} ({n_afectados} {"cupones" if n_afectados > 1 else "cupón"})\n'
         f'• Partido: {bet0.home_team} vs {bet0.away_team}\n'
         f'• Mercado: {bet0.mercado} — {bet0.seleccion}\n'
         f'• Estado BetPlay: {first.estado_kambi} → esperado: {first.estado_esperado}\n'
