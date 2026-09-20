@@ -6,7 +6,7 @@ from .models import InspeccionApuesta
 @admin.register(InspeccionApuesta)
 class InspeccionApuestaAdmin(admin.ModelAdmin):
     list_display = ('creado', 'veredicto', 'direccion', 'apuesta_resumen', 'estado_kambi',
-                    'estado_esperado', 'confianza', 'aviso_usuario', 'aviso_admin')
+                    'estado_esperado', 'confianza', 'aviso_usuario')
     list_filter = ('veredicto', 'direccion', 'confianza', 'aviso_usuario')
     search_fields = ('apuesta__home_team', 'apuesta__away_team', 'apuesta__usuario__email',
                      'apuesta__coupon_ref')

@@ -499,7 +499,7 @@ class CronSchedule(models.Model):
             ('sync_bet_history_pre', 10, 25, 0, True, 'Sync pre-apuestas (balance fresco para stake %)'),
             ('capture_closing_odds', 0, 0, 15, True, 'Snapshots para CLV (cada 15 min)'),
             ('check_betplay_tokens', 3, 0, 0, True, 'Verificación tickets BetPlay (03:00, 11:00, 18:00 UTC)'),
-            ('inspect_bets', 0, 0, 360, True, 'Inspector: verifica liquidaciones cada 6h (00/06/12/18 UTC)'),
+            ('inspect_bets', 0, 0, 360, True, 'Inspector: verifica liquidaciones (revisa 24h atrás) cada 6h (00/06/12/18 UTC)'),
         ]
         for nombre, hora, minuto, cada, enabled, desc in defaults:
             obj, created = cls.objects.get_or_create(

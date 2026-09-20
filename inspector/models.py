@@ -46,10 +46,8 @@ class InspeccionApuesta(models.Model):
     fuente = models.CharField(max_length=60, blank=True, default='API-Football', verbose_name='Fuente de datos')
 
     reintentos = models.PositiveIntegerField(default=0, verbose_name='Reintentos de verificación')
-    intentos_aviso = models.PositiveIntegerField(default=0, verbose_name='Intentos de aviso (usuario)')
-    intentos_aviso_admin = models.PositiveIntegerField(default=0, verbose_name='Intentos de aviso (admin)')
+    intentos_aviso = models.PositiveIntegerField(default=0, verbose_name='Intentos de aviso')
     aviso_usuario = models.BooleanField(default=False, verbose_name='Usuario avisado')
-    aviso_admin = models.BooleanField(default=False, verbose_name='Admin avisado')
 
     creado = models.DateTimeField(auto_now_add=True)
     actualizado = models.DateTimeField(auto_now=True)

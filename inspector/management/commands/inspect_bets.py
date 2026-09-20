@@ -2,9 +2,13 @@
 """
 Inspector de apuestas — management command.
 
-Verifica las apuestas liquidadas (LOST/WON) de los últimos `--days` días que
-aún no tienen inspección final, comparando el estado BetPlay/Kambi contra la
-base de datos local (API-Football).
+Verifica las apuestas liquidadas (LOST/WON), comparando el estado
+BetPlay/Kambi contra la base de datos local (API-Football):
+
+- Barrido: apuestas de los últimos `--days` días que aún no tienen inspección.
+- Re-verificación obligatoria: TODAS las apuestas liquidadas de las últimas
+  24 horas se revisan en cada corrida (aunque ya tengan inspección), para
+  capturar liquidaciones recién resueltas y correcciones de estados.
 
 Uso:
   manage.py inspect_bets                 # corrida normal (cron)
@@ -15,6 +19,9 @@ Uso:
 
 Diseñado para correr DESPUÉS de sync_bet_history (estados BetPlay) y de
 api_football_daily (stats), vía run_scheduler.
+
+Los avisos de WhatsApp van SOLO al usuario afectado (decisión John,
+2026-09-20); el admin supervisa desde el panel /inspector/.
 """
 
 from collections import Counter
@@ -40,7 +47,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--days', type=int, default=14,
-                            help='Ventana de días a inspeccionar (default 14)')
+                            help='Ventana de días para el BARRIDO de apuestas sin inspección (default 14; las últimas 24h se re-verifican siempre)')
         parser.add_argument('--email', type=str, default=None,
                             help='Solo inspeccionar apuestas de este usuario')
         parser.add_argument('--dry-run', action='store_true',
@@ -59,6 +66,7 @@ class Command(BaseCommand):
 
         now = timezone.now()
         desde = now - timedelta(days=days)
+        desde_24h = now - timedelta(hours=24)
 
         qs = (HistorialApuesta.objects
               .filter(bet_status__in=['LOST', 'WON'],
@@ -73,10 +81,17 @@ class Command(BaseCommand):
                     InspeccionApuesta.objects.filter(apuesta__in=qs.values('id'))}
 
         to_check = []
+        n_24h = 0
         for bet in qs:
             insp = existing.get(bet.id)
             if insp is None or force:
                 to_check.append(bet)
+                continue
+            # Re-verificación obligatoria: últimas 24h SIEMPRE (captura
+            # liquidaciones recién resueltas y correcciones de estado).
+            if bet.event_start_date >= desde_24h:
+                to_check.append(bet)
+                n_24h += 1
                 continue
             # Re-verificar siempre que BetPlay haya cambiado el estado
             # (p. ej. corrección manual de la liquidación tras un reclamo).
@@ -98,7 +113,8 @@ class Command(BaseCommand):
                 to_check.append(bet)
 
         self.stdout.write(f'Inspector: {len(to_check)} apuestas a verificar '
-                          f'(ventana {days}d, {"dry-run" if dry else "normal"}).')
+                          f'(ventana {days}d + últimas 24h [{n_24h}], '
+                          f'{"dry-run" if dry else "normal"}).')
 
         client = None
         tried_ids = set()
@@ -144,11 +160,11 @@ class Command(BaseCommand):
             insp.save()
             if result['veredicto'] == 'REVISAR':
                 mismatches += 1
-                # Si la inspección cambió a REVISAR, resetear avisos para re-notificar
+                # Si la inspección cambió a REVISAR, resetear aviso para re-notificar
+                # (el aviso va SOLO al usuario afectado; el admin solo ve el panel).
                 if prev_veredicto and prev_veredicto != 'REVISAR' and not is_new:
                     insp.aviso_usuario = False
-                    insp.aviso_admin = False
-                    insp.save(update_fields=['aviso_usuario', 'aviso_admin'])
+                    insp.save(update_fields=['aviso_usuario'])
 
         self.stdout.write(f'Resultado: {dict(verdicts)} | nuevas: {created} | '
                           f'discrepancias: {mismatches}')
@@ -180,10 +196,8 @@ class Command(BaseCommand):
         descartan (NO_VERIFICABLE); los no clasificables (ticket vencido)
         quedan pendientes para la próxima corrida.
         """
-        from cuentas.models import Usuario
         from inspector.coupon_check import CouponStructureChecker
-        from inspector.notifications import (enviar_aviso_admin_grupo,
-                                             enviar_aviso_usuario)
+        from inspector.notifications import enviar_aviso_usuario
 
         pending = list(InspeccionApuesta.objects
                        .filter(veredicto=InspeccionApuesta.VEREDICTO_REVISAR)
@@ -215,10 +229,9 @@ class Command(BaseCommand):
             notifiable.append(insp)
         pending = notifiable
 
-        admin_user = (Usuario.objects.filter(is_superuser=True, is_active=True)
-                      .order_by('id').first())
-
         # ── Avisos a usuarios (uno por apuesta, solo pérdidas claras) ──
+        # Decisión John (2026-09-20): los avisos van SOLO al WhatsApp del
+        # usuario afectado; el admin revisa el panel /inspector/.
         n_user = 0
         for insp in pending:
             if (insp.direccion == InspeccionApuesta.DIR_PERDIDA
@@ -231,25 +244,4 @@ class Command(BaseCommand):
                     n_user += 1
                 insp.save(update_fields=['aviso_usuario', 'intentos_aviso', 'actualizado'])
 
-        # ── Avisos al admin (agrupados por fixture + dirección) ──
-        n_admin = n_grupos = 0
-        if admin_user is not None:
-            grupos = {}
-            for insp in pending:
-                if insp.aviso_admin or insp.intentos_aviso_admin >= 3:
-                    continue
-                key = (insp.fixture_api_id, insp.direccion)
-                grupos.setdefault(key, []).append(insp)
-            for key, rows in grupos.items():
-                ok = enviar_aviso_admin_grupo(rows, admin_user)
-                n_grupos += 1
-                for insp in rows:
-                    insp.intentos_aviso_admin += 1
-                    if ok:
-                        insp.aviso_admin = True
-                        n_admin += 1
-                    insp.save(update_fields=['aviso_admin', 'intentos_aviso_admin',
-                                             'actualizado'])
-
-        self.stdout.write(f'Avisos: {n_user} a usuarios | {n_admin} cupones al admin '
-                          f'en {n_grupos} mensaje(s)')
+        self.stdout.write(f'Avisos: {n_user} a usuarios (el admin solo ve el panel web)')

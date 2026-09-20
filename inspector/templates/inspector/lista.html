@@ -37,7 +37,8 @@
   <div class="insp-header">
     <h2>🔎 Inspector de apuestas</h2>
     <p>Verificación automática de liquidaciones (BetPlay/Kambi vs datos API-Football).
-       Las discrepancias generan aviso al usuario y solicitud de revisión manual.</p>
+       Las discrepancias en pérdidas generan un aviso por WhatsApp al usuario
+       afectado; este panel es la vista de control del admin.</p>
   </div>
 
   <div class="insp-cards">
@@ -75,7 +76,7 @@
         <td>{{ i.apuesta.mercado|truncatechars:40 }}<br>{{ i.apuesta.seleccion }}</td>
         <td>{{ i.estado_kambi }}{% if i.estado_esperado %} → {{ i.estado_esperado }}{% endif %}</td>
         <td>{{ i.detalle|truncatechars:90 }}</td>
-        <td>{% if i.aviso_usuario %}👤{% endif %}{% if i.aviso_admin %} 🛡️{% endif %}</td>
+        <td>{% if i.aviso_usuario %}👤{% endif %}</td>
       </tr>
       {% empty %}
       <tr><td colspan="7" style="color:var(--text-secondary)">Sin inspecciones todavía.</td></tr>
