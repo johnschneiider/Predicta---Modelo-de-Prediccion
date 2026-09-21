@@ -1,0 +1,16 @@
+COMBINADA — HOY 13-sep — base(110) + ampliación(7)
+
+=== Base (DB-stored, ground truth API 20:10 UTC) ===
+v2.3: n=110 MAE=4.60 RMSE=5.85 bias=-0.40 ±3:41% ±5:64%
+VIEJO: n=110 MAE=5.69 RMSE=7.04 bias=-1.09
+en común n=110: mejora=19.0% | v2.3 gana 72/110 (65%)
+
+=== Ampliación (BD NO los tenía; ground truth 21:10 UTC) ===
+v2.3: n=7 MAE=4.21 RMSE=5.20 bias=+1.42 ±3:57% ±5:57%
+VIEJO: n=7 MAE=5.29 RMSE=6.74 bias=+0.28
+en común n=7: mejora=20.5% | v2.3 gana 5/7 (71%)
+
+=== UNIÓN (todos los partidos de hoy testeados) ===
+v2.3: n=117 MAE=4.58 RMSE=5.81 bias=-0.29 ±3:42% ±5:63%
+VIEJO: n=117 MAE=5.66 RMSE=7.03 bias=-1.01
+en común n=117: mejora=19.1% | v2.3 gana 77/117 (66%)

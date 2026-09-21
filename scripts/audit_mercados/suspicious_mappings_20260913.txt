@@ -1,0 +1,158 @@
+WON st=31000 net=+45880 Ambos Equipos Marcarán | 9 De Octubre FC vs Independiente Juniors || 9 de Octubre vs Ind. Juniors
+WON st=31000 net=+29760 Total de Tiros de Esquina | York City vs Swindon Town || Salford City vs Swindon Town
+WON st=31000 net=+25730 Total de Tiros de Esquina | IFK Mariehamn vs TPS || Mariehamn vs VPS
+LOST st=31000 net=-31000 Total de Tiros de Esquina | Vicenza vs Juve Stabia || Venezia vs Juve Stabia
+LOST st=26000 net=-26000 Ambos Equipos Marcarán | Independiente Santa Fe vs Deportes Tolima || Independiente Medellin vs Deportes Tolima
+LOST st=14000 net=-14000 Ambos Equipos Marcarán | Independiente Santa Fe vs Deportes Tolima || Independiente Medellin vs Deportes Tolima
+WON st=13000 net=+19240 Ambos Equipos Marcarán | 9 De Octubre FC vs Independiente Juniors || 9 de Octubre vs Ind. Juniors
+WON st=13000 net=+12480 Total de Tiros de Esquina | York City vs Swindon Town || Salford City vs Swindon Town
+WON st=13000 net=+10790 Total de Tiros de Esquina | IFK Mariehamn vs TPS || Mariehamn vs VPS
+LOST st=13000 net=-13000 Total de Tiros de Esquina | Vicenza vs Juve Stabia || Venezia vs Juve Stabia
+LOST st=12000 net=-12000 Total de Tiros de Esquina | TPS vs SJK Seinäjoki || VPS vs SJK
+WON st=11200 net=+10864 Ambos Equipos Marcarán | Independiente Santa Fe vs Millonarios FC || Independiente Medellin vs Millonarios
+WON st=11200 net=+15456 Total de goles | Independiente Santa Fe vs Millonarios FC || Independiente Medellin vs Millonarios
+LOST st=11200 net=-11200 Total de goles | New York Cosmos vs Sarasota Paradise || NY Cosmos vs Sarasota Paradise
+WON st=11200 net=+14336 Total de goles | Marquense vs Xelaju MC || Marquense vs Xelajú
+WON st=11200 net=+6944 Total de Tiros de Esquina | Queens Park Rangers vs Cardiff City || QPR vs Cardiff
+WON st=11200 net=+8064 Total de tiros a puerta (Res | Queens Park Rangers vs Cardiff City || QPR vs Cardiff
+WON st=11200 net=+7168 Total de goles | Queens Park Rangers vs Cardiff City || QPR vs Cardiff
+LOST st=11200 net=-11200 Total de Tiros de Esquina | Thun vs Lausanne-Sport || FC Thun vs Lausanne
+WON st=11000 net=+13750 Ambos Equipos Marcarán | Al-Mokawloon Al-Arab vs Al Ahly Cairo || El Mokawloon vs Al Ahly
+WON st=11000 net=+7700 Total de goles | Náutico-PE vs Botafogo-SP || Nautico Recife vs Botafogo SP
+WON st=11000 net=+8470 Total de goles | Inter de Palmira vs Real Soacha Cundinamarca || Internacional Palmira vs Real Cundinamarca
+LOST st=11000 net=-11000 Total de goles | Lech Poznań vs Jagiellonia Białystok || Lech Poznan vs Jagiellonia
+WON st=11000 net=+12870 Total de goles | Al Feiha vs Al-Kholood || Al-Fateh vs Al Kholood
+LOST st=11000 net=-11000 Total de tiros a puerta (Res | Al Feiha vs Al-Kholood || Al-Fateh vs Al Kholood
+LOST st=11000 net=-11000 Total de goles | Atlético Mineiro-MG vs Cruzeiro-MG || Atletico-MG vs Cruzeiro
+LOST st=11000 net=-11000 Total de Tiros de Esquina | Atlético Mineiro-MG vs Cruzeiro-MG || Atletico-MG vs Cruzeiro
+LOST st=11000 net=-11000 Total de tiros a puerta (Res | Atlético Mineiro-MG vs Cruzeiro-MG || Atletico-MG vs Cruzeiro
+WON st=11000 net=+10560 Total de goles | Accrington Stanley vs Grimsby Town || Accrington ST vs Grimsby
+WON st=11000 net=+8800 Total de Tiros de Esquina | Accrington Stanley vs Grimsby Town || Accrington ST vs Grimsby
+WON st=11000 net=+19250 Total de Tiros de Esquina | Cheltenham vs York City || Cheltenham vs Salford City
+WON st=11000 net=+10010 Total de Tiros de Esquina | Ghazl El-Mehalla vs ENPPI Club || Ghazl El Mehalla vs Enppi
+LOST st=11000 net=-11000 Total de goles | Ghazl El-Mehalla vs ENPPI Club || Ghazl El Mehalla vs Enppi
+LOST st=11000 net=-11000 Ambos Equipos Marcarán | Estudiantes de La Plata vs Newell's Old Boys || Estudiantes L.P. vs Newells Old Boys
+WON st=11000 net=+9460 Total de tiros a puerta (Res | Independiente vs Gimnasia y Esgrima de Mendoza || Independiente vs Gimnasia M.
+LOST st=11000 net=-11000 Ambos Equipos Marcarán | Independiente vs Gimnasia y Esgrima de Mendoza || Independiente vs Gimnasia M.
+LOST st=11000 net=-11000 Total de tiros a puerta (Res | Grêmio-RS vs Chapecoense-SC || Gremio vs Chapecoense-sc
+LOST st=11000 net=-11000 Total de tiros a puerta (Res | América-MG vs Ponte Preta-SP || America Mineiro vs Ponte Preta
+LOST st=11000 net=-11000 Ambos Equipos Marcarán | Avaí-SC vs Atlético-GO || Avai vs Atletico Goianiense
+LOST st=11000 net=-11000 Total de tiros a puerta (Res | Avaí-SC vs Atlético-GO || Avai vs Atletico Goianiense
+WON st=11000 net=+9900 Ambos Equipos Marcarán | Nápoles vs Como || Napoli vs Como
+WON st=11000 net=+14080 Total de goles | Nápoles vs Como || Napoli vs Como
+LOST st=11000 net=-11000 Total de tiros a puerta (Res | Nápoles vs Como || Napoli vs Como
+LOST st=11000 net=-11000 Total de tiros a puerta (Res | Talleres vs Central Córdoba || Talleres Cordoba vs Central Cordoba de Santiago
+LOST st=11000 net=-11000 Ambos Equipos Marcarán | Club Atlético Tucumán vs Belgrano || Atletico Tucuman vs Belgrano Cordoba
+LOST st=11000 net=-11000 Total de tiros a puerta (Res | Club Atlas vs Querétaro FC || Atlas vs Club Queretaro
+WON st=11000 net=+12320 Ambos Equipos Marcarán | Botafogo-SP vs Cuiabá-MT || Botafogo SP vs Cuiaba
+WON st=11000 net=+12320 Total de goles | Atlético Mineiro-MG vs Vitória-BA || Atletico-MG vs Vitoria
+WON st=11000 net=+11880 Ambos Equipos Marcarán | Rosario Central vs Gimnasia de La Plata || Rosario Central vs Gimnasia L.P.
+WON st=11000 net=+13200 Total de goles | Avellino vs Vicenza || Avellino vs Cosenza
+LOST st=11000 net=-11000 Total de tiros a puerta (Res | Blackburn Rovers vs Queens Park Rangers || Blackburn vs QPR
+WON st=11000 net=+10670 Ambos Equipos Marcarán | Unión de Santa Fe vs Sarmiento || Union Santa Fe vs Sarmiento Junin
+LOST st=11000 net=-11000 Total de tiros a puerta (Res | Unión de Santa Fe vs Sarmiento || Union Santa Fe vs Sarmiento Junin
+LOST st=11000 net=-11000 Total de tiros a puerta (Res | Al Nassr vs Al Taawon Buraidah || Al-Nassr vs Al Taawon
+WON st=10000 net=+8000 Total de Tiros de Esquina | Ferencváros vs Újpest FC || Ferencvarosi TC vs Ujpest
+WON st=9600 net=+9600 Ambos Equipos Marcarán | Inter vs Nápoles || Inter vs Napoli
+WON st=9600 net=+7680 Total de goles | Sheffield United vs Norwich City || Sheffield Utd vs Norwich
+WON st=9600 net=+7008 Ambos Equipos Marcarán | Nantong Zhiyun vs Guangdong GZ-Power F.C. || Nantong Zhiyun vs Guangzhou E-Power
+LOST st=9600 net=-9600 Total de goles | Nantong Zhiyun vs Guangdong GZ-Power F.C. || Nantong Zhiyun vs Guangzhou E-Power
+LOST st=9600 net=-9600 Ambos Equipos Marcarán | Motorlet Praha vs SK Aritma Prague || Motorlet Praha vs Aritma Praha
+WON st=2600 net=+3848 Ambos Equipos Marcarán | 9 De Octubre FC vs Independiente Juniors || 9 de Octubre vs Ind. Juniors
+WON st=2600 net=+2496 Total de Tiros de Esquina | York City vs Swindon Town || Salford City vs Swindon Town
+LOST st=2600 net=-2600 Total de Tiros de Esquina | Vicenza vs Juve Stabia || Venezia vs Juve Stabia
+LOST st=2300 net=-2300 Total de Tiros de Esquina | TPS vs SJK Seinäjoki || VPS vs SJK
+LOST st=2200 net=-2200 Ambos Equipos Marcarán | Independiente Santa Fe vs Deportes Tolima || Independiente Medellin vs Deportes Tolima
+WON st=2200 net=+2750 Ambos Equipos Marcarán | Al-Mokawloon Al-Arab vs Al Ahly Cairo || El Mokawloon vs Al Ahly
+WON st=2100 net=+3108 Ambos Equipos Marcarán | 9 De Octubre FC vs Independiente Juniors || 9 de Octubre vs Ind. Juniors
+WON st=2100 net=+2016 Total de Tiros de Esquina | York City vs Swindon Town || Salford City vs Swindon Town
+WON st=2100 net=+1743 Total de Tiros de Esquina | IFK Mariehamn vs TPS || Mariehamn vs VPS
+LOST st=2100 net=-2100 Total de Tiros de Esquina | Vicenza vs Juve Stabia || Venezia vs Juve Stabia
+WON st=2000 net=+1700 Total de Tiros de Esquina | Independiente Santa Fe vs Fortaleza FC || Independiente Medellin vs Fortaleza FC
+WON st=2000 net=+2000 Ambos Equipos Marcarán | Gimnasia y Esgrima de Mendoza vs Boca Juniors || Gimnasia M. vs Boca Juniors
+WON st=2000 net=+2100 Total de goles | Paksi SE vs DVSC Debreceni || Paks vs Debreceni VSC
+WON st=2000 net=+2000 Ambos Equipos Marcarán | Inter vs Nápoles || Inter vs Napoli
+WON st=2000 net=+1600 Total de goles | Sheffield United vs Norwich City || Sheffield Utd vs Norwich
+WON st=2000 net=+1460 Ambos Equipos Marcarán | Nantong Zhiyun vs Guangdong GZ-Power F.C. || Nantong Zhiyun vs Guangzhou E-Power
+LOST st=2000 net=-2000 Total de goles | Nantong Zhiyun vs Guangdong GZ-Power F.C. || Nantong Zhiyun vs Guangzhou E-Power
+LOST st=2000 net=-2000 Ambos Equipos Marcarán | Motorlet Praha vs SK Aritma Prague || Motorlet Praha vs Aritma Praha
+WON st=1900 net=+1520 Total de Tiros de Esquina | Ferencváros vs Újpest FC || Ferencvarosi TC vs Ujpest
+WON st=1000 net=+1380 Total de goles | Independiente Santa Fe vs Millonarios FC || Independiente Medellin vs Millonarios
+LOST st=1000 net=-1000 Total de goles | New York Cosmos vs Sarasota Paradise || NY Cosmos vs Sarasota Paradise
+WON st=1000 net=+1280 Total de goles | Marquense vs Xelaju MC || Marquense vs Xelajú
+LOST st=800 net=-800 Ambos Equipos Marcarán | Independiente Santa Fe vs Deportes Tolima || Independiente Medellin vs Deportes Tolima
+WON st=800 net=+1000 Ambos Equipos Marcarán | Al-Mokawloon Al-Arab vs Al Ahly Cairo || El Mokawloon vs Al Ahly
+LOST st=800 net=-800 Total de goles | Atlético Mineiro-MG vs Cruzeiro-MG || Atletico-MG vs Cruzeiro
+LOST st=800 net=-800 Total de Tiros de Esquina | Atlético Mineiro-MG vs Cruzeiro-MG || Atletico-MG vs Cruzeiro
+LOST st=800 net=-800 Total de tiros a puerta (Res | Atlético Mineiro-MG vs Cruzeiro-MG || Atletico-MG vs Cruzeiro
+WON st=800 net=+1400 Total de Tiros de Esquina | Cheltenham vs York City || Cheltenham vs Salford City
+LOST st=800 net=-800 Total de goles | Ghazl El-Mehalla vs ENPPI Club || Ghazl El Mehalla vs Enppi
+LOST st=800 net=-800 Ambos Equipos Marcarán | Estudiantes de La Plata vs Newell's Old Boys || Estudiantes L.P. vs Newells Old Boys
+WON st=500 net=+500 Ambos Equipos Marcarán | Gimnasia y Esgrima de Mendoza vs Boca Juniors || Gimnasia M. vs Boca Juniors
+WON st=500 net=+525 Total de goles | Paksi SE vs DVSC Debreceni || Paks vs Debreceni VSC
+WON st=500 net=+500 Ambos Equipos Marcarán | Inter vs Nápoles || Inter vs Napoli
+LOST st=500 net=-500 Total de goles | Nantong Zhiyun vs Guangdong GZ-Power F.C. || Nantong Zhiyun vs Guangzhou E-Power
+LOST st=500 net=-500 Total de goles | Lech Poznań vs Jagiellonia Białystok || Lech Poznan vs Jagiellonia
+WON st=500 net=+585 Total de goles | Al Feiha vs Al-Kholood || Al-Fateh vs Al Kholood
+LOST st=500 net=-500 Total de tiros a puerta (Res | Al Feiha vs Al-Kholood || Al-Fateh vs Al Kholood
+LOST st=500 net=-500 Ambos Equipos Marcarán | Independiente vs Gimnasia y Esgrima de Mendoza || Independiente vs Gimnasia M.
+LOST st=500 net=-500 Total de tiros a puerta (Res | Grêmio-RS vs Chapecoense-SC || Gremio vs Chapecoense-sc
+LOST st=500 net=-500 Total de tiros a puerta (Res | América-MG vs Ponte Preta-SP || America Mineiro vs Ponte Preta
+LOST st=500 net=-500 Total de tiros a puerta (Res | Avaí-SC vs Atlético-GO || Avai vs Atletico Goianiense
+WON st=500 net=+640 Total de goles | Nápoles vs Como || Napoli vs Como
+LOST st=500 net=-500 Total de tiros a puerta (Res | Nápoles vs Como || Napoli vs Como
+LOST st=500 net=-500 Ambos Equipos Marcarán | Club Atlético Tucumán vs Belgrano || Atletico Tucuman vs Belgrano Cordoba
+WON st=500 net=+560 Total de goles | Atlético Mineiro-MG vs Vitória-BA || Atletico-MG vs Vitoria
+WON st=500 net=+600 Total de goles | Avellino vs Vicenza || Avellino vs Cosenza
+LOST st=500 net=-500 Total de tiros a puerta (Res | Club Atlas vs Querétaro FC || Atlas vs Club Queretaro
+WON st=500 net=+560 Ambos Equipos Marcarán | Botafogo-SP vs Cuiabá-MT || Botafogo SP vs Cuiaba
+WON st=500 net=+550 Ambos Equipos Marcarán | Rosario Central vs Gimnasia de La Plata || Rosario Central vs Gimnasia L.P.
+LOST st=500 net=-500 Total de tiros a puerta (Res | Blackburn Rovers vs Queens Park Rangers || Blackburn vs QPR
+LOST st=500 net=-500 Total de tiros a puerta (Res | Unión de Santa Fe vs Sarmiento || Union Santa Fe vs Sarmiento Junin
+LOST st=500 net=-500 Total de tiros a puerta (Res | Al Nassr vs Al Taawon Buraidah || Al-Nassr vs Al Taawon
+WON st=500 net=+570 Ambos Equipos Marcarán | Al-Mokawloon Al-Arab vs Al-Masry Club || El Mokawloon vs AL Masry
+LOST st=500 net=-500 Total de tiros a puerta (Res | Cruzeiro-MG vs Atlético Mineiro-MG || Cruzeiro vs Atletico-MG
+LOST st=500 net=-500 Total de Tiros de Esquina | Cruzeiro-MG vs Atlético Mineiro-MG || Cruzeiro vs Atletico-MG
+WON st=500 net=+700 Total de goles | River Plate vs Club Atlético Vélez Sarsfield || River Plate vs Velez Sarsfield
+LOST st=500 net=-500 Total de tiros a puerta (Res | River Plate vs Club Atlético Vélez Sarsfield || River Plate vs Velez Sarsfield
+LOST st=500 net=-500 Total de goles | Operário-PR vs Vila Nova-GO || Operario-PR vs Vila Nova FC
+LOST st=500 net=-500 Total de goles | Vikingur Reykjavík vs Valur Reykjavík || Vikingur Reykjavik vs KR Reykjavik
+WON st=500 net=+640 Total de tiros a puerta (Res | Ponte Preta-SP vs Avaí-SC || Ponte Preta vs Avai
+LOST st=500 net=-500 Total de Tiros de Esquina | Universidad de Chile vs Colo Colo || U. De Chile vs Colo Colo
+WON st=500 net=+570 Total de tiros a puerta (Res | RB Bragantino-SP vs Grêmio-RS || Bragantino vs Gremio
+LOST st=500 net=-500 Ambos Equipos Marcarán | Crvena Zvezda vs FK Čukarički || Crvena zvezda vs Cukaricki
+LOST st=500 net=-500 Total de goles | Crvena Zvezda vs FK Čukarički || Crvena zvezda vs Cukaricki
+LOST st=500 net=-500 Total de goles | Sporting de Gijón vs Burgos || Sp Gijon vs Burgos
+LOST st=500 net=-500 Total de goles | Concepción vs Coquimbo Unido || D. Concepcion vs Coquimbo
+WON st=500 net=+590 Total de goles | Huracán vs Deportivo Riestra || Huracan vs Dep. Riestra
+WON st=500 net=+775 Total de goles | Huachipato vs Deportes Limache || Huachipato vs Deportes Iquique
+LOST st=500 net=-500 Total de goles | Internacional P. A. vs Atlético Mineiro-MG || Internacional vs Atletico-MG
+LOST st=500 net=-500 Total de Tiros de Esquina | Internacional P. A. vs Atlético Mineiro-MG || Internacional vs Atletico-MG
+WON st=500 net=+575 Total de Tiros de Esquina | Club Atlético Tucumán vs Instituto || Atl. Tucuman vs Instituto
+LOST st=500 net=-500 Ambos Equipos Marcarán | Genoa vs Nápoles || Genoa vs Napoli
+WON st=500 net=+775 Total de Tiros de Esquina | Genoa vs Nápoles || Genoa vs Napoli
+WON st=500 net=+500 Total de goles | Olympiakos Piraeus vs Atromitos Athens || Olympiacos Piraeus vs Atromitos
+WON st=500 net=+815 Total de goles | Saint-Étienne vs Grenoble || St Etienne vs Grenoble
+LOST st=500 net=-500 Total de goles | Querétaro FC vs Deportivo Toluca FC || Queretaro vs Toluca
+LOST st=500 net=-500 Ambos Equipos Marcarán | Querétaro FC vs Deportivo Toluca FC || Queretaro vs Toluca
+WON st=500 net=+1350 Total de goles | Vicenza vs Catanzaro || Venezia vs Catanzaro
+LOST st=500 net=-500 Total de goles | Paksi SE vs Újpest FC || Paks vs Ujpest
+WON st=500 net=+615 Total de goles | Atletico Rojiblanco vs Cumbaya FC || Atletico Vinotinto vs Cumbaya
+LOST st=500 net=-500 Ambos Equipos Marcarán | Athletic Club-MG vs CRB-AL || Athletic Club vs CRB
+WON st=500 net=+1100 Total de tiros a puerta (Res | Minnesota United FC vs Atlanta United FC || Minnesota United vs Atlanta Utd
+WON st=500 net=+2375 Total de goles | Vila Nova-GO vs Ponte Preta-SP || Vila Nova FC vs Ponte Preta
+WON st=500 net=+600 Resultado Final | Cuiabá-MT vs Operário-PR || Cuiaba vs Operario-PR
+LOST st=500 net=-500 Total de tiros a puerta (Res | Fortaleza-CE vs FC São Bernardo-SP || Fortaleza vs Sao Bernardo
+LOST st=500 net=-500 Total de goles | Chacarita vs Club Atletico Guemes || Chacarita Juniors vs Club A. Guemes
+WON st=500 net=+675 Total de tiros a puerta (Res | Goiás-GO vs Juventude-RS || Goias vs Juventude
+WON st=500 net=+580 Resultado Final | Náutico-PE vs Ceará-CE || Nautico vs Ceara
+LOST st=500 net=-500 Total de Tiros de Esquina | Club Necaxa vs Club León || Necaxa vs Club Leon
+LOST st=500 net=-500 Total de tiros a puerta (Res | Club Atlético Vélez Sarsfield vs Defensa y Justicia || Velez Sarsfield vs Defensa y Justicia
+WON st=500 net=+875 Total de goles | Valur Reykjavík vs KA Akureyri || KR Reykjavik vs KA Akureyri
+WON st=500 net=+675 Total de tiros a puerta (Res | Estudiantes de Río Cuarto vs Club Atlético Tucumán || Estudiantes Rio Cuarto vs Atl. Tucuman
+LOST st=500 net=-500 Total de Tiros de Esquina | BK Häcken vs Halmstads BK || Hacken vs Halmstad
+LOST st=500 net=-500 Resultado Final | Brøndby IF vs SønderjyskE || Brondby vs Sonderjyske
+LOST st=500 net=-500 Total de tiros a puerta (Res | Club Atlético Vélez Sarsfield vs Defensa y Justicia || Velez Sarsfield vs Defensa y Justicia
+WON st=500 net=+675 Total de tiros a puerta (Res | Estudiantes de Río Cuarto vs Club Atlético Tucumán || Estudiantes Rio Cuarto vs Atl. Tucuman
+
+UNIQUE events: 80

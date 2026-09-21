@@ -1,0 +1,36 @@
+MOTOR REMATES TOTALES v2 — EVAL OUT-OF-SAMPLE (partidos de HOY) 2026-09-13T20:20:19.073587+00:00
+====================================================================================================
+
+### EVALUACIÓN OUT-OF-SAMPLE (HOY = 110 partidos)
+GBM v2:  MAE=4.82  RMSE=6.13  bias=-1.53
+baseline mu-global: MAE=5.53
+baseline liga-media (n=110): MAE=4.87
+A/D simple: MAE=5.17
+blend: alpha GBM=1.0 → MAE=4.82
+
+Detalle por partido (ordenado por |error|):
+  Liga MX              Cruz Azul          vs Club America       | pred= 26.5 real= 44.0 err=-17.5
+  Major League Soccer  Sporting Kansas Ci vs Los Angeles FC     | pred= 25.0 real= 42.0 err=-17.0
+  K League 1           Gimcheon Sangmu FC vs Gangwon FC         | pred= 20.6 real=  4.0 err=+16.6
+  2. Bundesliga        Karlsruher SC      vs Energie Cottbus    | pred= 30.1 real= 45.0 err=-14.9
+  Süper Lig            Galatasaray        vs Kocaelispor        | pred= 27.6 real= 41.0 err=-13.4
+  Serie A              Santos             vs Cruzeiro           | pred= 27.2 real= 40.0 err=-12.8
+  Liga I               Arges Pitesti      vs FC Botosani        | pred= 25.4 real= 13.0 err=+12.4
+  Eliteserien          Viking             vs Kristiansund BK    | pred= 28.3 real= 40.0 err=-11.7
+  Bundesliga           Sturm Graz         vs Lask Linz          | pred= 27.9 real= 39.0 err=-11.1
+  Super League 1       Asteras Tripolis   vs AEK Athens FC      | pred= 23.2 real= 34.0 err=-10.8
+  Premier League       Coventry           vs Brighton           | pred= 26.3 real= 36.0 err= -9.7
+  First League         Botev Plovdiv      vs Lokomotiv Plovdiv  | pred= 22.5 real= 13.0 err= +9.5
+  Superliga            Lyngby             vs Sonderjyske        | pred= 27.7 real= 37.0 err= -9.3
+  Super Liga           IMT Novi Beograd   vs FK Crvena Zvezda   | pred= 24.8 real= 16.0 err= +8.8
+  Eliteserien          Start              vs Brann              | pred= 27.3 real= 36.0 err= -8.7
+  Pro League           NEOM               vs Al-Fateh           | pred= 25.7 real= 34.0 err= -8.3
+  Jupiler Pro League   Club Brugge KV     vs Antwerp            | pred= 31.8 real= 40.0 err= -8.2
+  Super League 1       Kifisia            vs Levadiakos         | pred= 23.2 real= 15.0 err= +8.2
+  2. Bundesliga        VfL Osnabrück      vs Hertha BSC         | pred= 27.9 real= 36.0 err= -8.1
+  Major League Soccer  Los Angeles Galaxy vs Seattle Sounders   | pred= 26.9 real= 35.0 err= -8.1
+  Eredivisie           PSV Eindhoven      vs Sparta Rotterdam   | pred= 30.0 real= 38.0 err= -8.0
+  First League         Botev Vratsa       vs Levski Sofia       | pred= 20.7 real= 13.0 err= +7.7
+  Super League         FC Luzern          vs FC Basel 1893      | pred= 28.8 real= 36.0 err= -7.2
+  Ekstraklasa          Pogon Szczecin     vs Wieczysta Kraków   | pred= 27.9 real= 35.0 err= -7.1
+  Challenger Pro Leagu Liège              vs Club Brugge II     | pred= 25.4 real= 32.0 err= -6.6

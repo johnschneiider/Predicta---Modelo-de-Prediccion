@@ -1,0 +1,155 @@
+====================================================================================================
+WALK-FORWARD GOLES O/U — EVALUACIÓN
+Partidos: 62864 | 2005-07-29 → 2018-06-02
+====================================================================================================
+
+── A) SESGO real - λ (total goles) ──
+  Sesgo global: -0.527 goles | λ medio 3.102 vs real 2.575
+
+  Por temporada:
+    2005: n= 5034 λ=3.135 real=2.455 bias=-0.679
+    2006: n= 4345 λ=3.068 real=2.523 bias=-0.545
+    2007: n= 5035 λ=3.069 real=2.535 bias=-0.534
+    2008: n= 4714 λ=3.100 real=2.522 bias=-0.579
+    2009: n= 4890 λ=3.063 real=2.550 bias=-0.513
+    2010: n= 4512 λ=3.122 real=2.605 bias=-0.517
+    2011: n= 4972 λ=3.093 real=2.654 bias=-0.439
+    2012: n= 4961 λ=3.170 real=2.650 bias=-0.520
+    2013: n= 4974 λ=3.161 real=2.568 bias=-0.592
+    2014: n= 5040 λ=3.052 real=2.567 bias=-0.485
+    2015: n= 5039 λ=3.067 real=2.602 bias=-0.465
+    2016: n= 5040 λ=3.099 real=2.571 bias=-0.527
+    2017: n= 4308 λ=3.125 real=2.681 bias=-0.444
+
+  Por liga:
+    B1: n= 3354 λ=3.406 real=2.749 bias=-0.658
+    D2: n= 3362 λ=3.180 real=2.652 bias=-0.528
+    E2: n= 7175 λ=3.040 real=2.600 bias=-0.440
+    E3: n= 6623 λ=3.016 real=2.557 bias=-0.459
+    F1: n= 4560 λ=2.961 real=2.441 bias=-0.520
+    F2: n= 4930 λ=2.928 real=2.365 bias=-0.563
+    G1: n=  240 λ=3.349 real=2.329 bias=-1.019
+    I1: n= 4938 λ=3.180 real=2.636 bias=-0.544
+    I2: n= 5978 λ=2.956 real=2.403 bias=-0.552
+    N1: n= 3978 λ=3.759 real=3.059 bias=-0.700
+    P1: n= 3444 λ=2.953 real=2.475 bias=-0.478
+    SC0: n= 2959 λ=3.112 real=2.642 bias=-0.470
+    SC1: n= 2159 λ=3.043 real=2.707 bias=-0.335
+    SP2: n= 5531 λ=2.972 real=2.405 bias=-0.568
+    T1: n= 3633 λ=3.200 real=2.687 bias=-0.513
+
+── B) Corrección walk-forward (expanding por liga) ──
+  Cobertura corrección: 99.5% de 62864 partidos
+  Ratio liga: media 0.8179 | rango [0.635, 0.950]
+  Tras corrección: λ_corr medio 2.532 vs real 2.576 (sesgo +0.044)
+  p_over_c medio: 45.72% | fair_o medio: 47.87%
+
+── C) ESTRATEGIAS (cuota BbAv, la conservadora) ──
+  Reglas: edge = p_corr - fair ≥ umbral; EV = p_corr * cuota - 1 ≥ umbral
+
+  -- Baselines --
+  Over siempre                                 n=15718 WR= 48.3% ROI= -5.68% (z=-7.2) odds~1.98 edge~+10.7pp [15718O/0U]
+  Under siempre                                n=30318 WR= 52.6% ROI= -5.11% (z=-9.7) odds~1.84 edge~+9.7pp [0O/30318U]
+
+  -- E1: edge vs devig (θ) — ambos lados --
+  edge≥0.00                                    n=46036 WR= 51.1% ROI= -5.31% (z=-12.1) odds~1.89 edge~+10.0pp [15718O/30318U]
+  edge≥0.02                                    n=46034 WR= 51.1% ROI= -5.31% (z=-12.1) odds~1.89 edge~+10.0pp [15718O/30316U]
+  edge≥0.03                                    n=45819 WR= 51.2% ROI= -5.27% (z=-12.0) odds~1.88 edge~+10.1pp [15579O/30240U]
+  edge≥0.04                                    n=43691 WR= 51.4% ROI= -5.24% (z=-11.7) odds~1.88 edge~+10.4pp [14470O/29221U]
+  edge≥0.05                                    n=40084 WR= 51.5% ROI= -5.13% (z=-11.0) odds~1.88 edge~+10.9pp [13111O/26973U]
+
+  -- E1o: SOLO OVER con edge --
+  OVER edge≥0.00                               n=15718 WR= 48.3% ROI= -5.68% (z=-7.2) odds~1.98 edge~+10.7pp [15718O/0U]
+  OVER edge≥0.02                               n=15718 WR= 48.3% ROI= -5.68% (z=-7.2) odds~1.98 edge~+10.7pp [15718O/0U]
+  OVER edge≥0.03                               n=15579 WR= 48.4% ROI= -5.57% (z=-7.0) odds~1.98 edge~+10.8pp [15579O/0U]
+  OVER edge≥0.04                               n=14470 WR= 48.5% ROI= -5.64% (z=-6.9) odds~1.97 edge~+11.3pp [14470O/0U]
+  OVER edge≥0.05                               n=13111 WR= 48.7% ROI= -5.61% (z=-6.5) odds~1.97 edge~+12.0pp [13111O/0U]
+
+  -- E1u: SOLO UNDER con edge --
+  UNDER edge≥0.00                              n=30318 WR= 52.6% ROI= -5.11% (z=-9.7) odds~1.84 edge~+9.7pp [0O/30318U]
+  UNDER edge≥0.02                              n=30316 WR= 52.6% ROI= -5.12% (z=-9.7) odds~1.84 edge~+9.7pp [0O/30316U]
+  UNDER edge≥0.03                              n=30240 WR= 52.7% ROI= -5.11% (z=-9.7) odds~1.83 edge~+9.7pp [0O/30240U]
+  UNDER edge≥0.04                              n=29221 WR= 52.8% ROI= -5.04% (z=-9.4) odds~1.83 edge~+9.9pp [0O/29221U]
+  UNDER edge≥0.05                              n=26973 WR= 52.8% ROI= -4.90% (z=-8.8) odds~1.83 edge~+10.4pp [0O/26973U]
+
+  -- E2: edge + EV≥5% --
+  edge≥0.00 & EV≥5% (ambos)                    n=34279 WR= 50.6% ROI= -5.37% (z=-10.4) odds~1.90 edge~+11.8pp [11863O/22416U]
+  edge≥0.02 & EV≥5% (ambos)                    n=34279 WR= 50.6% ROI= -5.37% (z=-10.4) odds~1.90 edge~+11.8pp [11863O/22416U]
+  edge≥0.03 & EV≥5% (ambos)                    n=34279 WR= 50.6% ROI= -5.37% (z=-10.4) odds~1.90 edge~+11.8pp [11863O/22416U]
+  edge≥0.05 & EV≥5% (ambos)                    n=34194 WR= 50.7% ROI= -5.32% (z=-10.4) odds~1.90 edge~+11.8pp [11827O/22367U]
+  OVER edge≥0.00 & EV≥5%                       n=11863 WR= 48.4% ROI= -5.39% (z=-5.9) odds~1.98 edge~+12.7pp [11863O/0U]
+  UNDER edge≥0.00 & EV≥5%                      n=22416 WR= 51.8% ROI= -5.35% (z=-8.6) odds~1.86 edge~+11.3pp [0O/22416U]
+  OVER edge≥0.03 & EV≥5%                       n=11863 WR= 48.4% ROI= -5.39% (z=-5.9) odds~1.98 edge~+12.7pp [11863O/0U]
+  UNDER edge≥0.03 & EV≥5%                      n=22416 WR= 51.8% ROI= -5.35% (z=-8.6) odds~1.86 edge~+11.3pp [0O/22416U]
+  OVER edge≥0.05 & EV≥5%                       n=11827 WR= 48.4% ROI= -5.32% (z=-5.8) odds~1.98 edge~+12.7pp [11827O/0U]
+  UNDER edge≥0.05 & EV≥5%                      n=22367 WR= 51.8% ROI= -5.32% (z=-8.6) odds~1.86 edge~+11.3pp [0O/22367U]
+
+  -- E3: edge + EV≥5% + cuota≥2.0 --
+  edge≥0.02 & EV≥5% & odds≥2                   n=10854 WR= 42.5% ROI= -6.92% (z=-6.6) odds~2.21 edge~+12.4pp [5690O/5164U]
+  edge≥0.03 & EV≥5% & odds≥2                   n=10854 WR= 42.5% ROI= -6.92% (z=-6.6) odds~2.21 edge~+12.4pp [5690O/5164U]
+  edge≥0.05 & EV≥5% & odds≥2                   n=10772 WR= 42.6% ROI= -6.77% (z=-6.5) odds~2.21 edge~+12.4pp [5654O/5118U]
+
+── C2) Igual con cuota BbMx (máxima del mercado) ──
+  (fair se mantiene con avg; la cuota ejecutable mejora)
+  MAXQUOTE edge≥0.00                           n=57672 WR= 51.4% ROI= -0.47% (z=-1.2) odds~1.98 edge~+8.6pp [20615O/37057U]
+  MAXQUOTE edge≥0.03                           n=49474 WR= 51.7% ROI= -0.47% (z=-1.1) odds~1.96 edge~+9.7pp [16596O/32878U]
+  MAXQUOTE edge≥0.05                           n=41028 WR= 51.8% ROI= -0.29% (z=-0.6) odds~1.97 edge~+10.9pp [13421O/27607U]
+  MAXQUOTE OVER edge≥0.00                      n=20615 WR= 48.4% ROI= -0.50% (z=-0.7) odds~2.09 edge~+8.8pp [20615O/0U]
+  MAXQUOTE UNDER edge≥0.00                     n=37057 WR= 53.0% ROI= -0.46% (z=-0.9) odds~1.91 edge~+8.5pp [0O/37057U]
+  MAXQUOTE OVER edge≥0.03                      n=16596 WR= 48.9% ROI= -0.42% (z=-0.5) odds~2.07 edge~+10.5pp [16596O/0U]
+  MAXQUOTE UNDER edge≥0.03                     n=32878 WR= 53.1% ROI= -0.50% (z=-0.9) odds~1.91 edge~+9.4pp [0O/32878U]
+
+── E) ESTABILIDAD POR TEMPORADA ──
+
+  UNDER edge≥0.03 & EV≥5%:
+    2005: n=1718 WR= 53.6% ROI= -5.64%
+    2006: n=1770 WR= 56.6% ROI= -1.40%
+    2007: n=2057 WR= 55.3% ROI= -2.79%
+    2008: n=1773 WR= 55.2% ROI= -2.50%
+    2009: n=1814 WR= 53.0% ROI= -6.34%
+    2010: n=1491 WR= 49.8% ROI= -8.46%
+    2011: n=1906 WR= 51.3% ROI= -4.30%
+    2012: n=1607 WR= 49.5% ROI= -5.92%
+    2013: n=1708 WR= 51.6% ROI= -4.39%
+    2014: n=1803 WR= 52.0% ROI= -4.50%
+    2015: n=1560 WR= 48.8% ROI= -8.46%
+    2016: n=1674 WR= 48.3% ROI= -8.46%
+    2017: n=1535 WR= 46.1% ROI= -8.33%
+
+  UNDER edge≥0.05 & EV≥5%:
+    2005: n=1716 WR= 53.6% ROI= -5.64%
+    2006: n=1770 WR= 56.6% ROI= -1.40%
+    2007: n=2057 WR= 55.3% ROI= -2.79%
+    2008: n=1770 WR= 55.3% ROI= -2.44%
+    2009: n=1813 WR= 53.0% ROI= -6.29%
+    2010: n=1491 WR= 49.8% ROI= -8.46%
+    2011: n=1905 WR= 51.3% ROI= -4.25%
+    2012: n=1604 WR= 49.4% ROI= -6.02%
+    2013: n=1705 WR= 51.6% ROI= -4.40%
+    2014: n=1796 WR= 52.1% ROI= -4.41%
+    2015: n=1555 WR= 48.9% ROI= -8.17%
+    2016: n=1664 WR= 48.4% ROI= -8.51%
+    2017: n=1521 WR= 46.2% ROI= -8.37%
+
+  OVER edge≥0.05 & EV≥5%:
+    2005: n= 804 WR= 47.5% ROI= -8.67%
+    2006: n= 701 WR= 49.8% ROI= -4.77%
+    2007: n= 847 WR= 53.0% ROI= +2.90%
+    2008: n= 961 WR= 44.4% ROI=-13.06%
+    2009: n= 948 WR= 49.8% ROI= -2.63%
+    2010: n= 909 WR= 46.5% ROI= -8.16%
+    2011: n= 772 WR= 53.0% ROI= +0.77%
+    2012: n= 992 WR= 47.4% ROI= -8.88%
+    2013: n=1199 WR= 48.5% ROI= -4.93%
+    2014: n= 977 WR= 46.3% ROI= -7.85%
+    2015: n=1012 WR= 48.0% ROI= -2.38%
+    2016: n=1076 WR= 47.8% ROI= -6.32%
+    2017: n= 629 WR= 49.8% ROI= -2.43%
+
+── F) Correlación modelo vs mercado ──
+  corr(p_over_c, fair_o) = 0.5560
+  Brier modelo: 0.2529 | Brier mercado: 0.2446 (menor=mejor)
+  AUC modelo: 0.5488 | AUC mercado: 0.5773
+
+====================================================================================================
+FIN

@@ -1,0 +1,19 @@
+v2.3 GBM val: MAE=4.883 RMSE=6.224 bias=-0.756
+v2.3 calib: y=-3.338+1.160p MAE=4.852 bias=-0.000
+saved gbm_v23.pkl (trained on all data)
+
+### v2.3 OUT-OF-SAMPLE HOY (110 partidos)
+raw MAE=4.893 | calibrado MAE=4.706 RMSE=5.961 bias=-0.677
+baseline global 25.25: 5.514 | liga: 4.868
+±3: 40% | ±5: 60%
+Top-10 errores:
+  K League 1           Gimcheon Sangmu  vs Gangwon FC       | pred= 21.3 real=  4.0 err=+17.3
+  Major League Soccer  Sporting Kansas  vs Los Angeles FC   | pred= 26.3 real= 42.0 err=-15.7
+  Liga MX              Cruz Azul        vs Club America     | pred= 28.5 real= 44.0 err=-15.5
+  2. Bundesliga        Karlsruher SC    vs Energie Cottbus  | pred= 30.6 real= 45.0 err=-14.4
+  Liga I               Arges Pitesti    vs FC Botosani      | pred= 27.2 real= 13.0 err=+14.2
+  Serie A              Santos           vs Cruzeiro         | pred= 28.6 real= 40.0 err=-11.4
+  Eliteserien          Viking           vs Kristiansund BK  | pred= 28.9 real= 40.0 err=-11.1
+  Süper Lig            Galatasaray      vs Kocaelispor      | pred= 30.0 real= 41.0 err=-11.0
+  First League         Botev Plovdiv    vs Lokomotiv Plovdi | pred= 24.0 real= 13.0 err=+11.0
+  Super League 1       Asteras Tripolis vs AEK Athens FC    | pred= 23.6 real= 34.0 err=-10.4

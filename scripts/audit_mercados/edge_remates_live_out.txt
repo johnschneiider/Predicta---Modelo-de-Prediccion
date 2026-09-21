@@ -1,0 +1,41 @@
+EDGE TEST · remates totales + SOT · λ_modelo vs λ_mercado · 2026-09-13T19:54:24.204129+00:00
+==============================================================================================================
+Eventos NOT_STARTED: 207
+Eventos escaneados: 170 | eventos con mercado: 15
+
+evento                                         mer   liga                     λ_mkt   λ_mod   Δ       rmse    vig%   lineas
+----------------------------------------------------------------------------------------------------------------------------------
+Flamengo-RJ - Corinthians-SP                   REM   Primeira Liga              25.32   25.60   +0.28  0.0009    5.5 22,23,24,25,26,27,28
+Flamengo-RJ - Corinthians-SP                   SOT   Primeira Liga               8.40    8.59   +0.19  0.0067    5.8 5,6,7,8,9,10
+Juventude-RS - Athletic Club-MG                SOT   Serie B                     8.42    9.29   +0.87  0.0050    5.7 6,7,8,9
+Fortaleza-CE - Ceará-CE                        SOT   Serie B                     8.88    9.29   +0.41  0.0036    5.5 7,8,9,10
+Novorizontino-SP - Cuiabá-MT                   SOT   Serie B                     8.98    9.29   +0.31  0.0031    5.5 7,8,9,10
+FC Midtjylland - Brøndby IF                    SOT   Süper Lig                   9.80    9.69   -0.11  0.0021    6.2 8,9,10,11
+Torino - Roma                                  REM   Serie A                    25.46   24.60   -0.86  0.0020    5.6 22,23,24,25,26,27,28
+Torino - Roma                                  SOT   Serie A                     8.88    8.10   -0.78  0.0072    5.7 6,7,8,9,10,11
+Como - Parma                                   REM   Serie A                    26.78   23.33   -3.45  0.0017    5.5 23,24,25,26,27,28,29
+Como - Parma                                   SOT   Serie A                     8.74    8.03   -0.71  0.0072    5.7 6,7,8,9,10,11
+Chivas Guadalajara - Pumas UNAM                SOT   Liga MX (Mexico)            9.34    9.40   +0.06  0.0013    6.1 7,8,9,10
+Santos Laguna - FC Juárez                      SOT   Liga MX (Mexico)            8.00    9.07   +1.07  0.0024    6.2 6,7,8,9
+Independiente - San Lorenzo                    SOT   Primera Nacional (Argent    8.12    8.40   +0.28  0.0053    6.2 6,7,8,9
+Huracán - Racing Club                          SOT   Primera Nacional (Argent    8.66    8.40   -0.26  0.0033    6.0 7,8,9
+Argentinos Jrs - Gimnasia de La Plata          SOT   Primera Nacional (Argent    9.04    8.40   -0.64  0.0025    6.1 7,8,9,10
+
+Comparables con modelo: 15
+
+Δp (modelo - mercado) por línea, en puntos porcentuales:
+  Como - Parma                               [REM] Serie A            λ26.78→23.33 | 24:-20.7  24:-21.6  26:-21.7  26:-21.0  28:-20.2  28:-18.5  30:-17.0
+  Santos Laguna - FC Juárez                  [SOT] Liga MX (Mexico)   λ8.00→9.07 | 6:+11.0  8:+12.5  8:+13.1  10:+12.3
+  Juventude-RS - Athletic Club-MG            [SOT] Serie B            λ8.42→9.29 | 6:+8.6  8:+9.5  8:+10.2  10:+9.5
+  Torino - Roma                              [REM] Serie A            λ25.46→24.60 | 22:-5.3  24:-5.4  24:-5.1  26:-5.3  26:-5.2  28:-5.0  28:-5.0
+  Torino - Roma                              [SOT] Serie A            λ8.88→8.10 | 6:-6.7  8:-8.7  8:-9.4  10:-9.4  10:-8.6  12:-7.7
+  Como - Parma                               [SOT] Serie A            λ8.74→8.03 | 6:-6.3  8:-8.1  8:-8.7  10:-8.1  10:-7.5  12:-7.1
+  Argentinos Jrs - Gimnasia de La Plata      [SOT] Primera Nacional ( λ9.04→8.40 | 8:-6.8  8:-7.6  10:-7.6  10:-7.0
+  Fortaleza-CE - Ceará-CE                    [SOT] Serie B            λ8.88→9.29 | 8:+4.9  8:+5.1  10:+4.6  10:+4.2
+  Novorizontino-SP - Cuiabá-MT               [SOT] Serie B            λ8.98→9.29 | 8:+3.5  8:+3.7  10:+3.6  10:+2.8
+  Flamengo-RJ - Corinthians-SP               [REM] Primeira Liga      λ25.32→25.60 | 22:+1.7  24:+1.7  24:+1.6  26:+1.8  26:+1.7  28:+1.7  28:+1.5
+  Independiente - San Lorenzo                [SOT] Primera Nacional ( λ8.12→8.40 | 6:+3.5  8:+3.6  8:+3.2  10:+2.4
+  Huracán - Racing Club                      [SOT] Primera Nacional ( λ8.66→8.40 | 8:-2.6  8:-3.2  10:-3.4
+  Flamengo-RJ - Corinthians-SP               [SOT] Primeira Liga      λ8.40→8.59 | 6:+2.6  6:+2.3  8:+2.1  8:+2.2  10:+1.9  10:+1.0
+  FC Midtjylland - Brøndby IF                [SOT] Süper Lig          λ9.80→9.69 | 8:-0.8  10:-1.4  10:-1.3  12:-1.1
+  Chivas Guadalajara - Pumas UNAM            [SOT] Liga MX (Mexico)   λ9.34→9.40 | 8:+0.5  8:+0.5  10:+0.9  10:+0.6

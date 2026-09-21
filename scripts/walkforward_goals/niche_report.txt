@@ -1,0 +1,76 @@
+====================================================================================================
+NICHOS GOLES O/U — corrección walk-forward aplicada
+n=62564 | ratio medio 0.8166
+====================================================================================================
+
+── 1) Calibración del modelo corregido (p_over_c vs real) ──
+  (0.0, 0.25]        n=   632 p_corr= 22.6% real= 38.3% gap=+15.7pp
+  (0.25, 0.35]       n=  9250 p_corr= 31.5% real= 41.0% gap= +9.5pp
+  (0.35, 0.4]        n= 12234 p_corr= 37.6% real= 45.0% gap= +7.4pp
+  (0.4, 0.45]        n= 12017 p_corr= 42.4% real= 47.0% gap= +4.6pp
+  (0.45, 0.5]        n=  9096 p_corr= 47.4% real= 48.1% gap= +0.7pp
+  (0.5, 0.55]        n=  6704 p_corr= 52.4% real= 49.7% gap= -2.6pp
+  (0.55, 0.6]        n=  4914 p_corr= 57.3% real= 50.9% gap= -6.4pp
+  (0.6, 0.65]        n=  3346 p_corr= 62.3% real= 54.3% gap= -8.0pp
+  (0.65, 1.0]        n=  4371 p_corr= 71.8% real= 56.9% gap=-14.9pp
+
+── 2) ROI por división — estrategia UNDER edge≥0.05 & EV≥5% (BbAv) ──
+  B1: n= 1590 WR= 50.1% ROI_av= -2.65% ROI_max= +2.78%
+  D2: n= 1306 WR= 50.6% ROI_av= -5.05% ROI_max= +0.02%
+  E2: n= 2648 WR= 50.9% ROI_av= -6.16% ROI_max= -1.55%
+  E3: n= 2434 WR= 53.9% ROI_av= -2.93% ROI_max= +1.86%
+  F1: n= 1722 WR= 56.0% ROI_av= -5.81% ROI_max= -1.34%
+  F2: n= 1744 WR= 56.8% ROI_av= -7.95% ROI_max= -3.82%
+  G1: n=   65 WR= 52.3% ROI_av= -9.26% ROI_max= -5.14%
+  I1: n= 1833 WR= 49.0% ROI_av= -7.46% ROI_max= -2.57%
+  I2: n= 2184 WR= 55.5% ROI_av= -6.55% ROI_max= -2.26%
+  N1: n= 1678 WR= 42.9% ROI_av= -4.93% ROI_max= +1.10%
+  P1: n= 1022 WR= 55.6% ROI_av= -4.39% ROI_max= +0.12%
+  SC0: n= 1119 WR= 50.7% ROI_av= -3.59% ROI_max= +1.51%
+  SC1: n=  578 WR= 50.2% ROI_av= -1.23% ROI_max= +3.36%
+  SP2: n= 1363 WR= 57.4% ROI_av= -2.62% ROI_max= +1.54%
+  T1: n= 1442 WR= 48.1% ROI_av= -8.25% ROI_max= -3.54%
+
+── 3) Colas: distancia |λ_corr-2.5| ──
+  UNDER dist≥0.5 (max)                                 n=15421 WR= 50.6% ROI= -2.58% (z=-3.2)
+  UNDER dist≥0.75 (max)                                n= 6271 WR= 46.0% ROI= -2.42% (z=-1.7)
+  UNDER dist≥1.0 (max)                                 n= 3129 WR= 42.0% ROI= -3.46% (z=-1.6)
+  OVER dist≥0.5 (max)                                  n=15421 WR= 49.4% ROI= -1.84% (z=-2.2)
+  OVER dist≥0.75 (max)                                 n= 6271 WR= 54.0% ROI= -1.29% (z=-1.1)
+  OVER dist≥1.0 (max)                                  n= 3129 WR= 58.0% ROI= +0.24% (z=+0.2)
+
+── 3b) p extrema ──
+  UNDER p≥0.55 (max)                                   n=34133 WR= 55.5% ROI= -0.78% (z=-1.6)
+  UNDER p≥0.60 (max)                                   n=22116 WR= 56.9% ROI= -0.61% (z=-1.0)
+  UNDER p≥0.65 (max)                                   n= 9882 WR= 59.2% ROI= -0.30% (z=-0.4)
+  OVER p≤0.35 (max)                                    n= 9882 WR= 40.8% ROI= -5.12% (z=-4.4)
+  OVER p≤0.30 (max)                                    n= 3221 WR= 38.4% ROI= -7.51% (z=-3.6)
+  OVER p≤0.25 (max)                                    n=  632 WR= 38.3% ROI= -6.54% (z=-1.4)
+
+── 4) Contrarian por fair del mercado ──
+  fair_o≥0.52 → UNDER (max) n=14454 WR= 43.0% ROI= -1.05% (z=-1.1)
+  fair_o≥0.55 → UNDER (max) n= 8343 WR= 40.0% ROI= -1.71% (z=-1.3)
+  fair_o≥0.58 → UNDER (max) n= 4512 WR= 37.4% ROI= -1.04% (z=-0.5)
+  fair_o≥0.60 → UNDER (max) n= 2917 WR= 35.5% ROI= -0.96% (z=-0.4)
+  fair_o≤0.45 → OVER (max) n=22672 WR= 40.8% ROI= -3.21% (z=-4.1)
+  fair_o≤0.42 → OVER (max) n=11281 WR= 38.6% ROI= -4.10% (z=-3.6)
+  fair_o≤0.40 → OVER (max) n= 4838 WR= 36.5% ROI= -5.26% (z=-2.9)
+
+── 5) EV altos (max odds) ──
+  EV≥10% (max) ambos                                   n=23463 WR= 50.0% ROI= -0.17% (z=-0.2)
+  EV≥15% (max) ambos                                   n=14335 WR= 48.7% ROI= +0.26% (z=+0.3)
+  EV≥20% (max) ambos                                   n= 8491 WR= 47.7% ROI= +1.23% (z=+1.0)
+  UNDER EV≥10% (max)                                   n=14457 WR= 50.5% ROI= -0.62% (z=-0.7)
+  UNDER EV≥15% (max)                                   n= 7981 WR= 48.3% ROI= -0.72% (z=-0.6)
+  OVER EV≥10% (max)                                    n= 9006 WR= 49.1% ROI= +0.56% (z=+0.5)
+  OVER EV≥15% (max)                                    n= 6354 WR= 49.2% ROI= +1.49% (z=+1.1)
+
+── 6) Modelo vs mercado: desacuerdo ──
+  modelo MUY under vs mercado        n=18469 WR= 52.5% ROI= -0.33% (z=-0.5)
+  modelo under                       n=14668 WR= 54.1% ROI= -0.71% (z=-0.9)
+  acuerdo                            n=12457 WR= 50.9% ROI= -1.26% (z=-1.4)
+  modelo over                        n= 7230 WR= 48.5% ROI= -1.05% (z=-0.9)
+  modelo MUY over vs mercado         n= 9740 WR= 49.8% ROI= -0.11% (z=-0.1)
+
+====================================================================================================
+FIN

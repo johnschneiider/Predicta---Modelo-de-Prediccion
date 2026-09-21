@@ -1,0 +1,49 @@
+====================================================================================================
+FORMA + BLEND — tests finales
+n=62564
+====================================================================================================
+
+── A) Isotonic walk-forward (expanding, refit cada 2000) ──
+  cobertura isotonic: 92.0%
+  Brier poisson-corr: 0.2528
+  Brier isotonic:     0.2477
+  Brier mercado:      0.2447
+  AUC poisson-corr:   0.5489
+  AUC isotonic:       0.5481
+  AUC mercado:        0.5771
+
+  Curva calibración isotonic:
+    (0.35, 0.4]     n=  2443 p_iso= 38.7% real= 38.9% gap= +0.2pp
+    (0.4, 0.45]     n= 16828 p_iso= 43.4% real= 44.1% gap= +0.7pp
+    (0.45, 0.5]     n= 28900 p_iso= 47.0% real= 48.1% gap= +1.1pp
+    (0.5, 0.55]     n=  6299 p_iso= 53.2% real= 54.1% gap= +0.9pp
+    (0.55, 0.6]     n=  2676 p_iso= 56.5% real= 56.8% gap= +0.3pp
+    (0.6, 0.65]     n=   374 p_iso= 61.4% real= 61.2% gap= -0.2pp
+    (0.65, 1.0]     n=    44 p_iso= 73.6% real= 63.6% gap=-10.0pp
+
+  ROI isotonic + cuota max:
+  ISO OVER edge≥0.03                             n=12597 WR= 43.1% ROI= -0.76% (z=-0.7)
+  ISO OVER edge≥0.05                             n= 6689 WR= 42.7% ROI= -0.39% (z=-0.3)
+  ISO UNDER edge≥0.03                            n=19123 WR= 46.5% ROI= -0.91% (z=-1.2)
+  ISO UNDER edge≥0.05                            n=12295 WR= 45.1% ROI= +0.71% (z=+0.7)
+  ISO ambos edge≥0.03                            n=31720 WR= 45.2% ROI= -0.85% (z=-1.4)
+  ISO ambos edge≥0.05 & EV≥10%                   n=16677 WR= 43.2% ROI= +0.12% (z=+0.1)
+  ISO ambos edge≥0.08 & EV≥15%                   n= 7688 WR= 41.0% ROI= -1.15% (z=-0.8)
+
+── B) Blend logístico walk-forward [logit(p_corr), logit(fair)] ──
+  cobertura blend: 91.3%
+  Brier blend:  0.2448
+  Brier modelo solo: 0.2529
+  Últimos coefs: modelo=+0.066, mercado=+1.001, intercept=+0.002
+  AUC blend:  0.5776
+  AUC mercado en submuestra: 0.5779
+  AUC modelo en submuestra:  0.5477
+
+  ROI blend + cuota max (ambos lados):
+  BLEND edge≥0.00                                n=52564 WR= 52.2% ROI= -1.14% (z=-2.7)
+  BLEND edge≥0.03                                n= 2217 WR= 52.1% ROI= -1.54% (z=-0.8)
+  BLEND edge≥0.05                                n=   74 WR= 44.6% ROI= -7.73% (z=-0.6)
+  BLEND edge≥0.08                                n=0
+
+====================================================================================================
+FIN

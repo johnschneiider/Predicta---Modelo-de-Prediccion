@@ -1,0 +1,5 @@
+MOTOR v2.2 — rest/form features 2026-09-13T20:23:34.772079+00:00
+saved features_v22.csv
+v2.2 GBM val: MAE=4.898 RMSE=6.237 bias=-0.727
+v2.2 recalculated: y=-2.021+1.107p  MAE=4.873 bias=-0.000
+saved gbm_v22.pkl

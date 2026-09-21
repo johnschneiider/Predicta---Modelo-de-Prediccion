@@ -1,0 +1,816 @@
+AUDITORÍA MERCADOS · generado 2026-09-14T10:17:32.719411+00:00
+====================================================================================================
+
+### 1. SISTEMA (is_system=True) POR MERCADO — histórico completo ###
+  GOLES: n=255 (eventos=181) WR=43.5% stake=1,161,200 net=-72,290 COP ROI=-6.2% avgOdds=2.30 BE=45.4% CLV=+1.40 (n=246) z=-0.65
+  BTTS: n=196 (eventos=101) WR=56.1% stake=1,639,600 net=+126,841 COP ROI=+7.7% avgOdds=2.00 BE=50.4% CLV=+0.54 (n=187) z=+0.74
+  CÓRNERS: n=159 (eventos=101) WR=54.1% stake=1,110,400 net=+121,617 COP ROI=+11.0% avgOdds=2.03 BE=50.5% CLV=+2.41 (n=141) z=+0.89
+  SOT: n=96 (eventos=71) WR=38.5% stake=533,000 net=-94,919 COP ROI=-17.8% avgOdds=2.19 BE=46.9% CLV=+0.16 (n=87) z=-1.25
+  1X2: n=14 (eventos=14) WR=35.7% stake=7,000 net=-380 COP ROI=-5.4% avgOdds=2.65 BE=39.5% CLV=+3.65 (n=8) z=-0.15
+
+### 2. VENTANAS 30d / 7d — CÓRNERS, BTTS, GOLES ###
+  GOLES 30d: n=255 (eventos=181) WR=43.5% stake=1,161,200 net=-72,290 COP ROI=-6.2% avgOdds=2.30 BE=45.4% CLV=+1.40 (n=246) z=-0.65
+  GOLES 7d: sin datos
+  BTTS 30d: n=196 (eventos=101) WR=56.1% stake=1,639,600 net=+126,841 COP ROI=+7.7% avgOdds=2.00 BE=50.4% CLV=+0.54 (n=187) z=+0.74
+  BTTS 7d: n=80 (eventos=26) WR=50.0% stake=974,700 net=+30,343 COP ROI=+3.1% avgOdds=1.98 BE=51.1% CLV=+0.10 (n=77) z=+0.20
+  CÓRNERS 30d: n=159 (eventos=101) WR=54.1% stake=1,110,400 net=+121,617 COP ROI=+11.0% avgOdds=2.03 BE=50.5% CLV=+2.41 (n=141) z=+0.89
+  CÓRNERS 7d: n=53 (eventos=17) WR=50.9% stake=668,600 net=-18,700 COP ROI=-2.8% avgOdds=1.87 BE=53.4% CLV=+3.51 (n=47) z=-0.15
+
+### 3. CÓRNERS por lado+línea ###
+  UNDER 7.5: n=1 (eventos=1) WR=0.0% stake=500 net=-500 COP ROI=-100.0% avgOdds=n/a BE=n/a CLV=+5.77 (n=1) z=n/a
+  UNDER 8.5: n=20 (eventos=15) WR=60.0% stake=84,700 net=+51,734 COP ROI=+61.1% avgOdds=2.28 BE=44.4% CLV=+3.16 (n=17) z=+1.47
+  UNDER 9.5: n=49 (eventos=30) WR=44.9% stake=394,700 net=-52,196 COP ROI=-13.2% avgOdds=1.99 BE=50.7% CLV=+1.75 (n=43) z=-0.59
+  UNDER 10.5: n=42 (eventos=18) WR=57.1% stake=434,900 net=+60,992 COP ROI=+14.0% avgOdds=1.88 BE=53.3% CLV=+2.21 (n=37) z=+0.67
+  UNDER 11.5: n=9 (eventos=5) WR=88.9% stake=55,300 net=+38,507 COP ROI=+69.6% avgOdds=1.78 BE=56.3% CLV=+5.84 (n=7) z=+2.79
+  OVER 8.5: n=1 (eventos=1) WR=0.0% stake=11,000 net=-11,000 COP ROI=-100.0% avgOdds=n/a BE=n/a CLV=+7.18 (n=1) z=n/a
+  OVER 9.5: n=20 (eventos=18) WR=65.0% stake=87,000 net=+42,975 COP ROI=+49.4% avgOdds=1.97 BE=51.4% CLV=+2.05 (n=20) z=+1.85
+  OVER 10.5: n=13 (eventos=9) WR=46.2% stake=40,300 net=-9,545 COP ROI=-23.7% avgOdds=2.15 BE=47.0% CLV=+1.77 (n=13) z=-0.49
+  OVER 11.5: n=2 (eventos=2) WR=0.0% stake=1,000 net=-1,000 COP ROI=-100.0% avgOdds=n/a BE=n/a CLV=+5.88 (n=2) z=n/a
+  OVER 12.5: n=1 (eventos=1) WR=0.0% stake=500 net=-500 COP ROI=-100.0% avgOdds=n/a BE=n/a CLV=n/a z=n/a
+  OVER 13.5: n=1 (eventos=1) WR=100.0% stake=500 net=+2,150 COP ROI=+430.0% avgOdds=5.30 BE=18.9% CLV=n/a z=n/a
+
+### 4. BTTS por selección ###
+  Sí: n=194 (eventos=99) WR=56.2% stake=1,638,600 net=+126,801 COP ROI=+7.7% avgOdds=2.00 BE=50.5% CLV=+0.52 (n=185) z=+0.74
+  No: n=2 (eventos=2) WR=50.0% stake=1,000 net=+40 COP ROI=+4.0% avgOdds=2.08 BE=48.1% CLV=+2.52 (n=2) z=+0.04
+
+### 5. GOLES por línea ###
+  Más de 2.5: n=140 (eventos=96) WR=50.7% stake=745,000 net=+56,890 COP ROI=+7.6% avgOdds=2.09 BE=48.2% CLV=+0.95 (n=138) z=+0.63
+  Más de 3.5: n=73 (eventos=50) WR=32.9% stake=256,300 net=-102,719 COP ROI=-40.1% avgOdds=2.47 BE=41.7% CLV=+2.06 (n=72) z=-2.03
+  Menos de 2.5: n=21 (eventos=17) WR=28.6% stake=117,000 net=-29,610 COP ROI=-25.3% avgOdds=1.99 BE=50.8% CLV=+0.48 (n=21) z=-0.86
+
+### 6. CLV HEALTH (función viva del motor) ###
+  Tiros de Esquina: ok=True avg_clv=2.671333333333334 n=30
+  Ambos Equipos Marcarán: ok=True avg_clv=-0.1266666666666666 n=30
+  Total de goles: ok=True avg_clv=2.598333333333333 n=30
+
+### 7. POR USUARIO (sistema, settled) ###
+  user 1: n=313 (eventos=311) WR=43.8% stake=200,800 net=+4,320 COP ROI=+2.2% avgOdds=2.37 BE=43.8% CLV=+1.26 (n=281) z=+0.28
+  user 2: n=102 (eventos=102) WR=54.9% stake=211,600 net=+11,129 COP ROI=+5.3% avgOdds=1.93 BE=52.3% CLV=+1.54 (n=94) z=+0.55
+  user 3: n=276 (eventos=276) WR=51.1% stake=3,074,800 net=+61,060 COP ROI=+2.0% avgOdds=1.99 BE=50.8% CLV=+1.09 (n=268) z=+0.33
+  user 9: n=29 (eventos=29) WR=51.7% stake=964,000 net=+4,360 COP ROI=+0.5% avgOdds=1.92 BE=52.3% CLV=+1.43 (n=26) z=+0.02
+
+### 8. RECONCILIACIÓN: liquidaciones últimas 30h vs antes ###
+  ÚLTIMAS 30h Tiros de Esq: n=159 (eventos=101) WR=54.1% stake=1,110,400 net=+121,617 COP ROI=+11.0% avgOdds=2.03 BE=50.5% CLV=+2.41 (n=141) z=+0.89
+  ÚLTIMAS 30h Ambos Equipo: n=196 (eventos=101) WR=56.1% stake=1,639,600 net=+126,841 COP ROI=+7.7% avgOdds=2.00 BE=50.4% CLV=+0.54 (n=187) z=+0.74
+  ÚLTIMAS 30h Total de gol: n=255 (eventos=181) WR=43.5% stake=1,161,200 net=-72,290 COP ROI=-6.2% avgOdds=2.30 BE=45.4% CLV=+1.40 (n=246) z=-0.65
+
+  -- filas liquidadas en últimas 30h (todas) --
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Atlético Nacional  vs Aguilas Doradas Ri st=  2,300 net=   -2,300 clv=2.56
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Famalicão          vs Sporting Lisboa    st=  2,300 net=   +1,978 clv=0.54
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 WON  CD Tenerife        vs Leganés            st=  2,300 net=   +1,978 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST FK IMT Novi Beogra vs Crvena Zvezda      st=  2,300 net=   -2,300 clv=-9.33
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Botev Vratsa       vs Levski Sofia       st=  2,300 net=   -2,300 clv=0.47
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Gençlerbirliği SK  vs Kasımpaşa          st=  2,300 net=   +1,794 clv=None
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 LOST Gençlerbirliği SK  vs Kasımpaşa          st=  2,300 net=   -2,300 clv=None
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Silkeborg IF       vs Viborg FF          st=  2,300 net=   +2,001 clv=None
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Alianza Lima       vs Universitario de D st=  2,100 net=   +2,100 clv=-1.96
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. LOST FC Cincinnati      vs Charlotte FC       st=  2,100 net=   -2,100 clv=1.03
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. LOST Deportivo Toluca F vs Club Atlas         st=  2,100 net=   -2,100 clv=9.14
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Real Madrid        vs Rayo Vallecano     st=  2,100 net=   +2,247 clv=7.25
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Sunderland         vs Arsenal            st=  2,100 net=   -2,100 clv=-1.85
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  CSKA Sofia         vs FC Arda Kardzhali  st=  2,100 net=   +2,100 clv=1.52
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  9 De Octubre FC    vs Independiente Juni st=  2,100 net=   +3,108 clv=-0.8
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Cobresal           vs Coquimbo Unido     st=  2,100 net=   +1,596 clv=0.57
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 WON  Independiente Riva vs Aldosivi           st=  2,100 net=   +1,743 clv=-3.68
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Colwyn Bay         vs Connah's Quay FC   st=  2,100 net=   +1,743 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Ilves              vs FC Lahti           st=  2,100 net=   +1,974 clv=16.17
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  York City          vs Swindon Town       st=  2,100 net=   +2,016 clv=-7.55
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  IFK Mariehamn      vs TPS                st=  2,100 net=   +1,743 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 LOST Vicenza            vs Juve Stabia        st=  2,100 net=   -2,100 clv=1.46
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Levadia Tallinn    vs Vaprus Pärnu       st=  2,100 net=   -2,100 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Ventforet Kofu     vs Júbilo Iwata       st=  2,100 net=   -2,100 clv=-0.55
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Machida Zelvia     vs Yokohama F Marinos st=  2,100 net=   +1,659 clv=4.07
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 LOST Bucheon FC 1995    vs Jeju United        st=  2,100 net=   -2,100 clv=11.79
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Independiente Sant vs Deportes Tolima    st=  2,200 net=   -2,200 clv=4.4
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Sevilla            vs Valencia           st=  2,200 net=   -2,200 clv=-2.97
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. LOST Drogheda United    vs Sligo Rovers       st=  2,200 net=   -2,200 clv=5.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 11. WON  Sport Recife-PE    vs Ponte Preta-SP     st=  2,200 net=   +1,936 clv=5.62
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  CF Estrela         vs S.C. Braga         st=  2,200 net=   +1,804 clv=-0.55
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Radnik Surdulica   vs Crvena Zvezda      st=  2,200 net=   -2,200 clv=-0.56
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  CD Platense Zacate vs AD Isidro Metapán  st=  2,200 net=   +1,804 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Moreirense         vs Benfica            st=  2,200 net=   -2,200 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Mamelodi Sundowns  vs Siwelele F.C.      st=  2,200 net=   -2,200 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Al-Mokawloon Al-Ar vs Al Ahly Cairo      st=  2,200 net=   +2,750 clv=-1.32
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 11. WON  FC Twente          vs SC Telstar         st=  2,200 net=   +1,650 clv=7.36
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Željezničar Saraje vs FK Sarajevo        st=  2,200 net=   -2,200 clv=-0.98
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Watford            vs Preston North End  st=  2,300 net=   +1,909 clv=0.55
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. LOST TPS                vs SJK Seinäjoki      st=  2,300 net=   -2,300 clv=-0.54
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. LOST FC Lahti           vs IFK Mariehamn      st=  2,300 net=   -2,300 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST AD Cofutpa         vs Municipal Grecia   st=  2,100 net=   -2,100 clv=0.56
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 WON  Emelec             vs Manta FC           st=  2,100 net=   +2,184 clv=13.97
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Deportes Limache   vs Cobresal           st=  2,100 net=   +1,785 clv=-5.13
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Getafe             vs Celta Vigo         st=  2,100 net=   +2,688 clv=-1.72
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  National Bank of E vs Ghazl El-Mehalla   st=  2,100 net=   +2,478 clv=1.87
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  FC Fratria         vs FC Chernomorets 19 st=  2,100 net=   +1,953 clv=1.58
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Almeria            vs Cadiz              st=  1,900 net=   +1,520 clv=-3.23
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Lokomotiv Sofia    vs Ludogorets Razgrad st=  1,900 net=   +1,501 clv=-0.56
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Alaves             vs Osasuna            st=  1,900 net=   +1,900 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Ferencváros        vs Újpest FC          st=  1,900 net=   +1,520 clv=1.69
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 11. WON  Cracovia Kraków    vs Górnik Zabrze      st=  1,900 net=   +1,387 clv=None
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 11. LOST Real Salt Lake     vs Los Angeles FC     st=  2,000 net=   -2,000 clv=2.31
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Universitario de D vs Comerciantes Unido st=  2,000 net=   +2,280 clv=1.9
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST San Antonio FC     vs FC Tulsa           st=  2,000 net=   -2,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Union Omaha        vs Charlotte Independ st=  2,000 net=   -2,000 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Más de 9.5   LOST Universidad de Chi vs Coquimbo Unido     st=  2,000 net=   -2,000 clv=0.55
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Universidad de Chi vs Coquimbo Unido     st=  2,000 net=   +1,820 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Orlando City       vs San Diego FC       st=  2,000 net=   +1,900 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. LOST Inter Miami CF     vs Atlanta United FC  st=  2,000 net=   -2,000 clv=0.54
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Oriente Petrolero  vs Always Ready       st=  2,000 net=   -2,000 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 WON  Independiente Sant vs Fortaleza FC       st=  2,000 net=   +1,700 clv=1.65
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Independiente del  vs Macará             st=  2,000 net=   +1,840 clv=-1.54
+  [09-14 02:45] Total de goles               Más de 3.5   WON  Indy Eleven        vs Birmingham Legion  st=  2,000 net=   +2,600 clv=9.52
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 WON  Cusco FC           vs UCV Moquegua       st=  2,000 net=   +1,480 clv=-1.14
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Sport Huancayo     vs Sport Boys         st=  2,000 net=   +1,720 clv=-1.06
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Gimnasia y Esgrima vs Boca Juniors       st=  2,000 net=   +2,000 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Más de 10.5  WON  St Mirren          vs Celtic             st=  2,000 net=   +1,860 clv=1.58
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Longford Town      vs Kerry FC           st=  2,000 net=   -2,000 clv=-0.55
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Levski Sofia       vs CSKA 1948 Sofia    st=  2,000 net=   -2,000 clv=-2.09
+  [09-14 02:45] Total de Tiros de Esquina    Más de 9.5   WON  Levski Sofia       vs CSKA 1948 Sofia    st=  2,000 net=   +1,880 clv=-1.52
+  [09-14 02:45] Total de goles               Más de 3.5   WON  Paksi SE           vs DVSC Debreceni     st=  2,000 net=   +2,100 clv=13.26
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Alverca            vs S.C. Braga         st=  2,000 net=   +1,780 clv=-2.07
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Keciörengücü       vs Sarıyer S.K.       st=  2,000 net=   +1,760 clv=-0.53
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST The New Saints     vs Barry Town         st=  2,000 net=   -2,000 clv=1.62
+  [09-14 02:45] Total de goles               Más de 3.5   LOST The New Saints     vs Barry Town         st=  2,000 net=   -2,000 clv=11.22
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Gyirmot FC         vs Karcagi SE         st=  2,000 net=   -2,000 clv=0.56
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Inter              vs Nápoles            st=  2,000 net=   +2,000 clv=11.73
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Al Kuwait SC       vs Al Jahra           st=  2,000 net=   -2,000 clv=-0.54
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Králův Dvůr        vs Domažlice          st=  2,000 net=   -2,000 clv=1.0
+  [09-14 02:45] Total de Tiros de Esquina    Más de 10.5  LOST NEC Nijmegen       vs Feyenoord          st=  2,000 net=   -2,000 clv=4.66
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Sabah FK           vs Zira IK            st=  2,000 net=   +2,040 clv=4.12
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Odds Ballklubb     vs Strømsgodset       st=  2,000 net=   -2,000 clv=8.93
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Accrington Stanley vs Crawley Town       st=  2,000 net=   +1,680 clv=-1.6
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Swindon Town       vs Colchester United  st=  2,000 net=   +1,800 clv=6.15
+  [09-14 02:45] Total de Tiros de Esquina    Más de 9.5   WON  Barnsley           vs Stevenage FC       st=  2,000 net=   +1,660 clv=2.23
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Sheffield United   vs Norwich City       st=  2,000 net=   +1,600 clv=0.56
+  [09-14 02:45] Total de goles               Más de 2.5   WON  KBSC Kazincbarcika vs Kecskeméti TE      st=  2,000 net=   +1,620 clv=-0.55
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Maidstone United   vs Weston Super Mare  st=  2,000 net=   -2,000 clv=0.51
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Brighton           vs Leeds United       st=  2,000 net=   -2,000 clv=6.9
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Brentford          vs Sunderland         st=  2,000 net=   +1,540 clv=2.91
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Brentford          vs Sunderland         st=  2,000 net=   -2,000 clv=3.45
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Metz               vs Rodez              st=  2,000 net=   +1,500 clv=0.57
+  [09-14 02:45] Total de goles               Más de 3.5   WON  Newcastle United   vs AFC Bournemouth    st=  2,000 net=   +2,960 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Nantong Zhiyun     vs Guangdong GZ-Power st=  2,000 net=   +1,460 clv=-0.57
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Nantong Zhiyun     vs Guangdong GZ-Power st=  2,000 net=   -2,000 clv=1.0
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Changchun Yatai    vs Shanghai Jiading C st=  2,000 net=   -2,000 clv=3.28
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST FC Seoul           vs Incheon United     st=  2,000 net=   -2,000 clv=None
+  [09-14 02:45] Total de goles               Más de 2.5   LOST FC Seoul           vs Incheon United     st=  2,000 net=   -2,000 clv=None
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Bucheon FC 1995    vs Daejeon Citizen    st=  2,000 net=   -2,000 clv=None
+  [09-14 02:45] Total de goles               Más de 3.5   LOST West Torrens Birka vs MetroStars         st=  2,000 net=   -2,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Motorlet Praha     vs SK Aritma Prague   st=  2,000 net=   -2,000 clv=None
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Atlético Nacional  vs Aguilas Doradas Ri st= 13,000 net=  -13,000 clv=2.56
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Famalicão          vs Sporting Lisboa    st= 13,000 net=  +11,180 clv=0.54
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 WON  CD Tenerife        vs Leganés            st= 13,000 net=  +11,180 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST FK IMT Novi Beogra vs Crvena Zvezda      st= 13,000 net=  -13,000 clv=-9.33
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Botev Vratsa       vs Levski Sofia       st= 13,000 net=  -13,000 clv=0.47
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Gençlerbirliği SK  vs Kasımpaşa          st= 13,000 net=  +10,140 clv=None
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 LOST Gençlerbirliği SK  vs Kasımpaşa          st= 13,000 net=  -13,000 clv=None
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Silkeborg IF       vs Viborg FF          st= 13,000 net=  +11,310 clv=None
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Alianza Lima       vs Universitario de D st= 13,000 net=  +13,000 clv=-1.96
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. LOST FC Cincinnati      vs Charlotte FC       st= 13,000 net=  -13,000 clv=1.03
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. LOST Deportivo Toluca F vs Club Atlas         st= 13,000 net=  -13,000 clv=9.14
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Real Soacha Cundin vs Unión Magdalena    st= 13,000 net=  +11,960 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Internacional de B vs Llaneros F.C.      st= 13,000 net=  +12,740 clv=-3.41
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Real Madrid        vs Rayo Vallecano     st= 13,000 net=  +13,910 clv=7.25
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Sunderland         vs Arsenal            st= 13,000 net=  -13,000 clv=-1.85
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  CSKA Sofia         vs FC Arda Kardzhali  st= 13,000 net=  +13,000 clv=1.52
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  9 De Octubre FC    vs Independiente Juni st= 13,000 net=  +19,240 clv=-0.8
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Cobresal           vs Coquimbo Unido     st= 13,000 net=   +9,880 clv=0.57
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 WON  Independiente Riva vs Aldosivi           st= 13,000 net=  +10,790 clv=-3.68
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Colwyn Bay         vs Connah's Quay FC   st= 13,000 net=  +10,790 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Ilves              vs FC Lahti           st= 13,000 net=  +12,220 clv=16.17
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  York City          vs Swindon Town       st= 13,000 net=  +12,480 clv=-7.55
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  IFK Mariehamn      vs TPS                st= 13,000 net=  +10,790 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 LOST Vicenza            vs Juve Stabia        st= 13,000 net=  -13,000 clv=1.46
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Levadia Tallinn    vs Vaprus Pärnu       st= 13,000 net=  -13,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Ventforet Kofu     vs Júbilo Iwata       st= 13,000 net=  -13,000 clv=-0.55
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Machida Zelvia     vs Yokohama F Marinos st= 13,000 net=  +10,270 clv=4.07
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 LOST Bucheon FC 1995    vs Jeju United        st= 13,000 net=  -13,000 clv=11.79
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Independiente Sant vs Deportes Tolima    st= 14,000 net=  -14,000 clv=4.4
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Sevilla            vs Valencia           st= 14,000 net=  -14,000 clv=-2.97
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. LOST Drogheda United    vs Sligo Rovers       st= 14,000 net=  -14,000 clv=5.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 11. WON  Sport Recife-PE    vs Ponte Preta-SP     st= 14,000 net=  +12,320 clv=5.62
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  CF Estrela         vs S.C. Braga         st= 14,000 net=  +11,480 clv=-0.55
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Radnik Surdulica   vs Crvena Zvezda      st= 14,000 net=  -14,000 clv=-0.56
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  CD Platense Zacate vs AD Isidro Metapán  st= 11,000 net=   +9,020 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Moreirense         vs Benfica            st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Mamelodi Sundowns  vs Siwelele F.C.      st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Al-Mokawloon Al-Ar vs Al Ahly Cairo      st= 11,000 net=  +13,750 clv=-1.32
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 11. WON  FC Twente          vs SC Telstar         st= 11,000 net=   +8,250 clv=7.36
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Željezničar Saraje vs FK Sarajevo        st= 11,000 net=  -11,000 clv=-0.98
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Watford            vs Preston North End  st= 12,000 net=   +9,960 clv=0.55
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. LOST TPS                vs SJK Seinäjoki      st= 12,000 net=  -12,000 clv=-0.54
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. LOST FC Lahti           vs IFK Mariehamn      st= 12,000 net=  -12,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST AD Cofutpa         vs Municipal Grecia   st= 11,000 net=  -11,000 clv=0.56
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 WON  Emelec             vs Manta FC           st= 11,000 net=  +11,440 clv=13.97
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Deportes Limache   vs Cobresal           st= 11,000 net=   +9,350 clv=-5.13
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Getafe             vs Celta Vigo         st= 11,000 net=  +14,080 clv=-1.72
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  National Bank of E vs Ghazl El-Mehalla   st= 11,000 net=  +12,980 clv=1.87
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  FC Fratria         vs FC Chernomorets 19 st= 11,000 net=  +10,230 clv=1.58
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Almeria            vs Cadiz              st= 10,000 net=   +8,000 clv=-3.23
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Lokomotiv Sofia    vs Ludogorets Razgrad st= 10,000 net=   +7,900 clv=-0.56
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Alaves             vs Osasuna            st= 10,000 net=  +10,000 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Ferencváros        vs Újpest FC          st= 10,000 net=   +8,000 clv=1.69
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 11. WON  Cracovia Kraków    vs Górnik Zabrze      st= 10,000 net=   +7,300 clv=None
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST The New Saints     vs Barry Town         st=  9,600 net=   -9,600 clv=1.62
+  [09-14 02:45] Total de goles               Más de 3.5   LOST The New Saints     vs Barry Town         st=  9,600 net=   -9,600 clv=11.22
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Gyirmot FC         vs Karcagi SE         st=  9,600 net=   -9,600 clv=0.56
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Inter              vs Nápoles            st=  9,600 net=   +9,600 clv=11.73
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Al Kuwait SC       vs Al Jahra           st=  9,600 net=   -9,600 clv=-0.54
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Králův Dvůr        vs Domažlice          st=  9,600 net=   -9,600 clv=1.0
+  [09-14 02:45] Total de Tiros de Esquina    Más de 10.5  LOST NEC Nijmegen       vs Feyenoord          st=  9,600 net=   -9,600 clv=4.66
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Sabah FK           vs Zira IK            st=  9,600 net=   +9,792 clv=4.12
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Odds Ballklubb     vs Strømsgodset       st=  9,600 net=   -9,600 clv=8.93
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Accrington Stanley vs Crawley Town       st=  9,600 net=   +8,064 clv=-1.6
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Swindon Town       vs Colchester United  st=  9,600 net=   +8,640 clv=6.15
+  [09-14 02:45] Total de Tiros de Esquina    Más de 9.5   WON  Barnsley           vs Stevenage FC       st=  9,600 net=   +7,968 clv=2.23
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Sheffield United   vs Norwich City       st=  9,600 net=   +7,680 clv=0.56
+  [09-14 02:45] Total de goles               Más de 2.5   WON  KBSC Kazincbarcika vs Kecskeméti TE      st=  9,600 net=   +7,776 clv=-0.55
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Maidstone United   vs Weston Super Mare  st=  9,600 net=   -9,600 clv=0.51
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Brighton           vs Leeds United       st=  9,600 net=   -9,600 clv=6.9
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Brentford          vs Sunderland         st=  9,600 net=   +7,392 clv=2.91
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Brentford          vs Sunderland         st=  9,600 net=   -9,600 clv=3.45
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Metz               vs Rodez              st=  9,600 net=   +7,200 clv=0.57
+  [09-14 02:45] Total de goles               Más de 3.5   WON  Newcastle United   vs AFC Bournemouth    st=  9,600 net=  +14,208 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Nantong Zhiyun     vs Guangdong GZ-Power st=  9,600 net=   +7,008 clv=-0.57
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Nantong Zhiyun     vs Guangdong GZ-Power st=  9,600 net=   -9,600 clv=1.0
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Changchun Yatai    vs Shanghai Jiading C st=  9,600 net=   -9,600 clv=3.28
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST FC Seoul           vs Incheon United     st=  9,600 net=   -9,600 clv=None
+  [09-14 02:45] Total de goles               Más de 2.5   LOST FC Seoul           vs Incheon United     st=  9,600 net=   -9,600 clv=None
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Bucheon FC 1995    vs Daejeon Citizen    st=  9,600 net=   -9,600 clv=None
+  [09-14 02:45] Total de goles               Más de 3.5   LOST West Torrens Birka vs MetroStars         st=  9,600 net=   -9,600 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Motorlet Praha     vs SK Aritma Prague   st=  9,600 net=   -9,600 clv=None
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Deportivo Pereira  vs Independiente Mede st= 11,000 net=  +10,780 clv=15.79
+  [09-14 02:45] Total de goles               Menos de 2.5 WON  Náutico-PE         vs Botafogo-SP        st= 11,000 net=   +7,700 clv=1.19
+  [09-14 02:45] Total de goles               Más de 3.5   WON  Managua FC         vs Diriangen FC       st= 11,000 net=  +19,250 clv=1.85
+  [09-14 02:45] Total de goles               Menos de 2.5 WON  Inter de Palmira   vs Real Soacha Cundin st= 11,000 net=   +8,470 clv=4.12
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Real Sociedad      vs Celta Vigo         st= 11,000 net=  -11,000 clv=5.08
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Universidad Católi vs Aucas              st= 11,000 net=  -11,000 clv=-7.46
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 WON  Toulouse           vs Lille              st= 11,000 net=  +10,450 clv=-0.51
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 9.5 WON  Anderlecht         vs Kortrijk           st= 11,000 net=   +8,140 clv=-2.25
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Lugano             vs Servette           st= 11,000 net=  -11,000 clv=-1.23
+  [09-14 02:45] Total de Tiros de Esquina    Más de 9.5   WON  Lugano             vs Servette           st= 11,000 net=   +7,810 clv=4.91
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 WON  KAA Gent           vs OH Leuven          st= 11,000 net=   +9,460 clv=0.54
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Lech Poznań        vs Jagiellonia Białys st= 11,000 net=  -11,000 clv=10.0
+  [09-14 02:45] Total de goles               Más de 3.5   LOST FC Copenhague      vs FC Nordsjælland    st= 11,000 net=  -11,000 clv=4.83
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 LOST Győri ETO FC       vs Ferencváros        st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Al Ahly Cairo      vs Smouha SC          st= 11,000 net=  -11,000 clv=9.69
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 8.5 WON  Neom SC            vs Al Khaleej Saihat  st= 11,000 net=  +12,540 clv=4.9
+  [09-14 02:45] Total de goles               Menos de 2.5 LOST Neom SC            vs Al Khaleej Saihat  st= 11,000 net=  -11,000 clv=8.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 WON  Raków Częstochowa  vs Górnik Zabrze      st= 11,000 net=   +9,790 clv=-4.55
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Al Feiha           vs Al-Kholood         st= 11,000 net=  +12,870 clv=0.93
+  [09-14 02:45] Total de tiros a puerta (Res Más de 8.5   LOST Al Feiha           vs Al-Kholood         st= 11,000 net=  -11,000 clv=-1.35
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Independiente Sant vs Millonarios FC     st= 11,200 net=  +10,864 clv=-2.48
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Independiente Sant vs Millonarios FC     st= 11,200 net=  +15,456 clv=-4.03
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 WON  Deportes Limache   vs Ñublense           st= 11,200 net=  +11,984 clv=1.47
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Forward Madison FC vs One Knoxville SC   st= 11,200 net=  -11,200 clv=-0.56
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Barcelona SC       vs Independiente del  st= 11,200 net=  +11,200 clv=0.0
+  [09-14 02:45] Total de goles               Menos de 2.5 LOST New York Cosmos    vs Sarasota Paradise  st= 11,200 net=  -11,200 clv=-0.91
+  [09-14 02:45] Total de goles               Más de 3.5   WON  Charlotte Independ vs Portland Hearts of st= 11,200 net=  +10,976 clv=9.39
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Charleston Battery vs Hartford Athletic  st= 11,200 net=  -11,200 clv=0.0
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Westchester SC     vs Chattanooga Red Wo st= 11,200 net=  -11,200 clv=1.22
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Marquense          vs Xelaju MC          st= 11,200 net=  +14,336 clv=0.0
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Falkirk            vs Rangers FC         st= 11,200 net=  -11,200 clv=-0.86
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 WON  Dundee FC          vs St Johnstone       st= 11,200 net=   +6,832 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Dundee FC          vs St Johnstone       st= 11,200 net=  -11,200 clv=3.26
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 9.5 LOST Celtic             vs Aberdeen           st= 11,200 net=  -11,200 clv=0.0
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Celtic             vs Aberdeen           st= 11,200 net=  -11,200 clv=3.63
+  [09-14 02:45] Total de goles               Menos de 2.5 LOST Burton Albion      vs AFC Wimbledon      st= 11,200 net=  -11,200 clv=5.29
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 LOST Burton Albion      vs AFC Wimbledon      st= 11,200 net=  -11,200 clv=4.92
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Luton Town         vs Stockport County   st= 11,200 net=  -11,200 clv=10.53
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 11. WON  Queens Park Ranger vs Cardiff City       st= 11,200 net=   +6,944 clv=5.88
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 9.5 WON  Queens Park Ranger vs Cardiff City       st= 11,200 net=   +8,064 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Queens Park Ranger vs Cardiff City       st= 11,200 net=   +7,168 clv=4.46
+  [09-14 02:45] Total de Tiros de Esquina    Más de 10.5  LOST Red Bull Salzburg  vs Rapid de Viena     st= 11,200 net=  -11,200 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Más de 9.5   LOST Thun               vs Lausanne-Sport     st= 11,200 net=  -11,200 clv=-2.08
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Široki Brijeg      vs FK Sarajevo        st= 11,200 net=  +12,544 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Široki Brijeg      vs FK Sarajevo        st= 11,200 net=  +15,456 clv=-6.67
+  [09-14 02:45] Total de tiros a puerta (Res Más de 9.5   WON  AGF Aarhus         vs FC Midtjylland     st= 11,200 net=   +9,520 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Más de 9.5   WON  AGF Aarhus         vs FC Midtjylland     st= 11,200 net=   +7,392 clv=1.22
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Slavia Sofia       vs Levski Sofia       st= 11,200 net=  +12,544 clv=-0.93
+  [09-14 02:45] Total de goles               Más de 3.5   WON  Flora Tallinn      vs Tammeka Tartu      st= 11,200 net=  +10,192 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 LOST V-Varen Nagasaki   vs Gamba Osaka        st= 11,200 net=  -11,200 clv=1.52
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 8.5 WON  Fortaleza FC       vs Once Caldas Maniza st= 11,000 net=  +15,180 clv=9.17
+  [09-14 02:45] Total de goles               Menos de 2.5 WON  LDU Quito          vs Mushuc Runa        st= 11,000 net=  +10,670 clv=0.51
+  [09-14 02:45] Total de goles               Menos de 1.5 LOST Atlético Mineiro-M vs Cruzeiro-MG        st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 8.5 LOST Atlético Mineiro-M vs Cruzeiro-MG        st= 11,000 net=  -11,000 clv=12.9
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 7.5 LOST Atlético Mineiro-M vs Cruzeiro-MG        st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 WON  Londrina-PR        vs Juventude-RS       st= 11,000 net=  +13,750 clv=-6.25
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Envigado FC        vs Unión Magdalena    st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 WON  Stoke City         vs Norwich City       st= 11,000 net=   +8,470 clv=-4.32
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 LOST Stoke City         vs Norwich City       st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Más de 9.5   WON  Salford City FC    vs Newport County     st= 11,000 net=   +8,030 clv=4.22
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Accrington Stanley vs Grimsby Town       st= 11,000 net=  +10,560 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Más de 9.5   WON  Accrington Stanley vs Grimsby Town       st= 11,000 net=   +8,800 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Bristol Rovers     vs Colchester United  st= 11,000 net=  -11,000 clv=3.33
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 8.5 WON  Bristol Rovers     vs Colchester United  st= 11,000 net=  +14,300 clv=-2.13
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 8.5 WON  Cheltenham         vs York City          st= 11,000 net=  +19,250 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 8.5 LOST Swindon Town       vs Port Vale          st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Menos de 2.5 LOST Swindon Town       vs Port Vale          st= 11,000 net=  -11,000 clv=-0.56
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 LOST Chesterfield       vs Gillingham         st= 11,000 net=  -11,000 clv=0.53
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Leek Town          vs Warrington Town FC st= 11,000 net=  +10,120 clv=0.0
+  [09-14 02:45] Total de goles               Menos de 2.5 LOST Bradford City      vs Cambridge United   st= 11,000 net=  -11,000 clv=7.39
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 LOST Swansea City       vs Watford            st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 7.5 LOST Preston North End  vs Bristol City       st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 4.5   WON  FC Zürich          vs Young Boys         st= 11,000 net=  +17,930 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 9.5 LOST Wolfsberger AC     vs LASK Linz          st= 11,000 net=  -11,000 clv=10.22
+  [09-14 02:45] Total de goles               Menos de 2.5 LOST Wolfsberger AC     vs LASK Linz          st= 11,000 net=  -11,000 clv=-13.45
+  [09-14 02:45] Total de goles               Más de 5.5   LOST KR Reykjavík       vs Vikingur Reykjavík st= 11,000 net=  -11,000 clv=10.53
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Boluspor           vs Keciörengücü       st= 11,000 net=  -11,000 clv=0.62
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Helsingborgs IF    vs Örebro SK          st= 11,000 net=  -11,000 clv=-1.23
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 10. WON  Helsingborgs IF    vs Örebro SK          st= 11,000 net=   +8,250 clv=1.16
+  [09-14 02:45] Total de goles               Menos de 2.5 WON  SV Horn            vs SC ESV Parndorf    st= 11,000 net=  +13,750 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Singida Black Star vs Namungo FC         st= 11,000 net=  +11,770 clv=-2.36
+  [09-14 02:45] Total de Tiros de Esquina    Menos de 8.5 WON  Ghazl El-Mehalla   vs ENPPI Club         st= 11,000 net=  +10,010 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Ghazl El-Mehalla   vs ENPPI Club         st= 11,000 net=  -11,000 clv=1.54
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Union La Calera    vs La Serena          st= 11,000 net=  -11,000 clv=1.08
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Defensa y Justicia vs Platense           st= 11,000 net=  -11,000 clv=0.46
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 WON  Defensa y Justicia vs Platense           st= 11,000 net=  +10,450 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Estudiantes de La  vs Newell's Old Boys  st= 11,000 net=  -11,000 clv=0.46
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  FC Barcelona       vs Rayo Vallecano     st= 11,000 net=  +11,220 clv=4.12
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Benfica            vs Estoril            st= 11,000 net=  +11,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Aston Villa        vs Arsenal            st= 11,000 net=  -11,000 clv=2.76
+  [09-14 02:45] Total de tiros a puerta (Res Más de 8.5   LOST Aston Villa        vs Arsenal            st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Osasuna            vs Getafe             st= 11,000 net=  -11,000 clv=1.75
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 7.5 LOST Lecce              vs Roma               st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Weston Super Mare  vs Chelmsford City    st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Gainsborough Trini vs Cleethorpes Town   st= 11,000 net=  +11,000 clv=-0.99
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Real CD España     vs Atletico Choloma   st= 11,000 net=  +11,220 clv=6.32
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Millonarios FC     vs Internacional de B st= 11,000 net=  -11,000 clv=-0.99
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 WON  Independiente      vs Gimnasia y Esgrima st= 11,000 net=   +9,460 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Independiente      vs Gimnasia y Esgrima st= 11,000 net=  -11,000 clv=2.86
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Mirassol-SP        vs Palmeiras-SP       st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Más de 9.5   LOST Mirassol-SP        vs Palmeiras-SP       st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 LOST Grêmio-RS          vs Chapecoense-SC     st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Real Monarchs SLC  vs Tacoma Defiance    st= 11,000 net=  -11,000 clv=-6.67
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Sport Boys         vs Sporting Cristal   st= 11,000 net=  -11,000 clv=1.55
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Bentin Tacna Heroi vs Santos FC          st= 11,000 net=  +10,450 clv=-1.52
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 LOST Celta Vigo         vs Athletic Bilbao    st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Celta Vigo         vs Athletic Bilbao    st= 11,000 net=  -11,000 clv=-3.23
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 LOST América-MG         vs Ponte Preta-SP     st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Avaí-SC            vs Atlético-GO        st= 11,000 net=  -11,000 clv=-1.06
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 7.5 LOST Avaí-SC            vs Atlético-GO        st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Pisa               vs Catanzaro          st= 11,000 net=  +13,750 clv=0.9
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Corinthians-SP     vs Santos-SP          st= 11,000 net=  -11,000 clv=1.87
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Corinthians-SP     vs Santos-SP          st= 11,000 net=  -11,000 clv=0.52
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Cagliari           vs Inter              st= 11,000 net=  -11,000 clv=5.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Banfield           vs River Plate        st= 11,000 net=  +11,440 clv=-6.42
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Aucas              vs Libertad Loja      st= 11,000 net=  -11,000 clv=-0.52
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Casa Pia           vs Moreirense         st= 11,000 net=  -11,000 clv=0.53
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Nápoles            vs Como               st= 11,000 net=   +9,900 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Nápoles            vs Como               st= 11,000 net=  +14,080 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Más de 8.5   LOST Nápoles            vs Como               st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Deportes Copiapó   vs Antofagasta        st= 11,000 net=  +10,010 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Botev Plovdiv      vs Levski Sofia       st= 11,000 net=  +10,120 clv=3.78
+  [09-14 02:45] Total de Tiros de Esquina    Más de 9.5   WON  Botev Plovdiv      vs Levski Sofia       st= 11,000 net=  +12,100 clv=1.94
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Spartak Varna      vs Ludogorets Razgrad st= 11,000 net=   +9,130 clv=-0.54
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Moss               vs Strømmen           st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   LOST FC Andorra         vs Eibar              st= 11,000 net=  -11,000 clv=2.5
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 LOST Dundee FC          vs Hibernian          st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Athletico Paranaen vs Fluminense-RJ      st= 11,000 net=  +10,560 clv=0.51
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Athletico Paranaen vs Fluminense-RJ      st= 11,000 net=  +14,520 clv=-1.28
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 WON  Leeds United       vs Brentford          st= 11,000 net=   +9,680 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 7.5 WON  Sunderland         vs Fulham             st= 11,000 net=  +10,560 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 9.5 WON  Silkeborg IF       vs FC Midtjylland     st= 11,000 net=  +10,010 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 LOST Lyngby             vs Odense BK          st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Más de 9.5   LOST Aberdeen           vs Rangers FC         st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 3.5   WON  FC Utrecht         vs PSV Eindhoven      st= 11,000 net=  +10,670 clv=17.26
+  [09-14 02:45] Total de tiros a puerta (Res Más de 12.5  WON  FC Utrecht         vs PSV Eindhoven      st= 11,000 net=  +23,650 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Sydney United      vs St. George Saints  st= 11,000 net=  -11,000 clv=-4.72
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 9.5 WON  Portland Timbers   vs Austin FC          st= 11,000 net=  +13,750 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   LOST CSD Comunicaciones vs CSD Municipal      st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 7.5 LOST Talleres           vs Central Córdoba    st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 9.5 WON  Houston Dynamo     vs San Jose Earthquak st= 11,000 net=  +11,770 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Club Atlético Tucu vs Belgrano           st= 11,000 net=  -11,000 clv=0.95
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Alianza Lima       vs Club Deportivo Gar st= 11,000 net=  -11,000 clv=-4.93
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 7.5 LOST Club Atlas         vs Querétaro FC       st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   WON  São Paulo-SP       vs RB Bragantino-SP   st= 11,000 net=  +12,540 clv=-0.93
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Botafogo-SP        vs Cuiabá-MT          st= 11,000 net=  +12,320 clv=-1.85
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Atlético Mineiro-M vs Vitória-BA         st= 11,000 net=  +12,320 clv=-0.93
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Rosario Central    vs Gimnasia de La Pla st= 11,000 net=  +11,880 clv=-1.89
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Avellino           vs Vicenza            st= 11,000 net=  +13,200 clv=1.38
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Auxerre            vs Angers             st= 11,000 net=  +12,320 clv=-1.85
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 7.5 LOST Auxerre            vs Angers             st= 11,000 net=  -11,000 clv=-6.09
+  [09-14 02:45] Total de goles               Más de 2.5   LOST FK Sarajevo        vs Zrinjski Mostar    st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Carlos A. Mannucci vs Academia Cantolao  st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Albacete Balompié  vs Real Oviedo        st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Sampdoria          vs Juve Stabia        st= 11,000 net=  +11,660 clv=-0.48
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 7.5 LOST Monza              vs Udinese            st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Monza              vs Udinese            st= 11,000 net=  +10,010 clv=-1.04
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Monza              vs Udinese            st= 11,000 net=  +13,750 clv=-1.32
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 LOST Sassuolo           vs Torino             st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Sassuolo           vs Torino             st= 11,000 net=  +11,440 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Konyaspor          vs Kocaelispor        st= 11,000 net=   +9,570 clv=-5.08
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Levante            vs Real Betis         st= 11,000 net=   +9,350 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 9.5 WON  Excelsior Rotterda vs Sparta Rotterdam   st= 11,000 net=   +9,900 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Más de 10.5  WON  Santos Laguna      vs Tigres UANL        st= 11,000 net=  +11,440 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Más de 9.5   WON  Vasco da Gama-RJ   vs Cruzeiro-MG        st= 11,000 net=  +10,670 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 WON  Tottenham          vs Newcastle United   st= 11,000 net=  +11,220 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Alverca            vs Santa Clara        st= 11,000 net=   +9,900 clv=-0.52
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  RAAL La Louvière   vs KV Mechelen        st= 11,000 net=   +9,350 clv=-0.54
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 7.5 LOST RAAL La Louvière   vs KV Mechelen        st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 7.5 LOST Blackburn Rovers   vs Queens Park Ranger st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 7.5 WON  Bristol City       vs Portsmouth         st= 11,000 net=   +9,900 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 LOST AFC Bournemouth    vs Everton            st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Kyoto Purple Sanga vs Avispa Fukuoka     st= 11,000 net=  +11,220 clv=5.21
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Nagoya Grampus Eig vs Fagiano Okayama    st= 11,000 net=  +11,000 clv=2.56
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Yokohama FC        vs Sagan Tosu         st= 11,000 net=  +11,880 clv=1.46
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Vissel Kobe        vs Cerezo Osaka       st= 11,000 net=  -11,000 clv=-2.55
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Kataller Toyama    vs Fujieda MYFC       st= 11,000 net=   +9,460 clv=3.33
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST V-Varen Nagasaki   vs FC Tokyo           st= 11,000 net=  -11,000 clv=-2.11
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Mito Hollyhock     vs Machida Zelvia     st= 11,000 net=  +11,550 clv=3.54
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Mito Hollyhock     vs Machida Zelvia     st= 11,000 net=  -11,000 clv=6.91
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Unión de Santa Fe  vs Sarmiento          st= 11,000 net=  +10,670 clv=1.03
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 LOST Unión de Santa Fe  vs Sarmiento          st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Comerciantes Unido vs FC Cajamarca       st= 11,000 net=   +9,680 clv=0.53
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 WON  Alaves             vs Villarreal         st= 11,000 net=  +10,670 clv=0.0
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST CD Tenerife        vs Sporting de Gijón  st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 3.5   LOST Cardiff Met Univer vs Briton Ferry Llans st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Guiseley           vs Lancaster          st= 11,000 net=  +10,230 clv=1.05
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           LOST Cremonese          vs Módena             st= 11,000 net=  -11,000 clv=12.02
+  [09-14 02:45] Total de goles               Más de 2.5   WON  Cremonese          vs Módena             st= 11,000 net=  +14,520 clv=7.91
+  [09-14 02:45] Total de tiros a puerta (Res Más de 10.5  LOST Al Nassr           vs Al Taawon Buraidah st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de goles               Más de 2.5   LOST Nancy              vs Dunquerque         st= 11,000 net=  -11,000 clv=0.0
+  [09-14 02:45] Total de Tiros de Esquina    Más de 8.5   LOST Montpellier        vs Boulogne           st= 11,000 net=  -11,000 clv=7.18
+  [09-14 02:45] Ambos Equipos Marcarán       Sí           WON  Keciörengücü       vs Ümraniyespor       st= 11,000 net=   +9,900 clv=0.0
+  [09-14 02:45] Total de tiros a puerta (Res Menos de 8.5 WON  Al Riyadh          vs Neom SC            st= 11,000 net=  +13,200 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Atlético Nacional  vs Aguilas Doradas Ri st=  2,800 net=   -2,800 clv=2.56
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Botev Vratsa       vs Levski Sofia       st=  2,800 net=   -2,800 clv=0.47
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Alianza Lima       vs Universitario de D st=  2,600 net=   +2,600 clv=-1.96
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 10. LOST FC Cincinnati      vs Charlotte FC       st=  2,600 net=   -2,600 clv=1.03
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 10. LOST Deportivo Toluca F vs Club Atlas         st=  2,600 net=   -2,600 clv=9.14
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Real Madrid        vs Rayo Vallecano     st=  2,600 net=   +2,782 clv=7.25
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Sunderland         vs Arsenal            st=  2,600 net=   -2,600 clv=-1.85
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  CSKA Sofia         vs FC Arda Kardzhali  st=  2,600 net=   +2,600 clv=1.52
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  9 De Octubre FC    vs Independiente Juni st=  2,600 net=   +3,848 clv=-0.8
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 10. WON  Ilves              vs FC Lahti           st=  2,600 net=   +2,444 clv=16.17
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 10. WON  York City          vs Swindon Town       st=  2,600 net=   +2,496 clv=-7.55
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 LOST Vicenza            vs Juve Stabia        st=  2,600 net=   -2,600 clv=1.46
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 LOST Bucheon FC 1995    vs Jeju United        st=  2,600 net=   -2,600 clv=11.79
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Independiente Sant vs Deportes Tolima    st=    800 net=     -800 clv=4.4
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Sevilla            vs Valencia           st=    800 net=     -800 clv=-2.97
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 11. WON  Sport Recife-PE    vs Ponte Preta-SP     st=    800 net=     +720 clv=6.74
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Moreirense         vs Benfica            st=    800 net=     -800 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Mamelodi Sundowns  vs Siwelele F.C.      st=    800 net=     -800 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Al-Mokawloon Al-Ar vs Al Ahly Cairo      st=    800 net=   +1,000 clv=-1.32
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Željezničar Saraje vs FK Sarajevo        st=    800 net=     -800 clv=-0.98
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 WON  Emelec             vs Manta FC           st=    500 net=     +520 clv=13.97
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Getafe             vs Celta Vigo         st=    500 net=     +640 clv=-1.72
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  National Bank of E vs Ghazl El-Mehalla   st=    500 net=     +590 clv=1.87
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Alaves             vs Osasuna            st=    500 net=     +500 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Universitario de D vs Comerciantes Unido st=    500 net=     +570 clv=1.9
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Oriente Petrolero  vs Always Ready       st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   WON  Indy Eleven        vs Birmingham Legion  st=    500 net=     +650 clv=9.52
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Gimnasia y Esgrima vs Boca Juniors       st=    500 net=     +500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   WON  Paksi SE           vs DVSC Debreceni     st=    500 net=     +525 clv=13.26
+  [09-14 09:17] Total de goles               Más de 3.5   LOST The New Saints     vs Barry Town         st=    500 net=     -500 clv=11.22
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Inter              vs Nápoles            st=    500 net=     +500 clv=11.73
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Králův Dvůr        vs Domažlice          st=    500 net=     -500 clv=1.0
+  [09-14 09:17] Total de Tiros de Esquina    Más de 10.5  LOST NEC Nijmegen       vs Feyenoord          st=    500 net=     -500 clv=4.66
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Sabah FK           vs Zira IK            st=    500 net=     +510 clv=4.12
+  [09-14 09:17] Total de goles               Más de 3.5   WON  Newcastle United   vs AFC Bournemouth    st=    500 net=     +740 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Nantong Zhiyun     vs Guangdong GZ-Power st=    500 net=     -500 clv=1.0
+  [09-14 09:17] Total de goles               Más de 3.5   LOST West Torrens Birka vs MetroStars         st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 8.5 LOST Lyon               vs Auxerre            st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 8.5 WON  Viborg FF          vs Lyngby             st=    500 net=     +775 clv=None
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Avondale FC        vs Preston Lions      st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Más de 10.5  LOST Athletic Club-MG   vs Vila Nova-GO       st=    500 net=     -500 clv=-0.87
+  [09-14 09:17] Total de Tiros de Esquina    Más de 9.5   LOST New York City FC   vs Nashville SC       st=    500 net=     -500 clv=6.34
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Santiago Wanderers vs Deportes Iquique   st=    500 net=     -500 clv=1.79
+  [09-14 09:17] Total de goles               Más de 3.5   WON  AD Comerciantes FC vs Ayacucho FC        st=    500 net=   +1,325 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 8.5 WON  Alianza Atlético   vs UTC Cajamarca      st=    500 net=     +560 clv=-1.85
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 LOST Real Betis         vs Real Madrid        st=    500 net=     -500 clv=-9.01
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Caernarfon         vs Flint Town United  st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Bray Wanderers     vs Cork City          st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 8.5 WON  UD Las Palmas      vs Leganés            st=    500 net=     +540 clv=5.05
+  [09-14 09:17] Total de Tiros de Esquina    Más de 9.5   LOST FC Arda Kardzhali  vs Botev Plovdiv      st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 WON  Al Ahli Jeddah     vs Al Riyadh          st=    500 net=     +575 clv=9.14
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 LOST Sparta Rotterdam   vs PEC Zwolle         st=    500 net=     -500 clv=-20.78
+  [09-14 09:17] Total de goles               Más de 3.5   WON  FC Cajamarca       vs Cienciano Cusco    st=    500 net=     +825 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 8.5 LOST Richards Bay FC    vs Amazulu FC         st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Más de 9.5   WON  CFR Cluj           vs Farul Constanta    st=    500 net=     +600 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 10. LOST Aalesund           vs Start              st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 LOST IFK Norrköping     vs Ljungskile SK      st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de goles               Más de 3.5   WON  Managua FC         vs Diriangen FC       st=    500 net=     +875 clv=1.85
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Universidad Católi vs Aucas              st=    500 net=     -500 clv=-7.46
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Lech Poznań        vs Jagiellonia Białys st=    500 net=     -500 clv=10.0
+  [09-14 09:17] Total de goles               Más de 3.5   LOST FC Copenhague      vs FC Nordsjælland    st=    500 net=     -500 clv=4.83
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 LOST Győri ETO FC       vs Ferencváros        st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Al Ahly Cairo      vs Smouha SC          st=    500 net=     -500 clv=9.69
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 8.5 WON  Neom SC            vs Al Khaleej Saihat  st=    500 net=     +570 clv=4.9
+  [09-14 09:17] Total de goles               Menos de 2.5 LOST Neom SC            vs Al Khaleej Saihat  st=    500 net=     -500 clv=8.0
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Al Feiha           vs Al-Kholood         st=    500 net=     +585 clv=0.93
+  [09-14 09:17] Total de tiros a puerta (Res Más de 8.5   LOST Al Feiha           vs Al-Kholood         st=    500 net=     -500 clv=-1.35
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Independiente Sant vs Millonarios FC     st=  1,000 net=   +1,380 clv=-4.03
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 WON  Deportes Limache   vs Ñublense           st=  1,000 net=   +1,070 clv=1.47
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Barcelona SC       vs Independiente del  st=  1,000 net=   +1,000 clv=0.0
+  [09-14 09:17] Total de goles               Menos de 2.5 LOST New York Cosmos    vs Sarasota Paradise  st=  1,000 net=   -1,000 clv=-0.91
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Charleston Battery vs Hartford Athletic  st=  1,000 net=   -1,000 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Westchester SC     vs Chattanooga Red Wo st=  1,000 net=   -1,000 clv=1.22
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Marquense          vs Xelaju MC          st=  1,000 net=   +1,280 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Falkirk            vs Rangers FC         st=  1,000 net=   -1,000 clv=-0.86
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Celtic             vs Aberdeen           st=  1,000 net=   -1,000 clv=3.63
+  [09-14 09:17] Total de Tiros de Esquina    Más de 10.5  LOST Red Bull Salzburg  vs Rapid de Viena     st=  1,000 net=   -1,000 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Široki Brijeg      vs FK Sarajevo        st=  1,000 net=   +1,120 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Široki Brijeg      vs FK Sarajevo        st=  1,000 net=   +1,380 clv=-6.67
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Slavia Sofia       vs Levski Sofia       st=  1,000 net=   +1,120 clv=-0.93
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 LOST V-Varen Nagasaki   vs Gamba Osaka        st=  1,000 net=   -1,000 clv=1.52
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 8.5 WON  Fortaleza FC       vs Once Caldas Maniza st=    800 net=   +1,104 clv=9.17
+  [09-14 09:17] Total de goles               Menos de 1.5 LOST Atlético Mineiro-M vs Cruzeiro-MG        st=    800 net=     -800 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 8.5 LOST Atlético Mineiro-M vs Cruzeiro-MG        st=    800 net=     -800 clv=12.9
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 LOST Atlético Mineiro-M vs Cruzeiro-MG        st=    800 net=     -800 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 WON  Londrina-PR        vs Juventude-RS       st=    800 net=   +1,000 clv=-6.25
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 8.5 WON  Bristol Rovers     vs Colchester United  st=    800 net=   +1,040 clv=-2.13
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 8.5 WON  Cheltenham         vs York City          st=    800 net=   +1,400 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 LOST Preston North End  vs Bristol City       st=    800 net=     -800 clv=0.0
+  [09-14 09:17] Total de goles               Más de 4.5   WON  FC Zürich          vs Young Boys         st=    800 net=   +1,304 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 LOST Wolfsberger AC     vs LASK Linz          st=    800 net=     -800 clv=10.22
+  [09-14 09:17] Total de goles               Menos de 2.5 LOST Wolfsberger AC     vs LASK Linz          st=    800 net=     -800 clv=-13.45
+  [09-14 09:17] Total de goles               Más de 5.5   LOST KR Reykjavík       vs Vikingur Reykjavík st=    800 net=     -800 clv=10.53
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 WON  Helsingborgs IF    vs Örebro SK          st=    800 net=     +920 clv=0.0
+  [09-14 09:17] Total de goles               Menos de 2.5 WON  SV Horn            vs SC ESV Parndorf    st=    800 net=   +1,000 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Singida Black Star vs Namungo FC         st=    800 net=     +856 clv=-2.36
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Ghazl El-Mehalla   vs ENPPI Club         st=    800 net=     -800 clv=1.54
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Defensa y Justicia vs Platense           st=    800 net=     -800 clv=0.46
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Estudiantes de La  vs Newell's Old Boys  st=    800 net=     -800 clv=0.46
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  FC Barcelona       vs Rayo Vallecano     st=    800 net=     +816 clv=4.12
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Benfica            vs Estoril            st=    800 net=     +800 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Más de 8.5   LOST Aston Villa        vs Arsenal            st=    800 net=     -800 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Osasuna            vs Getafe             st=    800 net=     -800 clv=1.75
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 LOST Lecce              vs Roma               st=    800 net=     -800 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Weston Super Mare  vs Chelmsford City    st=    800 net=     -800 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Gainsborough Trini vs Cleethorpes Town   st=    800 net=     +800 clv=-0.99
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Real CD España     vs Atletico Choloma   st=    500 net=     +510 clv=6.32
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Millonarios FC     vs Internacional de B st=    500 net=     -500 clv=-0.99
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Independiente      vs Gimnasia y Esgrima st=    500 net=     -500 clv=2.86
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Mirassol-SP        vs Palmeiras-SP       st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Más de 9.5   LOST Mirassol-SP        vs Palmeiras-SP       st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 8.5 LOST Grêmio-RS          vs Chapecoense-SC     st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Celta Vigo         vs Athletic Bilbao    st=    500 net=     -500 clv=-3.23
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 8.5 LOST América-MG         vs Ponte Preta-SP     st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 LOST Avaí-SC            vs Atlético-GO        st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Pisa               vs Catanzaro          st=    500 net=     +625 clv=0.9
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Corinthians-SP     vs Santos-SP          st=    500 net=     -500 clv=1.87
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Cagliari           vs Inter              st=    500 net=     -500 clv=5.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Banfield           vs River Plate        st=    500 net=     +520 clv=-6.42
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Nápoles            vs Como               st=    500 net=     +640 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Más de 8.5   LOST Nápoles            vs Como               st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Más de 9.5   WON  Botev Plovdiv      vs Levski Sofia       st=    500 net=     +550 clv=1.94
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Moss               vs Strømmen           st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST FC Andorra         vs Eibar              st=    500 net=     -500 clv=6.0
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Athletico Paranaen vs Fluminense-RJ      st=    500 net=     +650 clv=-2.13
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 8.5 LOST Lyngby             vs Odense BK          st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Más de 9.5   LOST Aberdeen           vs Rangers FC         st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Más de 12.5  WON  FC Utrecht         vs PSV Eindhoven      st=    500 net=   +1,075 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Sydney United      vs St. George Saints  st=    500 net=     -500 clv=-4.72
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 9.5 WON  Portland Timbers   vs Austin FC          st=    500 net=     +625 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST CSD Comunicaciones vs CSD Municipal      st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Club Atlético Tucu vs Belgrano           st=    500 net=     -500 clv=0.95
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Alianza Lima       vs Club Deportivo Gar st=    500 net=     -500 clv=-4.93
+  [09-14 09:17] Total de tiros a puerta (Res Más de 9.5   WON  Vasco da Gama-RJ   vs Cruzeiro-MG        st=    500 net=     +540 clv=5.58
+  [09-14 09:17] Total de goles               Más de 2.5   WON  São Paulo-SP       vs RB Bragantino-SP   st=    500 net=     +570 clv=-0.93
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Atlético Mineiro-M vs Vitória-BA         st=    500 net=     +560 clv=-0.93
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Avellino           vs Vicenza            st=    500 net=     +600 clv=1.38
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Auxerre            vs Angers             st=    500 net=     +560 clv=-1.85
+  [09-14 09:17] Total de goles               Más de 2.5   LOST FK Sarajevo        vs Zrinjski Mostar    st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Albacete Balompié  vs Real Oviedo        st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Monza              vs Udinese            st=    500 net=     +625 clv=-1.32
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Sassuolo           vs Torino             st=    500 net=     +520 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Más de 10.5  WON  Santos Laguna      vs Tigres UANL        st=    500 net=     +520 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 9.5 WON  Houston Dynamo     vs San Jose Earthquak st=    500 net=     +535 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 LOST Club Atlas         vs Querétaro FC       st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Botafogo-SP        vs Cuiabá-MT          st=    500 net=     +560 clv=-1.85
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Rosario Central    vs Gimnasia de La Pla st=    500 net=     +550 clv=-0.94
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 LOST Auxerre            vs Angers             st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Sampdoria          vs Juve Stabia        st=    500 net=     +530 clv=-0.48
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 8.5 WON  Tottenham          vs Newcastle United   st=    500 net=     +510 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 LOST Blackburn Rovers   vs Queens Park Ranger st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Hemel Hempstead To vs Weston Super Mare  st=    500 net=     +560 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Kyoto Purple Sanga vs Avispa Fukuoka     st=    500 net=     +510 clv=5.21
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Kyoto Purple Sanga vs Avispa Fukuoka     st=    500 net=     +715 clv=10.45
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Nagoya Grampus Eig vs Fagiano Okayama    st=    500 net=     +500 clv=2.56
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Yokohama FC        vs Sagan Tosu         st=    500 net=     +540 clv=1.46
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Mito Hollyhock     vs Machida Zelvia     st=    500 net=     +525 clv=3.54
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Mito Hollyhock     vs Machida Zelvia     st=    500 net=     -500 clv=6.91
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 8.5 LOST Unión de Santa Fe  vs Sarmiento          st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Cardiff Met Univer vs Briton Ferry Llans st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Cremonese          vs Módena             st=    500 net=     -500 clv=12.02
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Cremonese          vs Módena             st=    500 net=     +660 clv=7.91
+  [09-14 09:17] Total de tiros a puerta (Res Más de 10.5  LOST Al Nassr           vs Al Taawon Buraidah st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 8.5 WON  Al Riyadh          vs Neom SC            st=    500 net=     +600 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Celta Vigo         vs Osasuna            st=    500 net=     +550 clv=-8.7
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Al-Mokawloon Al-Ar vs Al-Masry Club      st=    500 net=     +570 clv=-1.38
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Real Potosí        vs Real Tomayapo      st=    500 net=     -500 clv=-5.99
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  CD Platense Zacate vs FC Alianza         st=    500 net=     +510 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Anyang FC          vs Incheon United     st=    500 net=     +550 clv=2.44
+  [09-14 09:17] Total de tiros a puerta (Res Más de 9.5   LOST Cruzeiro-MG        vs Atlético Mineiro-M st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Más de 11.5  LOST Cruzeiro-MG        vs Atlético Mineiro-M st=    500 net=     -500 clv=11.76
+  [09-14 09:17] Total de goles               Más de 3.5   WON  Gualberto Villarro vs Oriente Petrolero  st=    500 net=     +585 clv=1.4
+  [09-14 09:17] Total de tiros a puerta (Res Más de 9.5   WON  Al Shabab          vs Al Riyadh          st=    500 net=     +560 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 6.5 WON  Tigre              vs Central Córdoba    st=    500 net=     +815 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 8.5 LOST Pumas UNAM         vs Club Necaxa        st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Coritiba-PR        vs Corinthians-SP     st=    500 net=     +500 clv=-0.99
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Coritiba-PR        vs Corinthians-SP     st=    500 net=     +725 clv=-3.92
+  [09-14 09:17] Total de goles               Más de 2.5   WON  River Plate        vs Club Atlético Véle st=    500 net=     +700 clv=0.84
+  [09-14 09:17] Total de tiros a puerta (Res Más de 9.5   LOST River Plate        vs Club Atlético Véle st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 LOST Criciúma-SC        vs Fortaleza-CE       st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 LOST Chapecoense-SC     vs São Paulo-SP       st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Operário-PR        vs Vila Nova-GO       st=    500 net=     -500 clv=0.98
+  [09-14 09:17] Total de goles               Más de 2.5   LOST CD Tenerife        vs Almeria            st=    500 net=     -500 clv=-0.97
+  [09-14 09:17] Total de goles               Más de 4.5   LOST Vikingur Reykjavík vs Valur Reykjavík    st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 WON  Ponte Preta-SP     vs Avaí-SC            st=    500 net=     +640 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Más de 10.5  LOST Universidad de Chi vs Colo Colo          st=    500 net=     -500 clv=6.44
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 8.5 WON  RB Bragantino-SP   vs Grêmio-RS          st=    500 net=     +570 clv=8.08
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Cesena             vs Sampdoria          st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Panetolikos Agrini vs Asteras Tripolis   st=    500 net=     +500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Deportivo Maipú    vs Quilmes            st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   LOST CFR Cluj           vs FCSB               st=    500 net=     -500 clv=3.92
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Crvena Zvezda      vs FK Čukarički       st=    500 net=     -500 clv=26.51
+  [09-14 09:17] Total de goles               Más de 4.5   LOST Crvena Zvezda      vs FK Čukarički       st=    500 net=     -500 clv=12.73
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Sporting de Gijón  vs Burgos             st=    500 net=     -500 clv=2.08
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Pisa               vs Padova             st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 4.5   LOST Club Brugge        vs Cercle Brugge      st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Concepción         vs Coquimbo Unido     st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   WON  Viborg FF          vs FC Copenhague      st=    500 net=     +675 clv=-7.84
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Eibar              vs Valladolid         st=    500 net=     -500 clv=-6.3
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Turan Tovuz        vs Shamakhi FK        st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   WON  KuPS               vs IFK Mariehamn      st=    500 net=     +560 clv=3.92
+  [09-14 09:17] Total de goles               Más de 3.5   LOST FC Midtjylland     vs Randers FC         st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Más de 8.5   WON  West Bromwich      vs Burnley            st=    500 net=     +775 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Los Angeles FC     vs Portland Timbers   st=    500 net=     -500 clv=-2.44
+  [09-14 09:17] Total de goles               Menos de 2.5 LOST San Jose Earthquak vs Minnesota United F st=    500 net=     -500 clv=0.76
+  [09-14 09:17] Total de goles               Más de 3.5   LOST San Diego FC       vs Colorado Rapids    st=    500 net=     -500 clv=-0.87
+  [09-14 09:17] Total de goles               Menos de 2.5 LOST Puebla FC          vs Santos Laguna      st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   WON  Nashville SC       vs Columbus Crew      st=    500 net=     +825 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Austin FC          vs Philadelphia Union st=    500 net=     -500 clv=4.17
+  [09-14 09:17] Total de goles               Menos de 1.5 WON  Huracán            vs Deportivo Riestra  st=    500 net=     +590 clv=11.79
+  [09-14 09:17] Total de goles               Menos de 2.5 LOST CF Montréal        vs Los Ángeles Galaxy st=    500 net=     -500 clv=2.1
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 WON  Inter Miami CF     vs Toronto FC         st=    500 net=     +615 clv=-2.19
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Cruzeiro-MG        vs Flamengo-RJ        st=    500 net=     +520 clv=0.99
+  [09-14 09:17] Total de Tiros de Esquina    Más de 9.5   WON  Independiente      vs Independiente Riva st=    500 net=     +535 clv=-8.0
+  [09-14 09:17] Total de goles               Más de 3.5   WON  Huachipato         vs Deportes Limache   st=    500 net=     +775 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Internacional P. A vs Atlético Mineiro-M st=    500 net=     -500 clv=0.97
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 LOST Internacional P. A vs Atlético Mineiro-M st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Más de 9.5   WON  Club Atlético Tucu vs Instituto          st=    500 net=     +575 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 7.5 LOST Chaco For Ever     vs Los Andes          st=    500 net=     -500 clv=5.77
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Empoli             vs Cremonese          st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   LOST SC Heerenveen      vs PEC Zwolle         st=    500 net=     -500 clv=4.39
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Genoa              vs Nápoles            st=    500 net=     -500 clv=-4.72
+  [09-14 09:17] Total de Tiros de Esquina    Más de 9.5   WON  Genoa              vs Nápoles            st=    500 net=     +775 clv=0.0
+  [09-14 09:17] Total de goles               Menos de 2.5 WON  Olympiakos Piraeus vs Atromitos Athens   st=    500 net=     +500 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 8.5 WON  Almagro            vs Colegiales         st=    500 net=     +540 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   WON  Fenerbahçe         vs Konyaspor          st=    500 net=     +615 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Nueva Chicago      vs CA Atlanta         st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Levski Sofia       vs Spartak Varna      st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   WON  Levski Sofia       vs Spartak Varna      st=    500 net=     +825 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Tristán Suárez     vs Agropecuario       st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   WON  Saint-Étienne      vs Grenoble           st=    500 net=     +815 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Más de 9.5   LOST Valencia           vs Celta Vigo         st=    500 net=     -500 clv=2.88
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Valencia           vs Celta Vigo         st=    500 net=     -500 clv=1.75
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Südtirol           vs Virtus Entella     st=    500 net=     -500 clv=0.95
+  [09-14 09:17] Total de Tiros de Esquina    Más de 9.5   LOST Südtirol           vs Virtus Entella     st=    500 net=     -500 clv=12.26
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Inter              vs Monza              st=    500 net=     +675 clv=0.0
+  [09-14 09:17] Total de goles               Más de 4.5   WON  Inter              vs Monza              st=    500 net=   +1,650 clv=14.67
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Ludogorets Razgrad vs Slavia Sofia       st=    500 net=     +500 clv=-1.96
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 LOST Lens               vs Auxerre            st=    500 net=     -500 clv=1.45
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           WON  Athletic Bilbao    vs Sevilla            st=    500 net=     +530 clv=0.98
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Athletic Bilbao    vs Sevilla            st=    500 net=     +585 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Más de 10.5  WON  Shrewsbury Town    vs Barnet             st=    500 net=     +815 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Port Vale          vs Tranmere Rovers    st=    500 net=     -500 clv=-2.88
+  [09-14 09:17] Total de Tiros de Esquina    Más de 10.5  WON  Livingston         vs Dunfermline Athlet st=    500 net=     +580 clv=1.89
+  [09-14 09:17] Total de Tiros de Esquina    Más de 11.5  LOST Southampton        vs Stoke City         st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 LOST Ilves              vs VPS                st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Salford City FC    vs Chesterfield       st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Más de 9.5   LOST Salford City FC    vs Chesterfield       st=    500 net=     -500 clv=11.83
+  [09-14 09:17] Total de Tiros de Esquina    Más de 10.5  WON  Walsall            vs Grimsby Town       st=    500 net=     +540 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Walsall            vs Grimsby Town       st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Menos de 2.5 LOST Querétaro FC       vs Deportivo Toluca F st=    500 net=     -500 clv=-0.86
+  [09-14 09:17] Ambos Equipos Marcarán       No           LOST Querétaro FC       vs Deportivo Toluca F st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Menos de 2.5 LOST SJK Seinäjoki      vs FC Lahti           st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 8.5 LOST Audax Italiano     vs Union La Calera    st=    500 net=     -500 clv=0.81
+  [09-14 09:17] Total de goles               Menos de 1.5 WON  Estudiantes de Río vs San Lorenzo        st=    500 net=     +575 clv=0.47
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Deportivo Madryn   vs Mitre              st=    500 net=     +775 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   WON  Marsella           vs Estrasburgo        st=    500 net=     +660 clv=-1.28
+  [09-14 09:17] Total de goles               Más de 3.5   WON  Vicenza            vs Catanzaro          st=    500 net=   +1,350 clv=0.0
+  [09-14 09:17] Total de goles               Más de 4.5   LOST Paksi SE           vs Újpest FC          st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 4.5   WON  Venados FC         vs Dorados de Sinaloa st=    500 net=   +1,550 clv=-4.65
+  [09-14 09:17] Total de goles               Más de 2.5   WON  Atletico Rojiblanc vs Cumbaya FC         st=    500 net=     +615 clv=0.0
+  [09-14 09:17] Total de goles               Menos de 2.5 LOST Novorizontino-SP   vs América-MG         st=    500 net=     -500 clv=2.84
+  [09-14 09:17] Ambos Equipos Marcarán       Sí           LOST Athletic Club-MG   vs CRB-AL             st=    500 net=     -500 clv=-4.26
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 9.5 LOST Portland Timbers   vs San Diego FC       st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Resultado Final              Los Ángeles  WON  Los Ángeles Galaxy vs San Jose Earthquak st=    500 net=     +590 clv=21.11
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 LOST Seattle Sounders   vs Austin FC          st=    500 net=     -500 clv=2.22
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 9.5 LOST Real Salt Lake     vs FC Dallas          st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 LOST Botafogo-SP        vs Criciúma-SC        st=    500 net=     -500 clv=2.22
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 WON  Minnesota United F vs Atlanta United FC  st=    500 net=   +1,100 clv=0.0
+  [09-14 09:17] Resultado Final              Sporting Kan LOST Sporting Kansas Ci vs St. Louis City SC  st=    500 net=     -500 clv=-10.67
+  [09-14 09:17] Total de goles               Más de 4.5   WON  Vila Nova-GO       vs Ponte Preta-SP     st=    500 net=   +2,375 clv=0.0
+  [09-14 09:17] Resultado Final              Cuiabá-MT    WON  Cuiabá-MT          vs Operário-PR        st=    500 net=     +600 clv=7.84
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 LOST Toronto FC         vs Charlotte FC       st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Resultado Final              Philadelphia LOST Philadelphia Union vs Inter Miami CF     st=    500 net=     -500 clv=8.97
+  [09-14 09:17] Resultado Final              Orlando City LOST Orlando City       vs Chicago Fire       st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   LOST Columbus Crew      vs CF Montréal        st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Resultado Final              New York Red LOST New York Red Bulls vs Nashville SC       st=    500 net=     -500 clv=3.7
+  [09-14 09:17] Total de tiros a puerta (Res Más de 10.5  LOST D.C. United        vs New England Revolu st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 3.5   LOST FC Cincinnati      vs New York City FC   st=    500 net=     -500 clv=1.46
+  [09-14 09:17] Total de tiros a puerta (Res Más de 10.5  LOST Fortaleza-CE       vs FC São Bernardo-SP st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de goles               Más de 2.5   LOST Chacarita          vs Club Atletico Guem st=    500 net=     -500 clv=0.0
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 WON  Goiás-GO           vs Juventude-RS       st=    500 net=     +675 clv=8.29
+  [09-14 09:17] Resultado Final              Náutico-PE   WON  Náutico-PE         vs Ceará-CE           st=    500 net=     +580 clv=0.0
+  [09-14 09:17] Resultado Final              Londrina-PR  LOST Londrina-PR        vs Atlético-GO        st=    500 net=     -500 clv=-1.79
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 7.5 LOST CF Pachuca         vs Puebla FC          st=    500 net=     -500 clv=None
+  [09-14 09:17] Ambos Equipos Marcarán       No           WON  Sporting San Jose  vs CD Escorpiones de  st=    500 net=     +540 clv=5.05
+  [09-14 09:17] Total de Tiros de Esquina    Más de 12.5  LOST Club Necaxa        vs Club León          st=    500 net=     -500 clv=None
+  [09-14 09:17] Resultado Final              Gimnasia y E WON  Gimnasia y Esgrima vs Talleres           st=    500 net=   +1,050 clv=None
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 WON  Palestino          vs Huachipato         st=    500 net=     +575 clv=None
+  [09-14 09:17] Total de goles               Más de 4.5   LOST Internacional P. A vs Remo-PA            st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de tiros a puerta (Res Más de 10.5  LOST Club Atlético Véle vs Defensa y Justicia st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de tiros a puerta (Res Más de 9.5   WON  Lanús              vs Independiente      st=    500 net=     +715 clv=None
+  [09-14 09:17] Total de goles               Más de 4.5   LOST Almeria            vs CD Eldense         st=    500 net=     -500 clv=None
+  [09-14 09:17] Resultado Final              Casa Pia     LOST Casa Pia           vs Benfica            st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de goles               Más de 4.5   WON  FCSB               vs FC Botoşani        st=    500 net=   +1,800 clv=None
+  [09-14 09:17] Resultado Final              Samsunspor   LOST Samsunspor         vs Göztepe            st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de goles               Más de 4.5   WON  Valur Reykjavík    vs KA Akureyri        st=    500 net=     +875 clv=None
+  [09-14 09:17] Resultado Final              Novi Pazar   WON  Novi Pazar         vs Vojvodina          st=    500 net=   +1,300 clv=None
+  [09-14 09:17] Total de goles               Más de 3.5   LOST All Boys           vs Nueva Chicago      st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 6.5 WON  Estudiantes de Río vs Club Atlético Tucu st=    500 net=     +675 clv=None
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 9.5 LOST BK Häcken          vs Halmstads BK       st=    500 net=     -500 clv=None
+  [09-14 09:17] Resultado Final              SønderjyskE  LOST Brøndby IF         vs SønderjyskE        st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de goles               Más de 4.5   LOST Spartak Varna      vs FK Septemvri Sofia st=    500 net=     -500 clv=None
+  [09-14 09:17] Resultado Final              Zalaegerszeg LOST Zalaegerszegi TE   vs Ferencváros        st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de goles               Más de 4.5   WON  Gnistan            vs Ilves              st=    500 net=   +1,600 clv=None
+  [09-14 09:17] Total de tiros a puerta (Res Más de 9.5   LOST Club Atlético Véle vs Defensa y Justicia st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de tiros a puerta (Res Más de 9.5   WON  Lanús              vs Independiente      st=    500 net=     +715 clv=None
+  [09-14 09:17] Total de tiros a puerta (Res Menos de 6.5 WON  Estudiantes de Río vs Club Atlético Tucu st=    500 net=     +675 clv=None
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 8.5 LOST Internacional P. A vs Remo-PA            st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 8.5 LOST Club Tijuana       vs Cruz Azul          st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 8.5 LOST Seattle Sounders   vs Vancouver Whitecap st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de Tiros de Esquina    Menos de 10. LOST Austin FC          vs FC Dallas          st=    500 net=     -500 clv=None
+  [09-14 09:17] Total de Tiros de Esquina    Más de 13.5  WON  Club América       vs Atlético San Luis  st=    500 net=   +2,150 clv=None
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           LOST Atlético Nacional  vs Aguilas Doradas Ri st= 41,000 net=  -41,000 clv=2.56
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           WON  Famalicão          vs Sporting Lisboa    st= 41,000 net=  +35,260 clv=0.54
+  [09-14 10:11] Total de Tiros de Esquina    Menos de 9.5 WON  CD Tenerife        vs Leganés            st= 41,000 net=  +35,260 clv=0.0
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           LOST FK IMT Novi Beogra vs Crvena Zvezda      st= 41,000 net=  -41,000 clv=-9.33
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           LOST Botev Vratsa       vs Levski Sofia       st= 41,000 net=  -41,000 clv=0.47
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           WON  Gençlerbirliği SK  vs Kasımpaşa          st= 41,000 net=  +31,980 clv=None
+  [09-14 10:11] Total de Tiros de Esquina    Menos de 9.5 LOST Gençlerbirliği SK  vs Kasımpaşa          st= 41,000 net=  -41,000 clv=None
+  [09-14 10:11] Total de Tiros de Esquina    Menos de 10. WON  Silkeborg IF       vs Viborg FF          st= 41,000 net=  +35,670 clv=None
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           WON  Alianza Lima       vs Universitario de D st= 31,000 net=  +31,000 clv=-1.96
+  [09-14 10:11] Total de Tiros de Esquina    Menos de 10. LOST FC Cincinnati      vs Charlotte FC       st= 31,000 net=  -31,000 clv=1.03
+  [09-14 10:11] Total de Tiros de Esquina    Menos de 10. LOST Deportivo Toluca F vs Club Atlas         st= 31,000 net=  -31,000 clv=9.14
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           WON  Real Madrid        vs Rayo Vallecano     st= 31,000 net=  +33,170 clv=7.25
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           LOST Sunderland         vs Arsenal            st= 31,000 net=  -31,000 clv=-1.85
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           WON  CSKA Sofia         vs FC Arda Kardzhali  st= 31,000 net=  +31,000 clv=1.52
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           WON  9 De Octubre FC    vs Independiente Juni st= 31,000 net=  +45,880 clv=-0.8
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           WON  Cobresal           vs Coquimbo Unido     st= 31,000 net=  +23,560 clv=0.57
+  [09-14 10:11] Total de Tiros de Esquina    Menos de 9.5 WON  Independiente Riva vs Aldosivi           st= 31,000 net=  +25,730 clv=-3.68
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           WON  Colwyn Bay         vs Connah's Quay FC   st= 31,000 net=  +25,730 clv=0.0
+  [09-14 10:11] Total de Tiros de Esquina    Menos de 10. WON  Ilves              vs FC Lahti           st= 31,000 net=  +29,140 clv=16.17
+  [09-14 10:11] Total de Tiros de Esquina    Menos de 10. WON  York City          vs Swindon Town       st= 31,000 net=  +29,760 clv=-7.55
+  [09-14 10:11] Total de Tiros de Esquina    Menos de 10. WON  IFK Mariehamn      vs TPS                st= 31,000 net=  +25,730 clv=0.0
+  [09-14 10:11] Total de Tiros de Esquina    Menos de 9.5 LOST Vicenza            vs Juve Stabia        st= 31,000 net=  -31,000 clv=1.46
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           LOST Levadia Tallinn    vs Vaprus Pärnu       st= 31,000 net=  -31,000 clv=0.0
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           LOST Ventforet Kofu     vs Júbilo Iwata       st= 31,000 net=  -31,000 clv=-0.55
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           WON  Machida Zelvia     vs Yokohama F Marinos st= 31,000 net=  +24,490 clv=4.07
+  [09-14 10:11] Total de Tiros de Esquina    Menos de 9.5 LOST Bucheon FC 1995    vs Jeju United        st= 31,000 net=  -31,000 clv=11.79
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           LOST Independiente Sant vs Deportes Tolima    st= 26,000 net=  -26,000 clv=4.4
+  [09-14 10:11] Ambos Equipos Marcarán       Sí           LOST Sevilla            vs Valencia           st= 26,000 net=  -26,000 clv=-2.97
+  [09-14 10:11] Total de Tiros de Esquina    Menos de 10. LOST Drogheda United    vs Sligo Rovers       st= 26,000 net=  -26,000 clv=5.0
+  >> NETO TOTAL últimas 30h (sistema): +80,869 COP · filas=720
+
+### 9. ABIERTAS (exposición actual) ###
+  sys=True Ambos Equipos Marcarán                   Sí           América de Cali      vs Deportivo Pasto      stake=40,000 inicio=2026-09-15 01:00:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Avaí-SC              vs Vila Nova-GO         stake=40,000 inicio=2026-09-15 00:30:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Union La Calera      vs Deportes Limache     stake=40,000 inicio=2026-09-14 23:30:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Rangers de Talca     vs Deportes Iquique     stake=40,000 inicio=2026-09-14 23:30:00+00:00
+  sys=True Total de Tiros de Esquina                Menos de 10. Bahia-BA             vs Remo-PA              stake=40,000 inicio=2026-09-14 23:00:00+00:00
+  sys=True Ambos Equipos Marcarán                   Sí           S.C. Braga           vs Estoril              stake=40,000 inicio=2026-09-14 19:45:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Leeds United         vs Newcastle United     stake=40,000 inicio=2026-09-14 19:00:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Sligo Rovers         vs Galway United        stake=40,000 inicio=2026-09-14 18:45:00+00:00
+  sys=True Total de Tiros de Esquina                Menos de 10. Sligo Rovers         vs Galway United        stake=40,000 inicio=2026-09-14 18:45:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Dundalk              vs St Patrick's Athleti stake=40,000 inicio=2026-09-14 18:45:00+00:00
+  sys=True Total de Tiros (Resuelta usando Opta Dat Más de 28.5  Inter                vs Udinese              stake=40,000 inicio=2026-09-14 18:45:00+00:00
+  sys=True Ambos Equipos Marcarán                   Sí           Inter                vs Udinese              stake=40,000 inicio=2026-09-14 18:45:00+00:00
+  sys=True Total de Tiros de Esquina                Más de 8.5   Rio Ave              vs CF Estrela           stake=40,000 inicio=2026-09-14 17:45:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Rio Ave              vs CF Estrela           stake=40,000 inicio=2026-09-14 17:45:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Radomiak Radom       vs Piast Gliwice        stake=40,000 inicio=2026-09-14 17:00:00+00:00
+  sys=True Ambos Equipos Marcarán                   Sí           Ceramica Cleopatra   vs National Bank of Egy stake=40,000 inicio=2026-09-14 17:00:00+00:00
+  sys=True Total de Tiros de Esquina                Más de 9.5   FC Midtjylland       vs Brøndby IF           stake=40,000 inicio=2026-09-14 17:00:00+00:00
+  sys=True Ambos Equipos Marcarán                   Sí           Torino               vs Roma                 stake=40,000 inicio=2026-09-14 16:30:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           FC Inter Turku       vs VPS                  stake=40,000 inicio=2026-09-14 15:00:00+00:00
+  sys=True Ambos Equipos Marcarán                   Sí           América de Cali      vs Deportivo Pasto      stake=2,500 inicio=2026-09-15 01:00:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Union La Calera      vs Deportes Limache     stake=2,500 inicio=2026-09-14 23:30:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Rangers de Talca     vs Deportes Iquique     stake=2,500 inicio=2026-09-14 23:30:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Leeds United         vs Newcastle United     stake=2,500 inicio=2026-09-14 19:00:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Sligo Rovers         vs Galway United        stake=2,500 inicio=2026-09-14 18:45:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Dundalk              vs St Patrick's Athleti stake=2,500 inicio=2026-09-14 18:45:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Rio Ave              vs CF Estrela           stake=2,500 inicio=2026-09-14 17:45:00+00:00
+  sys=True Ambos Equipos Marcarán                   No           Radomiak Radom       vs Piast Gliwice        stake=2,500 inicio=2026-09-14 17:00:00+00:00
+  sys=True Total de Tiros de Esquina                Más de 9.5   FC Midtjylland       vs Brøndby IF           stake=2,500 inicio=2026-09-14 17:00:00+00:00
+  >> exposición abierta total: 782,500 COP
+
+### 10. CHEQUEOS DE ANOMALÍA ###
+  WON con payout 0: 0
+  LOST con payout >0: 0
+  stake<=0: 0
+  sin bet_odds (settled sys): 371 de 720
+  sin clv (settled sys): 51 de 720

@@ -1,0 +1,42 @@
+MOTOR REMATES TOTALES v2 — EVALUACIÓN FINAL OUT-OF-SAMPLE 2026-09-13T20:23:55.880939+00:00
+====================================================================================================
+Test: partidos del 13-sep-2026 (HOY) que la BD no tenía; ground truth post-partido desde API-Football.
+Modelo entrenado SOLO con datos anteriores a hoy. Cero leakage.
+
+### RESULTADO FINAL EN HOY (110 partidos)
+GBM v2.2 raw:      MAE=4.82
+GBM v2.2 calibrado: MAE=4.68  RMSE=5.93  bias=-0.76
+
+baseline mu-global (25.25):   MAE=5.51
+baseline liga-media (n=110): MAE=4.87
+baseline last5-mean (n=110): MAE=6.76
+
+Comparación con el motor viejo (medido antes): MAE 4.52 (remates, backtest, no-today).
+
+Distribución de |error| (calibrado):
+  [ 0-  2):  32  (29.1%)
+  [ 2-  4):  26  (23.6%)
+  [ 4-  6):  22  (20.0%)
+  [ 6-  8):  13  (11.8%)
+  [ 8- 10):   6  ( 5.5%)
+  [10- 15):   8  ( 7.3%)
+  [15-100):   3  ( 2.7%)
+
+% dentro de ±3: 40% | ±5: 60%
+
+Top 15 errores:
+  Liga MX              Cruz Azul        vs Club America     | pred= 27.4 real= 44.0 err=-16.6
+  K League 1           Gimcheon Sangmu  vs Gangwon FC       | pred= 20.1 real=  4.0 err=+16.1
+  Major League Soccer  Sporting Kansas  vs Los Angeles FC   | pred= 26.5 real= 42.0 err=-15.5
+  Liga I               Arges Pitesti    vs FC Botosani      | pred= 26.9 real= 13.0 err=+13.9
+  2. Bundesliga        Karlsruher SC    vs Energie Cottbus  | pred= 32.6 real= 45.0 err=-12.4
+  Serie A              Santos           vs Cruzeiro         | pred= 28.0 real= 40.0 err=-12.0
+  Süper Lig            Galatasaray      vs Kocaelispor      | pred= 29.2 real= 41.0 err=-11.8
+  Eliteserien          Viking           vs Kristiansund BK  | pred= 28.8 real= 40.0 err=-11.2
+  Bundesliga           Sturm Graz       vs Lask Linz        | pred= 28.4 real= 39.0 err=-10.6
+  First League         Botev Plovdiv    vs Lokomotiv Plovdi | pred= 23.3 real= 13.0 err=+10.3
+  Super League 1       Asteras Tripolis vs AEK Athens FC    | pred= 23.9 real= 34.0 err=-10.1
+  Super League 1       Kifisia          vs Levadiakos       | pred= 24.3 real= 15.0 err= +9.3
+  Premier League       Coventry         vs Brighton         | pred= 26.8 real= 36.0 err= -9.2
+  Eliteserien          Fredrikstad      vs Sarpsborg 08 FF  | pred= 29.1 real= 20.0 err= +9.1
+  Super Liga           IMT Novi Beograd vs FK Crvena Zvezda | pred= 25.0 real= 16.0 err= +9.0

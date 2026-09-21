@@ -1,0 +1,829 @@
+[
+ {
+  "name": "Santos - Cruzeiro",
+  "league": "Serie A",
+  "pred": 29.38,
+  "actual": 40,
+  "lgm": 27.529356217346926
+ },
+ {
+  "name": "LDU de Quito - Deportivo Cuenca",
+  "league": "Liga Pro",
+  "pred": 26.59,
+  "actual": 29,
+  "lgm": 24.985566689782214
+ },
+ {
+  "name": "Sporting Kansas City - Los Angeles FC",
+  "league": "Major League Soccer",
+  "pred": 26.38,
+  "actual": 42,
+  "lgm": 26.020010364686616
+ },
+ {
+  "name": "FC Dallas - Portland Timbers",
+  "league": "Major League Soccer",
+  "pred": 28.72,
+  "actual": 26,
+  "lgm": 26.020010364686616
+ },
+ {
+  "name": "St. Louis City - Minnesota United FC",
+  "league": "Major League Soccer",
+  "pred": 25.79,
+  "actual": 25,
+  "lgm": 26.020010364686616
+ },
+ {
+  "name": "Alianza Lima - Universitario",
+  "league": "Primera División",
+  "pred": 29.43,
+  "actual": 31,
+  "lgm": 26.61841478060256
+ },
+ {
+  "name": "Monterrey - Tigres UANL",
+  "league": "Liga MX",
+  "pred": 29.92,
+  "actual": 23,
+  "lgm": 27.765228268549716
+ },
+ {
+  "name": "Alianza Valledupar - Junior",
+  "league": "Primera A",
+  "pred": 26.13,
+  "actual": 31,
+  "lgm": 24.626347173997956
+ },
+ {
+  "name": "Real Salt Lake - New York City FC",
+  "league": "Major League Soccer",
+  "pred": 27.23,
+  "actual": 21,
+  "lgm": 26.020010364686616
+ },
+ {
+  "name": "Colorado Rapids - CF Montreal",
+  "league": "Major League Soccer",
+  "pred": 26.18,
+  "actual": 29,
+  "lgm": 26.020010364686616
+ },
+ {
+  "name": "Los Angeles Galaxy - Seattle Sounders",
+  "league": "Major League Soccer",
+  "pred": 28.2,
+  "actual": 35,
+  "lgm": 26.020010364686616
+ },
+ {
+  "name": "San Jose Earthquakes - Houston Dynamo",
+  "league": "Major League Soccer",
+  "pred": 26.65,
+  "actual": 21,
+  "lgm": 26.020010364686616
+ },
+ {
+  "name": "Cruz Azul - Club America",
+  "league": "Liga MX",
+  "pred": 30.02,
+  "actual": 44,
+  "lgm": 27.765228268549716
+ },
+ {
+  "name": "Gimcheon Sangmu FC - Gangwon FC",
+  "league": "K League 1",
+  "pred": 22.73,
+  "actual": 4,
+  "lgm": 21.12973610553597
+ },
+ {
+  "name": "Tokyo Verdy - JEF United Chiba",
+  "league": "J1 League",
+  "pred": 26.45,
+  "actual": 30,
+  "lgm": 25.732845529629806
+ },
+ {
+  "name": "Urawa - Fagiano Okayama",
+  "league": "J1 League",
+  "pred": 27.32,
+  "actual": 24,
+  "lgm": 25.732845529629806
+ },
+ {
+  "name": "Gwangju FC - FC Anyang",
+  "league": "K League 1",
+  "pred": 22.97,
+  "actual": 19,
+  "lgm": 21.12973610553597
+ },
+ {
+  "name": "AVS - Farense",
+  "league": "Segunda Liga",
+  "pred": 24.16,
+  "actual": 23,
+  "lgm": 23.841004943949155
+ },
+ {
+  "name": "Excelsior - Utrecht",
+  "league": "Eredivisie",
+  "pred": 27.34,
+  "actual": 22,
+  "lgm": 28.7277486550899
+ },
+ {
+  "name": "Wisla Plock - Cracovia Krakow",
+  "league": "Ekstraklasa",
+  "pred": 30.65,
+  "actual": 24,
+  "lgm": 28.35371965679307
+ },
+ {
+  "name": "Baník Ostrava - Pardubice",
+  "league": "Czech Liga",
+  "pred": 24.56,
+  "actual": 30,
+  "lgm": 25.817171858867358
+ },
+ {
+  "name": "Sheffield Utd - Wolves",
+  "league": "Championship",
+  "pred": 26.14,
+  "actual": 23,
+  "lgm": 25.836468839939908
+ },
+ {
+  "name": "Club Brugge KV - Antwerp",
+  "league": "Jupiler Pro League",
+  "pred": 35.53,
+  "actual": 40,
+  "lgm": 27.122646126082188
+ },
+ {
+  "name": "1. FC Heidenheim - Holstein Kiel",
+  "league": "2. Bundesliga",
+  "pred": 30.48,
+  "actual": 32,
+  "lgm": 28.04239124293102
+ },
+ {
+  "name": "Karlsruher SC - Energie Cottbus",
+  "league": "2. Bundesliga",
+  "pred": 31.41,
+  "actual": 45,
+  "lgm": 28.04239124293102
+ },
+ {
+  "name": "VfL Osnabrück - Hertha BSC",
+  "league": "2. Bundesliga",
+  "pred": 31.05,
+  "actual": 36,
+  "lgm": 28.04239124293102
+ },
+ {
+  "name": "IF Elfsborg - Kalmar FF",
+  "league": "Allsvenskan",
+  "pred": 27.07,
+  "actual": 28,
+  "lgm": 27.498640887168083
+ },
+ {
+  "name": "Hammarby FF - IF Brommapojkarna",
+  "league": "Allsvenskan",
+  "pred": 31.09,
+  "actual": 25,
+  "lgm": 27.498640887168083
+ },
+ {
+  "name": "Lyngby - Sonderjyske",
+  "league": "Superliga",
+  "pred": 28.63,
+  "actual": 37,
+  "lgm": 27.439285734815705
+ },
+ {
+  "name": "Silkeborg - Viborg",
+  "league": "Superliga",
+  "pred": 29.16,
+  "actual": 22,
+  "lgm": 27.439285734815705
+ },
+ {
+  "name": "FC Zurich - FC Vaduz",
+  "league": "Super League",
+  "pred": 29.66,
+  "actual": 28,
+  "lgm": 28.922469001835587
+ },
+ {
+  "name": "Arges Pitesti - FC Botosani",
+  "league": "Liga I",
+  "pred": 26.51,
+  "actual": 13,
+  "lgm": 27.224129854671645
+ },
+ {
+  "name": "Sporting Gijon - Eldense",
+  "league": "Segunda División",
+  "pred": 27.2,
+  "actual": 20,
+  "lgm": 25.152611611790423
+ },
+ {
+  "name": "Celta Vigo - Malaga",
+  "league": "La Liga",
+  "pred": 26.14,
+  "actual": 29,
+  "lgm": 25.017893201654086
+ },
+ {
+  "name": "KuPS - HJK Helsinki",
+  "league": "Veikkausliiga",
+  "pred": 24.16,
+  "actual": 28,
+  "lgm": 22.172664122164793
+ },
+ {
+  "name": "Slavia Sofia - Spartak Varna",
+  "league": "First League",
+  "pred": 23.58,
+  "actual": 19,
+  "lgm": 22.198737229052355
+ },
+ {
+  "name": "Viking - Kristiansund BK",
+  "league": "Eliteserien",
+  "pred": 30.22,
+  "actual": 40,
+  "lgm": 27.40907975340907
+ },
+ {
+  "name": "Heerenveen - Telstar",
+  "league": "Eredivisie",
+  "pred": 31.17,
+  "actual": 35,
+  "lgm": 28.7277486550899
+ },
+ {
+  "name": "Austria Vienna - Austria Lustenau",
+  "league": "Bundesliga",
+  "pred": 26.42,
+  "actual": 28,
+  "lgm": 25.594090576045033
+ },
+ {
+  "name": "WSG Wattens - TSV Hartberg",
+  "league": "Bundesliga",
+  "pred": 30.47,
+  "actual": 21,
+  "lgm": 25.594090576045033
+ },
+ {
+  "name": "Pogon Szczecin - Wieczysta Kraków",
+  "league": "Ekstraklasa",
+  "pred": 30.01,
+  "actual": 35,
+  "lgm": 28.35371965679307
+ },
+ {
+  "name": "IFK Norrkoping - Oddevold",
+  "league": "Superettan",
+  "pred": 25.13,
+  "actual": 21,
+  "lgm": 21.706545998285893
+ },
+ {
+  "name": "Lecce - Monza",
+  "league": "Serie A",
+  "pred": 24.75,
+  "actual": 26,
+  "lgm": 25.63325663511894
+ },
+ {
+  "name": "Lille - Estac Troyes",
+  "league": "Ligue 1",
+  "pred": 24.0,
+  "actual": 21,
+  "lgm": 25.69834381019175
+ },
+ {
+  "name": "Coventry - Brighton",
+  "league": "Premier League",
+  "pred": 28.01,
+  "actual": 36,
+  "lgm": 25.827720289368344
+ },
+ {
+  "name": "Plzen - Sigma Olomouc",
+  "league": "Czech Liga",
+  "pred": 26.01,
+  "actual": 26,
+  "lgm": 25.817171858867358
+ },
+ {
+  "name": "Zlin - Hradec Králové",
+  "league": "Czech Liga",
+  "pred": 26.08,
+  "actual": 28,
+  "lgm": 25.817171858867358
+ },
+ {
+  "name": "Chaves - Feirense",
+  "league": "Segunda Liga",
+  "pred": 23.08,
+  "actual": 25,
+  "lgm": 23.841004943949155
+ },
+ {
+  "name": "Milford FC - Richards Bay",
+  "league": "Premier Soccer League",
+  "pred": 24.27,
+  "actual": 24,
+  "lgm": 22.89342588080663
+ },
+ {
+  "name": "Siwelele - Golden Arrows",
+  "league": "Premier Soccer League",
+  "pred": 24.15,
+  "actual": 18,
+  "lgm": 22.89342588080663
+ },
+ {
+  "name": "RB Leipzig - Hamburger SV",
+  "league": "Bundesliga",
+  "pred": 33.2,
+  "actual": 29,
+  "lgm": 27.80979415249788
+ },
+ {
+  "name": "Randers FC - Odense",
+  "league": "Superliga",
+  "pred": 28.43,
+  "actual": 30,
+  "lgm": 27.439285734815705
+ },
+ {
+  "name": "Radnicki NIS - OFK Beograd",
+  "league": "Super Liga",
+  "pred": 25.6,
+  "actual": 21,
+  "lgm": 25.39983896693198
+ },
+ {
+  "name": "Genk - Gent",
+  "league": "Jupiler Pro League",
+  "pred": 30.51,
+  "actual": 33,
+  "lgm": 27.122646126082188
+ },
+ {
+  "name": "Liège - Club Brugge II",
+  "league": "Challenger Pro League",
+  "pred": 26.47,
+  "actual": 32,
+  "lgm": 25.818788245341104
+ },
+ {
+  "name": "Gençlerbirliği S.K. - Kasımpaşa",
+  "league": "Süper Lig",
+  "pred": 24.9,
+  "actual": 31,
+  "lgm": 26.16961875612478
+ },
+ {
+  "name": "Iğdır FK - Mardin 1969",
+  "league": "1. Lig",
+  "pred": 24.13,
+  "actual": 29,
+  "lgm": 23.50397531016218
+ },
+ {
+  "name": "Sivasspor - Muğlaspor",
+  "league": "1. Lig",
+  "pred": 25.9,
+  "actual": 26,
+  "lgm": 23.50397531016218
+ },
+ {
+  "name": "Valladolid - Oviedo",
+  "league": "Segunda División",
+  "pred": 24.46,
+  "actual": 25,
+  "lgm": 25.152611611790423
+ },
+ {
+  "name": "Levante - Barcelona",
+  "league": "La Liga",
+  "pred": 27.74,
+  "actual": 25,
+  "lgm": 25.017893201654086
+ },
+ {
+  "name": "Malmo FF - Orgryte IS",
+  "league": "Allsvenskan",
+  "pred": 30.4,
+  "actual": 32,
+  "lgm": 27.498640887168083
+ },
+ {
+  "name": "Lausanne - Servette FC",
+  "league": "Super League",
+  "pred": 28.55,
+  "actual": 28,
+  "lgm": 28.922469001835587
+ },
+ {
+  "name": "FC Luzern - FC Basel 1893",
+  "league": "Super League",
+  "pred": 33.04,
+  "actual": 36,
+  "lgm": 28.922469001835587
+ },
+ {
+  "name": "Botev Vratsa - Levski Sofia",
+  "league": "First League",
+  "pred": 19.86,
+  "actual": 13,
+  "lgm": 22.198737229052355
+ },
+ {
+  "name": "FC Volendam - Den Bosch",
+  "league": "Eerste Divisie",
+  "pred": 32.41,
+  "actual": 31,
+  "lgm": 28.8135310663262
+ },
+ {
+  "name": "PEC Zwolle - Feyenoord",
+  "league": "Eredivisie",
+  "pred": 27.81,
+  "actual": 32,
+  "lgm": 28.7277486550899
+ },
+ {
+  "name": "Ham-Kam - Molde",
+  "league": "Eliteserien",
+  "pred": 31.14,
+  "actual": 33,
+  "lgm": 27.40907975340907
+ },
+ {
+  "name": "KFUM Oslo - Aalesund",
+  "league": "Eliteserien",
+  "pred": 26.92,
+  "actual": 28,
+  "lgm": 27.40907975340907
+ },
+ {
+  "name": "Start - Brann",
+  "league": "Eliteserien",
+  "pred": 27.97,
+  "actual": 36,
+  "lgm": 27.40907975340907
+ },
+ {
+  "name": "Ljungskile SK - Falkenbergs FF",
+  "league": "Superettan",
+  "pred": 24.98,
+  "actual": 23,
+  "lgm": 21.706545998285893
+ },
+ {
+  "name": "UCV Moquegua - Sporting Cristal",
+  "league": "Primera División",
+  "pred": 26.97,
+  "actual": 31,
+  "lgm": 26.61841478060256
+ },
+ {
+  "name": "FK Partizan - Vojvodina",
+  "league": "Super Liga",
+  "pred": 30.27,
+  "actual": 32,
+  "lgm": 25.39983896693198
+ },
+ {
+  "name": "Sturm Graz - Lask Linz",
+  "league": "Bundesliga",
+  "pred": 30.05,
+  "actual": 39,
+  "lgm": 25.594090576045033
+ },
+ {
+  "name": "Kalamata - Volos NFC",
+  "league": "Super League 1",
+  "pred": 25.43,
+  "actual": 26,
+  "lgm": 23.954951011030786
+ },
+ {
+  "name": "Le Mans - Lens",
+  "league": "Ligue 1",
+  "pred": 28.19,
+  "actual": 29,
+  "lgm": 25.69834381019175
+ },
+ {
+  "name": "Avellino - Palermo",
+  "league": "Serie B",
+  "pred": 27.72,
+  "actual": 24,
+  "lgm": 26.433421386498495
+ },
+ {
+  "name": "Mantova - Sampdoria",
+  "league": "Serie B",
+  "pred": 26.0,
+  "actual": 23,
+  "lgm": 26.433421386498495
+ },
+ {
+  "name": "Legia Warszawa - Widzew Łódź",
+  "league": "Ekstraklasa",
+  "pred": 28.44,
+  "actual": 27,
+  "lgm": 28.35371965679307
+ },
+ {
+  "name": "Manchester United - Manchester City",
+  "league": "Premier League",
+  "pred": 28.83,
+  "actual": 22,
+  "lgm": 25.827720289368344
+ },
+ {
+  "name": "SV Elversberg - Bayern München",
+  "league": "Bundesliga",
+  "pred": 27.9,
+  "actual": 33,
+  "lgm": 27.80979415249788
+ },
+ {
+  "name": "FC Nordsjaelland - Aarhus",
+  "league": "Superliga",
+  "pred": 32.17,
+  "actual": 31,
+  "lgm": 27.439285734815705
+ },
+ {
+  "name": "Napoli - Bologna",
+  "league": "Serie A",
+  "pred": 25.95,
+  "actual": 20,
+  "lgm": 25.63325663511894
+ },
+ {
+  "name": "Teplice - Slavia Praha",
+  "league": "Czech Liga",
+  "pred": 26.27,
+  "actual": 25,
+  "lgm": 25.817171858867358
+ },
+ {
+  "name": "Asteras Tripolis - AEK Athens FC",
+  "league": "Super League 1",
+  "pred": 23.72,
+  "actual": 34,
+  "lgm": 23.954951011030786
+ },
+ {
+  "name": "NEOM - Al-Fateh",
+  "league": "Pro League",
+  "pred": 25.62,
+  "actual": 34,
+  "lgm": 24.845752725402885
+ },
+ {
+  "name": "Zulte Waregem - Charleroi",
+  "league": "Jupiler Pro League",
+  "pred": 27.1,
+  "actual": 30,
+  "lgm": 27.122646126082188
+ },
+ {
+  "name": "Mallorca - Sabadell",
+  "league": "Segunda División",
+  "pred": 24.79,
+  "actual": 31,
+  "lgm": 25.152611611790423
+ },
+ {
+  "name": "Getafe - Deportivo La Coruna",
+  "league": "La Liga",
+  "pred": 22.18,
+  "actual": 25,
+  "lgm": 25.017893201654086
+ },
+ {
+  "name": "IMT Novi Beograd - FK Crvena Zvezda",
+  "league": "Super Liga",
+  "pred": 25.65,
+  "actual": 16,
+  "lgm": 25.39983896693198
+ },
+ {
+  "name": "Arouca - Santa Clara",
+  "league": "Primeira Liga",
+  "pred": 24.26,
+  "actual": 22,
+  "lgm": 24.149647798577803
+ },
+ {
+  "name": "Benfica - GIL Vicente",
+  "league": "Primeira Liga",
+  "pred": 26.48,
+  "actual": 21,
+  "lgm": 24.149647798577803
+ },
+ {
+  "name": "Amed - Başakşehir",
+  "league": "Süper Lig",
+  "pred": 28.47,
+  "actual": 25,
+  "lgm": 26.16961875612478
+ },
+ {
+  "name": "Galatasaray - Kocaelispor",
+  "league": "Süper Lig",
+  "pred": 31.32,
+  "actual": 41,
+  "lgm": 26.16961875612478
+ },
+ {
+  "name": "Bursaspor - Esenler Erokspor",
+  "league": "1. Lig",
+  "pred": 21.17,
+  "actual": 24,
+  "lgm": 23.50397531016218
+ },
+ {
+  "name": "Fatih Karagümrük - Manisa F.K.",
+  "league": "1. Lig",
+  "pred": 25.43,
+  "actual": 30,
+  "lgm": 23.50397531016218
+ },
+ {
+  "name": "Fredrikstad - Sarpsborg 08 FF",
+  "league": "Eliteserien",
+  "pred": 26.62,
+  "actual": 20,
+  "lgm": 27.40907975340907
+ },
+ {
+  "name": "RAAL La Louvière - Kortrijk",
+  "league": "Jupiler Pro League",
+  "pred": 25.2,
+  "actual": 27,
+  "lgm": 27.122646126082188
+ },
+ {
+  "name": "Patro Eisden - AS Eupen",
+  "league": "Challenger Pro League",
+  "pred": 21.98,
+  "actual": 25,
+  "lgm": 25.818788245341104
+ },
+ {
+  "name": "Botev Plovdiv - Lokomotiv Plovdiv",
+  "league": "First League",
+  "pred": 23.95,
+  "actual": 13,
+  "lgm": 22.198737229052355
+ },
+ {
+  "name": "Corvinul Hunedoara - Universitatea Craiova",
+  "league": "Liga I",
+  "pred": 30.22,
+  "actual": 22,
+  "lgm": 27.224129854671645
+ },
+ {
+  "name": "Sarmiento Junin - Belgrano Cordoba",
+  "league": "Liga Profesional Argentina",
+  "pred": 26.86,
+  "actual": 26,
+  "lgm": 25.060845260524168
+ },
+ {
+  "name": "Tigre - Rosario Central",
+  "league": "Liga Profesional Argentina",
+  "pred": 23.88,
+  "actual": 25,
+  "lgm": 25.060845260524168
+ },
+ {
+  "name": "D. La Serena - Universidad de Chile",
+  "league": "Primera División",
+  "pred": 26.55,
+  "actual": 26,
+  "lgm": 26.451458629323835
+ },
+ {
+  "name": "Leones del Norte - Tecnico Universitario",
+  "league": "Liga Pro",
+  "pred": 25.8,
+  "actual": 27,
+  "lgm": 24.985566689782214
+ },
+ {
+  "name": "Sport Boys - Deportivo Garcilaso",
+  "league": "Primera División",
+  "pred": 26.18,
+  "actual": 31,
+  "lgm": 26.61841478060256
+ },
+ {
+  "name": "PSV Eindhoven - Sparta Rotterdam",
+  "league": "Eredivisie",
+  "pred": 30.03,
+  "actual": 38,
+  "lgm": 28.7277486550899
+ },
+ {
+  "name": "Kifisia - Levadiakos",
+  "league": "Super League 1",
+  "pred": 23.71,
+  "actual": 15,
+  "lgm": 23.954951011030786
+ },
+ {
+  "name": "PAOK - Aris Thessalonikis",
+  "league": "Super League 1",
+  "pred": 23.78,
+  "actual": 28,
+  "lgm": 23.954951011030786
+ },
+ {
+  "name": "Al Diriyah - Abha",
+  "league": "Pro League",
+  "pred": 23.16,
+  "actual": 23,
+  "lgm": 24.845752725402885
+ },
+ {
+  "name": "Al Riyadh - Al Kholood",
+  "league": "Pro League",
+  "pred": 25.53,
+  "actual": 25,
+  "lgm": 24.845752725402885
+ },
+ {
+  "name": "Panathinaikos - Panetolikos",
+  "league": "Super League 1",
+  "pred": 25.42,
+  "actual": 15,
+  "lgm": 23.954951011030786
+ },
+ {
+  "name": "Sassuolo - Juventus",
+  "league": "Serie A",
+  "pred": 26.79,
+  "actual": 28,
+  "lgm": 25.63325663511894
+ },
+ {
+  "name": "Stade Brestois 29 - Paris Saint Germain",
+  "league": "Ligue 1",
+  "pred": 28.27,
+  "actual": 31,
+  "lgm": 25.69834381019175
+ },
+ {
+  "name": "Mirassol - Vitoria",
+  "league": "Serie A",
+  "pred": 29.19,
+  "actual": 35,
+  "lgm": 27.529356217346926
+ },
+ {
+  "name": "Deportivo Pereira - Bucaramanga",
+  "league": "Primera A",
+  "pred": 24.81,
+  "actual": 22,
+  "lgm": 24.626347173997956
+ },
+ {
+  "name": "Tenerife - Leganes",
+  "league": "Segunda División",
+  "pred": 22.08,
+  "actual": 21,
+  "lgm": 25.152611611790423
+ },
+ {
+  "name": "Real Sociedad - Atletico Madrid",
+  "league": "La Liga",
+  "pred": 26.39,
+  "actual": 21,
+  "lgm": 25.017893201654086
+ },
+ {
+  "name": "Flamengo - Corinthians",
+  "league": "Serie A (BRA)",
+  "pred": 29.43,
+  "actual": 35,
+  "lgm": 27.529356217346926,
+  "flag": "cuotas reales capturadas"
+ }
+]

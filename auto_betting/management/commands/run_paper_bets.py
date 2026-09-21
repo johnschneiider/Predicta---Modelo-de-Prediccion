@@ -220,7 +220,7 @@ class Command(BaseCommand):
             if o.get('line') is None:
                 continue
             line = o['line']; cuota = o['odds_decimal']; t = o.get('type')
-            if cuota < 1.75 or line < 8.5 or line > 11.5:
+            if cuota < 2.00 or line < 8.5 or line > 11.5:
                 continue
             if t == 'OT_OVER':
                 p = 1 - nbinom.cdf(line, PHI, PHI/(PHI + lam_c))
@@ -247,7 +247,7 @@ class Command(BaseCommand):
         for o in odds:
             t = o.get('type'); cuota = o['odds_decimal']
             sel = next((k for k, v in tipos.items() if v == t), None)
-            if sel is None or cuota < 1.75:
+            if sel is None or cuota < 2.00:
                 continue
             p = probs[sel]
             if p >= 0.60 and (p - fair[t] / s) >= 0.06:
@@ -276,11 +276,11 @@ class Command(BaseCommand):
             cuota = o['odds_decimal']
             t = o.get('type')
             if t == 'OT_YES':
-                if p >= 0.50 and cuota >= 1.75 and (p - p_mkt_si) >= 0.06:
+                if p >= 0.50 and cuota >= 2.00 and (p - p_mkt_si) >= 0.06:
                     self._add(m, h, a, lg, 'Ambos Equipos Marcarán', 'btts_v2', 'Sí', None, cuota, p, start)
             elif t == 'OT_NO':
                 p_no = 1 - p
-                if p_no >= 0.50 and cuota >= 1.75 and (p_no - (1 - p_mkt_si)) >= 0.06:
+                if p_no >= 0.50 and cuota >= 2.00 and (p_no - (1 - p_mkt_si)) >= 0.06:
                     self._add(m, h, a, lg, 'Ambos Equipos Marcarán', 'btts_v2', 'No', None, cuota, p_no, start)
 
     def _paper_goals(self, m, h, a, lg, lam, odds, start):
@@ -291,7 +291,7 @@ class Command(BaseCommand):
             if o.get('line') is None:
                 continue
             line = o['line']; cuota = o['odds_decimal']; t = o.get('type')
-            if cuota < 1.75 or line < 2.0 or line > 4.5:
+            if cuota < 2.00 or line < 2.0 or line > 4.5:
                 continue
             if t == 'OT_OVER':
                 p = 1 - poisson.cdf(line, lam)
@@ -316,7 +316,7 @@ class Command(BaseCommand):
                 p = float(p_x[2]); sel = '2'
             else:
                 continue
-            if p >= 0.42 and (p - fair[t]) >= 0.08 and cuota >= 1.75:
+            if p >= 0.42 and (p - fair[t]) >= 0.08 and cuota >= 2.00:
                 self._add(m, h, a, lg, 'Resultado Final', 'x12_v2', sel, None, cuota, p, start)
 
     def _paper_sot(self, m, h, a, lg, sot_state, odds, start):
@@ -387,7 +387,7 @@ class Command(BaseCommand):
             if o.get('line') is None:
                 continue
             line = o['line']; cuota = o['odds_decimal']; t = o.get('type')
-            if cuota < 1.75 or line < 6.5 or line > 9.5:
+            if cuota < 2.00 or line < 6.5 or line > 9.5:
                 continue
             if t == 'OT_OVER':
                 p = 1 - nbinom.cdf(line, PHI, PHI/(PHI + lam_s))

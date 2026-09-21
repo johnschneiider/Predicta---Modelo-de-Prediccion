@@ -1,0 +1,11 @@
+COMPARATIVA FINAL — HOY 13-sep (110 partidos con ground truth API) 2026-09-13T20:27:40.137795+00:00
+====================================================================================================
+Motor VIEJO (shots+xg por nombre): n=112 MAE=5.67 RMSE=7.01 bias=-1.09
+v2.3 (este motor):                n=110 MAE=4.60 RMSE=5.85 bias=-0.40
+
+En común (n=110): VIEJO MAE=5.69 | v2.3 MAE=4.60 | mejora=19.0%
+v2.3 gana en 72/110 partidos (65%)
+
+RESUMEN PARA TOMAR DECISIONES:
+- motor viejo MAE (n=112): 5.67
+- motor v2.3 MAE (n=110): 4.60

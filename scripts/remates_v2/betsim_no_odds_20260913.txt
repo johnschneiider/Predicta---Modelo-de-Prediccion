@@ -1,0 +1,85 @@
+BET-SIM SIN CUOTAS — motor remates v2 — partidos de HOY 13-sep
+n partidos con prediccion y resultado real: 118
+===============================================================================================
+
+VARIANTE A — linea fija estandar 25.5 (~media global del mercado)
+  margen |  apuestas  ganadas  perdidas  winrate | over: W/N | under: W/N
+    0.00 |       118       80        38    67.8% | 57/84 | 23/34
+    0.50 |       105       75        30    71.4% | 54/76 | 21/29
+    0.75 |        93       67        26    72.0% | 48/68 | 19/25
+    1.00 |        84       63        21    75.0% | 44/61 | 19/23
+    1.50 |        68       52        16    76.5% | 38/52 | 14/16
+
+VARIANTE B — linea = media de la liga del partido (adaptativa)
+  margen |  apuestas  ganadas  perdidas  winrate | over: W/N | under: W/N | pushes
+    0.00 |       118       70        48    59.3% | 54/89 | 16/29 | 0
+    0.50 |        91       60        31    65.9% | 48/73 | 12/18 | 0
+    0.75 |        82       53        29    64.6% | 43/66 | 10/16 | 0
+    1.00 |        74       48        26    64.9% | 39/62 | 9/12 | 0
+    1.50 |        58       40        18    69.0% | 33/50 | 7/8 | 0
+
+DETALLE — Variante A margen 0.75 (principal):
+apuestas=93 ganadas=67 perdidas=26 winrate=72.0%
+  PERDIDAS:
+    Monterrey - Tigres UANL                      [Liga MX         ] over 25.5 | pred=29.92 real=23
+    Real Salt Lake - New York City FC            [Major League Soc] over 25.5 | pred=27.23 real=21
+    San Jose Earthquakes - Houston Dynamo        [Major League Soc] over 25.5 | pred=26.65 real=21
+    Urawa - Fagiano Okayama                      [J1 League       ] over 25.5 | pred=27.32 real=24
+    Excelsior - Utrecht                          [Eredivisie      ] over 25.5 | pred=27.34 real=22
+    Wisla Plock - Cracovia Krakow                [Ekstraklasa     ] over 25.5 | pred=30.65 real=24
+    Baník Ostrava - Pardubice                    [Czech Liga      ] under 25.5 | pred=24.56 real=30
+    Hammarby FF - IF Brommapojkarna              [Allsvenskan     ] over 25.5 | pred=31.09 real=25
+    Silkeborg - Viborg                           [Superliga       ] over 25.5 | pred=29.16 real=22
+    Arges Pitesti - FC Botosani                  [Liga I          ] over 25.5 | pred=26.51 real=13
+    Sporting Gijon - Eldense                     [Segunda División] over 25.5 | pred=27.2 real=20
+    KuPS - HJK Helsinki                          [Veikkausliiga   ] under 25.5 | pred=24.16 real=28
+    WSG Wattens - TSV Hartberg                   [Bundesliga      ] over 25.5 | pred=30.47 real=21
+    Lecce - Monza                                [Serie A         ] under 25.5 | pred=24.75 real=26
+    Iğdır FK - Mardin 1969                       [1. Lig          ] under 25.5 | pred=24.13 real=29
+    Levante - Barcelona                          [La Liga         ] over 25.5 | pred=27.74 real=25
+    Avellino - Palermo                           [Serie B         ] over 25.5 | pred=27.72 real=24
+    Manchester United - Manchester City          [Premier League  ] over 25.5 | pred=28.83 real=22
+    Teplice - Slavia Praha                       [Czech Liga      ] over 25.5 | pred=26.27 real=25
+    Asteras Tripolis - AEK Athens FC             [Super League 1  ] under 25.5 | pred=23.72 real=34
+    Benfica - GIL Vicente                        [Primeira Liga   ] over 25.5 | pred=26.48 real=21
+    Amed - Başakşehir                            [Süper Lig       ] over 25.5 | pred=28.47 real=25
+    Fredrikstad - Sarpsborg 08 FF                [Eliteserien     ] over 25.5 | pred=26.62 real=20
+    Corvinul Hunedoara - Universitatea Craiova   [Liga I          ] over 25.5 | pred=30.22 real=22
+    PAOK - Aris Thessalonikis                    [Super League 1  ] under 25.5 | pred=23.78 real=28
+    Real Sociedad - Atletico Madrid              [La Liga         ] over 25.5 | pred=26.39 real=21
+
+DETALLE — Variante B margen 0.75 (principal):
+apuestas=82 ganadas=53 perdidas=29 winrate=64.6%
+  PERDIDAS:
+    FC Dallas - Portland Timbers                 [Major League Soc] over 26.02 | pred=28.72 real=26
+    Monterrey - Tigres UANL                      [Liga MX         ] over 27.77 | pred=29.92 real=23
+    Real Salt Lake - New York City FC            [Major League Soc] over 26.02 | pred=27.23 real=21
+    Gimcheon Sangmu FC - Gangwon FC              [K League 1      ] over 21.13 | pred=22.73 real=4
+    Urawa - Fagiano Okayama                      [J1 League       ] over 25.73 | pred=27.32 real=24
+    Gwangju FC - FC Anyang                       [K League 1      ] over 21.13 | pred=22.97 real=19
+    Wisla Plock - Cracovia Krakow                [Ekstraklasa     ] over 28.35 | pred=30.65 real=24
+    Baník Ostrava - Pardubice                    [Czech Liga      ] under 25.82 | pred=24.56 real=30
+    Hammarby FF - IF Brommapojkarna              [Allsvenskan     ] over 27.50 | pred=31.09 real=25
+    Silkeborg - Viborg                           [Superliga       ] over 27.44 | pred=29.16 real=22
+    Sporting Gijon - Eldense                     [Segunda División] over 25.15 | pred=27.2 real=20
+    Slavia Sofia - Spartak Varna                 [First League    ] over 22.20 | pred=23.58 real=19
+    WSG Wattens - TSV Hartberg                   [Bundesliga      ] over 25.59 | pred=30.47 real=21
+    IFK Norrkoping - Oddevold                    [Superettan      ] over 21.71 | pred=25.13 real=21
+    Lecce - Monza                                [Serie A         ] under 25.63 | pred=24.75 real=26
+    Chaves - Feirense                            [Segunda Liga    ] under 23.84 | pred=23.08 real=25
+    Siwelele - Golden Arrows                     [Premier Soccer L] over 22.89 | pred=24.15 real=18
+    Gençlerbirliği S.K. - Kasımpaşa              [Süper Lig       ] under 26.17 | pred=24.9 real=31
+    Levante - Barcelona                          [La Liga         ] over 25.02 | pred=27.74 real=25
+    PEC Zwolle - Feyenoord                       [Eredivisie      ] under 28.73 | pred=27.81 real=32
+    Avellino - Palermo                           [Serie B         ] over 26.43 | pred=27.72 real=24
+    Manchester United - Manchester City          [Premier League  ] over 25.83 | pred=28.83 real=22
+    Benfica - GIL Vicente                        [Primeira Liga   ] over 24.15 | pred=26.48 real=21
+    Amed - Başakşehir                            [Süper Lig       ] over 26.17 | pred=28.47 real=25
+    Bursaspor - Esenler Erokspor                 [1. Lig          ] under 23.50 | pred=21.17 real=24
+    Botev Plovdiv - Lokomotiv Plovdiv            [First League    ] over 22.20 | pred=23.95 real=13
+    Corvinul Hunedoara - Universitatea Craiova   [Liga I          ] over 27.22 | pred=30.22 real=22
+    Panathinaikos - Panetolikos                  [Super League 1  ] over 23.95 | pred=25.42 real=15
+    Real Sociedad - Atletico Madrid              [La Liga         ] over 25.02 | pred=26.39 real=21
+
+EJEMPLO CON LINEAS REALES — Flamengo-Corinthians (sin cuotas; lineas capturadas 22.5-28.5):
+  lambda=29.43 -> el modelo va OVER en las 7 lineas (real=35) -> 7/7 ganadas (partido).

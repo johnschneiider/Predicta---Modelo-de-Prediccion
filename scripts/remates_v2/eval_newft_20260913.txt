@@ -1,0 +1,18 @@
+fetch hoy: 1130 fixtures | quota remaining=74688
+FT hoy: 973 | nuevos (no en cache previa, ligas cubiertas): 20
+stats descargadas: 20 | con total_shots: 7 | sin stats: 13
+evaluables: 7 | skipped: 0 []
+
+=== MOTOR v2.3 en partidos NUEVOS terminados hoy (no en BD; modelo no los vio) ===
+n=7 | MAE=4.21 | RMSE=5.20 | bias=+1.42
+±3: 57% | ±5: 57%
+baseline liga-media: MAE=4.98 | baseline global 25.25: 5.75
+
+Partido | pred v2.3 | real | err
+  Super League 1         Panathinaikos      vs Panetolikos        |  25.4 |    15 | +10.4
+  Serie A                Mirassol           vs Vitoria            |  29.2 |    35 |  -5.8
+  La Liga                Real Sociedad      vs Atletico Madrid    |  26.4 |    21 |  +5.4
+  Primera A              Deportivo Pereira  vs Bucaramanga        |  24.8 |    22 |  +2.8
+  Ligue 1                Stade Brestois 29  vs Paris Saint Germai |  28.3 |    31 |  -2.7
+  Serie A                Sassuolo           vs Juventus           |  26.8 |    28 |  -1.2
+  Segunda División       Tenerife           vs Leganes            |  22.1 |    21 |  +1.1
