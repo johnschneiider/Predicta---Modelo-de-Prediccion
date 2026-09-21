@@ -68,7 +68,6 @@ class Command(BaseCommand):
             self._paper_sot(m, home_db, away_db, league, sot_state, fetch_market_odds(m['event_id'], 'Total de tiros a puerta (Resuelta usando Opta Data)'), start)
             self._paper_corners(m, home_db, away_db, league, fetch_market_odds(m['event_id'], 'Total de Tiros de Esquina'), start)
             self._paper_do(m, home_db, away_db, league, p_x, fetch_market_odds(m['event_id'], 'Doble Oportunidad'), start)
-        self._build_parlays()
         self.stdout.write(f'Recolección finalizada.')
 
     # ---------- features (replicadas de btts_v2) ----------
@@ -253,56 +252,6 @@ class Command(BaseCommand):
             p = probs[sel]
             if p >= 0.60 and (p - fair[t] / s) >= 0.06:
                 self._add(m, h, a, lg, 'Doble Oportunidad', 'x12_v2', sel, None, cuota, p, start)
-
-    def _build_parlays(self):
-        """Arma dobles con cuota objetivo ~2.0 desde singles OPEN con EV>=0.
-        Patas de eventos distintos, cada par de eventos una sola vez, máx 10/día.
-        """
-        from auto_betting.models import PaperParlay
-        singles = list(PaperBet.objects.filter(estado='OPEN').exclude(motor=''))
-        legs = [s for s in singles if s.ev is not None and s.ev >= -0.05 and s.prob and s.prob >= 0.52 and s.cuota and s.cuota >= 1.35]
-        # dedupe por par de evento_id
-        usados = set()
-        for p in PaperParlay.objects.filter(estado='OPEN'):
-            evs = sorted([l.get('evento_id') for l in (p.legs or []) if l.get('evento_id')])
-            if len(evs) == 2:
-                usados.add(tuple(evs))
-        cands = []
-        for i in range(len(legs)):
-            for j in range(i + 1, len(legs)):
-                a, b = legs[i], legs[j]
-                if a.evento_id == b.evento_id:
-                    continue
-                par = tuple(sorted([a.evento_id, b.evento_id]))
-                if par in usados:
-                    continue
-                cuota = a.cuota * b.cuota
-                if not (1.80 <= cuota <= 2.40):
-                    continue
-                prob = a.prob * b.prob
-                ev = prob * cuota - 1
-                cands.append((ev, a, b))
-        cands.sort(key=lambda x: -x[0])
-        creadas = 0
-        for ev, a, b in cands:
-            if creadas >= 10:
-                break
-            par = tuple(sorted([a.evento_id, b.evento_id]))
-            if par in usados:
-                continue
-            leg_lst = [
-                {'paperbet_id': a.id, 'evento_id': a.evento_id, 'home': a.home_team, 'away': a.away_team,
-                 'mercado': a.mercado, 'seleccion': a.seleccion, 'linea': a.linea, 'cuota': a.cuota,
-                 'prob': a.prob, 'motor': a.motor},
-                {'paperbet_id': b.id, 'evento_id': b.evento_id, 'home': b.home_team, 'away': b.away_team,
-                 'mercado': b.mercado, 'seleccion': b.seleccion, 'linea': b.linea, 'cuota': b.cuota,
-                 'prob': b.prob, 'motor': b.motor},
-            ]
-            PaperParlay.objects.create(legs=leg_lst, cuota=round(a.cuota * b.cuota, 4),
-                                       prob=round(a.prob * b.prob, 4), ev=round(ev, 4))
-            usados.add(par)
-            creadas += 1
-        self.stdout.write(f'Combinadas creadas: {creadas}')
 
     def _add(self, m, home_db, away_db, liga, mercado, motor, seleccion, linea, cuota, prob, start):
         ev = prob*cuota - 1
