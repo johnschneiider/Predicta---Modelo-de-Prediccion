@@ -84,7 +84,7 @@ def _extract_json(text):
 
 
 def _gemini(bet):
-    model = getattr(settings, 'LLM_MODEL', 'gemini-2.5-flash')
+    model = getattr(settings, 'LLM_MODEL', 'gemini-3.5-flash')
     key = getattr(settings, 'LLM_API_KEY', '') or ''
     timeout = int(getattr(settings, 'LLM_TIMEOUT', 30) or 30)
     if not key:

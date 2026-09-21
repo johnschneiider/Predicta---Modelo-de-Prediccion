@@ -183,7 +183,7 @@ ODDS_API_KEY = os.getenv('ODDS_API_KEY', '9c2c101074ae4a4c3ec9b01a4d38cb6a')
 LLM_ENABLED = os.getenv('LLM_ENABLED', 'true').lower() == 'true'
 LLM_PROVIDER = os.getenv('LLM_PROVIDER', 'gemini')
 LLM_API_KEY = os.getenv('LLM_API_KEY', '')
-LLM_MODEL = os.getenv('LLM_MODEL', 'gemini-2.5-flash')
+LLM_MODEL = os.getenv('LLM_MODEL', 'gemini-3.5-flash')
 LLM_TIMEOUT = int(os.getenv('LLM_TIMEOUT', '30'))
 APIFOOTBALL_KEY = os.getenv('APIFOOTBALL_KEY', '')
 ODDS_API_BASE_URL = 'https://api.the-odds-api.com/v4'
