@@ -629,6 +629,9 @@ class PaperBet(models.Model):
     ev = models.FloatField(null=True, blank=True)        # prob*cuota - 1
     closing_odds = models.FloatField(null=True, blank=True)  # cuota de cierre (CLV)
     stake = models.IntegerField(default=10000)           # COP virtuales
+    llm_verdict = models.BooleanField(null=True, blank=True)   # True=aprobado, False=rechazado, None=no evaluado
+    llm_reason = models.TextField(blank=True, default='')      # justificación del LLM
+    llm_model = models.CharField(max_length=60, blank=True, default='')
     estado = models.CharField(max_length=8, choices=ESTADO_CHOICES, default='OPEN', db_index=True)
     resultado_real = models.CharField(max_length=20, blank=True)   # ej. '2-1' / 'Sí' / 'Home'
     payout = models.FloatField(null=True, blank=True)

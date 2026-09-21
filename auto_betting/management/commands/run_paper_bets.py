@@ -29,7 +29,7 @@ class Command(BaseCommand):
     help = 'Recolecta apuestas paper de los motores independientes'
 
     def add_arguments(self, parser):
-        parser.add_argument('--hours', type=int, default=48)
+        parser.add_argument('--hours', type=int, default=24)
 
     def handle(self, *args, **opts):
         btt_state = pickle.load(open(BTT_S, 'rb'))
@@ -256,7 +256,7 @@ class Command(BaseCommand):
     def _add(self, m, home_db, away_db, liga, mercado, motor, seleccion, linea, cuota, prob, start):
         ev = prob*cuota - 1
         dup = PaperBet.objects.filter(evento_id=str(m['event_id']), mercado=mercado,
-                                      seleccion=seleccion, linea=linea, estado='OPEN').exists()
+                                      seleccion=seleccion, linea=linea).exists()
         if dup:
             return False
         PaperBet.objects.create(evento_id=str(m['event_id']), start_time=start,

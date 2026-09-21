@@ -82,43 +82,10 @@
     </table>
   </div>
 
-  <div class="pb-section-title">🎯 Combinadas (cuota objetivo ~2.0 — patas con EV≥0 de eventos distintos)</div>
-  <div class="pb-cards">
-    <div class="pb-card"><div class="v">{{ par_stats.n }}</div><div class="l">Combinadas liquidadas</div></div>
-    <div class="pb-card"><div class="v">{{ par_stats.wr|default:'—' }}%</div><div class="l">Winrate</div></div>
-    <div class="pb-card"><div class="v">{{ par_stats.roi|default:'—' }}%</div><div class="l">ROI</div></div>
-    <div class="pb-card"><div class="v {% if par_stats.net >= 0 %}pos{% else %}neg{% endif %}">{{ par_stats.net|floatformat:0 }}</div><div class="l">Net (COP)</div></div>
-    <div class="pb-card"><div class="v">{{ par_open }}</div><div class="l">Pendientes</div></div>
-    <div class="pb-card"><div class="v {% if par_stats.roi > global_stats.roi %}pos{% else %}neg{% endif %}">{{ global_stats.roi|default:'—' }}%</div><div class="l">ROI singles (mismos motores)</div></div>
-  </div>
-  <div class="pb-table-wrap">
-    <table class="pb">
-      <tr><th>Creada</th><th>Pata 1</th><th>Pata 2</th><th>Cuota</th><th>P</th><th>EV</th><th>Estado</th><th>Resultado</th><th>Payout</th></tr>
-      {% for p in par_recientes %}
-      <tr>
-        <td>{{ p.creado|date:'m-d H:i' }}</td>
-        <td>{% with l=p.legs.0 %}{{ l.home|truncatechars:12 }} vs {{ l.away|truncatechars:12 }} — {{ l.seleccion }} ({{ l.motor }}){% endwith %}</td>
-        <td>{% with l=p.legs.1 %}{{ l.home|truncatechars:12 }} vs {{ l.away|truncatechars:12 }} — {{ l.seleccion }} ({{ l.motor }}){% endwith %}</td>
-        <td>{{ p.cuota|floatformat:2 }}</td>
-        <td>{{ p.prob|floatformat:2 }}</td>
-        <td class="{% if p.ev >= 0 %}pos{% else %}neg{% endif %}">{{ p.ev|floatformat:2 }}</td>
-        <td>
-          {% if p.estado == 'WON' %}<span class="badge badge-won">GANADA</span>
-          {% elif p.estado == 'LOST' %}<span class="badge badge-lost">PERDIDA</span>
-          {% elif p.estado == 'VOID' %}<span class="badge badge-open">ANULADA</span>
-          {% else %}<span class="badge badge-open">PENDIENTE</span>{% endif %}
-        </td>
-        <td>{{ p.resultado_real|default:'—' }}</td>
-        <td class="{% if p.net >= 0 %}pos{% else %}neg{% endif %}">{{ p.payout|floatformat:0|default:'—' }}</td>
-      </tr>
-      {% empty %}<tr><td colspan="9">Aún no hay combinadas. Se arman cuando existen singles con EV≥0 compatibles.</td></tr>{% endfor %}
-    </table>
-  </div>
-
   <div class="pb-section-title">Últimas apuestas paper</div>
   <div class="pb-table-wrap">
     <table class="pb">
-      <tr><th>Creada</th><th>Partido</th><th>Liga</th><th>Motor</th><th>Mercado</th><th>Selección</th><th>Línea</th><th>Cuota</th><th>P</th><th>EV</th><th>CLV</th><th>Estado</th><th>Resultado</th><th>Payout</th></tr>
+      <tr><th>Creada</th><th>Partido</th><th>Liga</th><th>Motor</th><th>Mercado</th><th>Selección</th><th>Línea</th><th>Cuota</th><th>P</th><th>EV</th><th>CLV</th><th>LLM</th><th>Estado</th><th>Resultado</th><th>Payout</th></tr>
       {% for b in recientes %}
       <tr>
         <td>{{ b.creado|date:'m-d H:i' }}</td>
@@ -133,6 +100,11 @@
         <td class="{% if b.ev >= 0 %}pos{% else %}neg{% endif %}">{{ b.ev|floatformat:2 }}</td>
         <td class="{% if b.clv_pct >= 0 %}pos{% else %}neg{% endif %}">{{ b.clv_pct|default:'—' }}</td>
         <td>
+          {% if b.llm_verdict is True %}<span class="badge badge-won">SI</span>
+          {% elif b.llm_verdict is False %}<span class="badge badge-lost">NO</span>
+          {% else %}<span class="badge badge-open">—</span>{% endif %}
+        </td>
+        <td>
           {% if b.estado == 'WON' %}<span class="badge badge-won">GANADA</span>
           {% elif b.estado == 'LOST' %}<span class="badge badge-lost">PERDIDA</span>
           {% else %}<span class="badge badge-open">PENDIENTE</span>{% endif %}
@@ -140,7 +112,7 @@
         <td>{{ b.resultado_real|default:'—' }}</td>
         <td class="{% if b.net >= 0 %}pos{% else %}neg{% endif %}">{{ b.payout|floatformat:0|default:'—' }}</td>
       </tr>
-      {% empty %}<tr><td colspan="13">Aún no hay apuestas paper. Corre <code>manage.py run_paper_bets</code>.</td></tr>{% endfor %}
+      {% empty %}<tr><td colspan="14">Aún no hay apuestas paper. Corre <code>manage.py run_paper_bets_llm</code>.</td></tr>{% endfor %}
     </table>
   </div>
 </div>

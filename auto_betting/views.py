@@ -654,21 +654,10 @@ def paperbet_dashboard(request):
 
     recientes = bets.order_by('-creado')[:120]
 
-    from .models import PaperParlay
-    parlays = PaperParlay.objects.all()
-    par_settled = parlays.exclude(estado='OPEN')
-    par_stats = agg(par_settled)
-    par_open = parlays.filter(estado='OPEN').count()
-    # comparativa: mismas patas en single (stake 10k cada pata vs 10k la combinada)
-    par_recientes = parlays.order_by('-creado')[:40]
-
     return render(request, 'auto_betting/paperbet.html', {
         'global_stats': global_stats,
         'open_count': open_count,
         'por_motor': por_motor,
         'por_mercado': por_mercado,
         'recientes': recientes,
-        'par_stats': par_stats,
-        'par_open': par_open,
-        'par_recientes': par_recientes,
     })
