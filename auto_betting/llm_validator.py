@@ -6,12 +6,12 @@ se envía a un LLM con acceso a búsqueda web. El LLM recibe TODOS los datos
 (EV, edge, cuota, prob, mercado, selección, equipos, liga, fecha) y responde
 SI/NO. Solo los picks aprobados se escriben en PaperBet.
 
-Proveedor por defecto: Google Gemini (tier gratuito) con grounding en Google
-Search. Configurable vía settings:
-  LLM_PROVIDER  -> 'gemini' (único con búsqueda web nativa)
-  LLM_API_KEY   -> clave de la API
-  LLM_MODEL     -> ej. 'gemini-2.5-flash'
-  LLM_TIMEOUT   -> segundos por petición
+Proveedores soportados (configurable vía settings):
+  LLM_PROVIDER='openai' -> OpenAI Responses API + herramienta web_search
+  LLM_PROVIDER='gemini' -> Google Gemini + grounding en Google Search
+  LLM_API_KEY  -> clave de la API
+  LLM_MODEL    -> 'gpt-4.1-mini' (openai) | 'gemini-3.5-flash' (gemini)
+  LLM_TIMEOUT  -> segundos por petición
 
 Fallos de red/API => FAIL-CLOSED (el pick se descarta), nunca se aprueba a ciegas.
 """
@@ -26,6 +26,7 @@ from django.conf import settings
 log = logging.getLogger('paperbet.llm')
 
 GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
+OPENAI_ENDPOINT = 'https://api.openai.com/v1/responses'
 
 _SYSTEM = (
     "Eres un analista de apuestas deportivas de élite. Recibes una apuesta "
@@ -73,7 +74,6 @@ def _extract_json(text):
     if not text:
         return None
     text = text.strip()
-    # quitar fences markdown si los hubiera
     m = re.search(r'\{.*\}', text, re.DOTALL)
     if m:
         text = m.group(0)
@@ -81,6 +81,52 @@ def _extract_json(text):
         return json.loads(text)
     except Exception:
         return None
+
+
+def _openai(bet):
+    model = getattr(settings, 'LLM_MODEL', 'gpt-4.1-mini')
+    key = getattr(settings, 'LLM_API_KEY', '') or ''
+    timeout = int(getattr(settings, 'LLM_TIMEOUT', 30) or 30)
+    if not key:
+        return False, "LLM_API_KEY no configurada", {'error': 'no_key'}
+    payload = {
+        "model": model,
+        "input": _SYSTEM + "\n\n" + _build_prompt(bet),
+        "tools": [{"type": "web_search"}],
+        "temperature": 0,
+    }
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    for attempt in (1, 2):
+        try:
+            r = requests.post(OPENAI_ENDPOINT, json=payload, headers=headers, timeout=timeout)
+            if r.status_code == 429:
+                log.warning("OpenAI 429, espera y reintento %d", attempt)
+                time.sleep(5 * attempt)
+                continue
+            r.raise_for_status()
+            data = r.json()
+            text = ""
+            searches = 0
+            for item in (data.get('output') or []):
+                t = item.get('type')
+                if t == 'message':
+                    for c in (item.get('content') or []):
+                        if c.get('type') == 'output_text':
+                            text += c.get('text', '')
+                elif t in ('web_search_call', 'web_search_preview_call'):
+                    searches += 1
+            parsed = _extract_json(text)
+            if parsed is None:
+                return False, "respuesta LLM no parseable", {'raw': text[:200]}
+            approve = bool(parsed.get('approve'))
+            reason = str(parsed.get('reason', ''))[:500]
+            meta = {'provider': 'openai', 'model': model, 'searches': searches}
+            return approve, reason, meta
+        except requests.RequestException as e:
+            log.warning("OpenAI error (intento %d): %s", attempt, e)
+            if attempt == 1:
+                time.sleep(2)
+    return False, "error de red/API", {'error': 'network'}
 
 
 def _gemini(bet):
@@ -131,7 +177,9 @@ def validate_bet(bet):
     """Devuelve (approved: bool, reason: str, meta: dict)."""
     if not getattr(settings, 'LLM_ENABLED', True):
         return True, "LLM deshabilitado (LLM_ENABLED=false)", {'skipped': True}
-    provider = (getattr(settings, 'LLM_PROVIDER', 'gemini') or 'gemini').lower()
+    provider = (getattr(settings, 'LLM_PROVIDER', 'openai') or 'openai').lower()
+    if provider == 'openai':
+        return _openai(bet)
     if provider == 'gemini':
         return _gemini(bet)
     return False, f"proveedor LLM no soportado: {provider}", {'error': 'provider'}
