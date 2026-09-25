@@ -14,6 +14,7 @@ Guard anti-concurrencia: cada tarea usa pgrep para evitar duplicados.
 import logging
 import subprocess
 import os
+import shutil
 from datetime import datetime, timezone as dt_timezone
 
 from django.core.management.base import BaseCommand
@@ -53,6 +54,9 @@ COMANDOS = {
     'inspect_bets': [
         'venv/bin/python', 'manage.py', 'inspect_bets',
     ],
+    'score_paper_bets': [
+        'venv/bin/python', 'manage.py', 'score_paper_bets', '--days-back', '3',
+    ],
 }
 
 # Logs por tarea
@@ -68,6 +72,10 @@ LOGS = {
     'run_auto_bets': 'logs/auto_betting.log',
     'build_showcase_pick': 'logs/showcase.log',
     'inspect_bets': 'logs/inspector.log',
+    # score_paper_bets tiene log PROPIO a propósito: antes compartía
+    # logs/paperbet_llm.log con la tarea de root run_paper_bets_llm, que lo
+    # recrea como root:root y dejaba al scheduler (www-data) sin poder abrirlo.
+    'score_paper_bets': 'logs/score_paper_bets.log',
 }
 
 # Tareas que NO deben solaparse (pgrep pattern para guard anti-concurrencia)
@@ -137,19 +145,53 @@ class Command(BaseCommand):
             env = dict(os.environ)
             env['DJANGO_SETTINGS_MODULE'] = 'betting_bot.settings'
 
+            # --- Blindaje del log -------------------------------------------
+            # Un archivo de log a nombre de OTRO usuario hacía que open() fallara
+            # con Permission denied y la tarea NUNCA se lanzaba: fallaba en
+            # silencio, una y otra vez, durante días. Se auto-repara antes de abrir.
             try:
-                with open(log_path, 'a', encoding='utf-8') as lf:
-                    subprocess.Popen(
-                        cmd,
-                        cwd=str(settings.BASE_DIR),
-                        env=env,
-                        stdout=lf,
-                        stderr=subprocess.STDOUT,
-                        start_new_session=True,
+                log_path.parent.mkdir(parents=True, exist_ok=True)
+                if log_path.exists() and not os.access(log_path, os.W_OK):
+                    os.chmod(log_path, 0o664)
+                    try:
+                        shutil.chown(log_path, user='www-data', group='www-data')
+                    except (LookupError, PermissionError):
+                        pass
+                    logger.warning(
+                        f"run_scheduler: {log_file} no era escribible; propiedad reparada"
                     )
             except Exception as e:
+                logger.warning(f"run_scheduler: no se pudo revisar {log_file}: {e}")
+
+            # Abrir el log NUNCA debe impedir lanzar la tarea: si falla, se lanza
+            # igual sin redirección. Perder el log es aceptable; perder el trabajo no.
+            lf = None
+            try:
+                lf = open(log_path, 'a', encoding='utf-8')
+            except Exception as e:
+                logger.error(
+                    f"run_scheduler: {sched.tarea} sin log escribible en {log_file}: {e} "
+                    f"(se lanza igual)"
+                )
+
+            try:
+                subprocess.Popen(
+                    cmd,
+                    cwd=str(settings.BASE_DIR),
+                    env=env,
+                    stdout=lf if lf is not None else subprocess.DEVNULL,
+                    stderr=subprocess.STDOUT,
+                    start_new_session=True,
+                )
+            except Exception as e:
+                if lf is not None:
+                    lf.close()
                 logger.error(f"run_scheduler: error lanzando {sched.tarea}: {e}")
                 continue
+            finally:
+                # El hijo ya heredó el descriptor; el padre puede cerrar el suyo.
+                if lf is not None:
+                    lf.close()
 
             sched.ultimo_run = now
             sched.save(update_fields=['ultimo_run'])

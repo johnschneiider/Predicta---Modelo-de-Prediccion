@@ -11,6 +11,12 @@ from football_api.client import ApiFootballClient
 from football_api.models import ApiLeague
 from football_data.models import League
 
+# Horas tras el inicio a partir de las cuales una apuesta que NO se puede
+# liquidar (partido aplazado, sin estadísticas, equipo con nombre que no
+# coincide con la API) se anula y se devuelve el stake. Sin este tope, esas
+# apuestas se quedaban en OPEN indefinidamente y el paperbet nunca cuadraba.
+STALE_VOID_HOURS = 40
+
 def norm(s):
     s = unicodedata.normalize('NFKD', s)
     return ''.join(x for x in s.lower() if x.isalnum())
@@ -60,7 +66,7 @@ class Command(BaseCommand):
             if best is None or best_s < 1.4:
                 # Partido sin fixture en API (liga fuera de cobertura del plan).
                 # Pasadas 40h del start_time sin poder liquidar → VOID (stake devuelto).
-                if timezone.now() - bet.start_time > timedelta(hours=40):
+                if timezone.now() - bet.start_time > timedelta(hours=STALE_VOID_HOURS):
                     bet.estado = 'VOID'
                     bet.resultado_real = 'sin cobertura API'
                     bet.payout = bet.stake
@@ -129,7 +135,25 @@ class Command(BaseCommand):
             bet.settled_at = timezone.now()
             bet.save(update_fields=['estado', 'payout', 'resultado_real', 'settled_at'])
             n_ok += 1
-        self.stdout.write(f'Liquidadas: {n_ok} | Siguen OPEN (sin FT/stats aún): {n_open}')
+        # --- Barrido final: ninguna apuesta queda OPEN para siempre --------
+        # Red de seguridad: pase lo que pase dentro del bucle (rama que hace
+        # `continue`, estadística ausente, estado raro de la API), una apuesta
+        # más vieja que STALE_VOID_HOURS sin resultado se anula con su stake
+        # devuelto. Así el paperbet no acumula OPEN eternos.
+        stale_cutoff = timezone.now() - timedelta(hours=STALE_VOID_HOURS)
+        n_void = 0
+        for bet in PaperBet.objects.filter(estado='OPEN', start_time__lt=stale_cutoff):
+            bet.estado = 'VOID'
+            bet.resultado_real = f'sin resultado >{STALE_VOID_HOURS}h'
+            bet.payout = bet.stake
+            bet.settled_at = timezone.now()
+            bet.save(update_fields=['estado', 'resultado_real', 'payout', 'settled_at'])
+            n_void += 1
+
+        self.stdout.write(
+            f'Liquidadas: {n_ok} | Anuladas por antigüedad: {n_void} | '
+            f'Siguen OPEN (aún no liquidables): {n_open}'
+        )
         self._settle_parlays()
 
     def _settle_parlays(self):
