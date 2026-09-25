@@ -37,7 +37,10 @@ class Command(BaseCommand):
         c = ApiFootballClient()
         fx_cache = {}
         sot_cache = {}
-        liga2api = {l.id: a.api_id for a in ApiLeague.objects.filter(predicta_league_id__isnull=False) for l in League.objects.filter(id=a.predicta_league_id)}
+        # Fases de la API que mapean a cada liga de Predicta. Puede haber más de
+        # una (Apertura/Clausura): ver auto_betting/fixture_match.py.
+        from auto_betting.fixture_match import match_fixture
+        ligas_api = list(ApiLeague.objects.filter(predicta_league_id__isnull=False))
         name2lid = {l.name: l.id for l in League.objects.all()}
         n_ok = n_open = 0
         for bet in open_bets:
@@ -51,19 +54,37 @@ class Command(BaseCommand):
             if fx is None:
                 continue
             lid = name2lid.get(bet.liga)
-            api_lid = liga2api.get(lid) if lid else None
-            # buscar fixture por nombres (y liga si está)
-            nh, na = norm(bet.home_team), norm(bet.away_team)
-            best = None; best_s = 0.0
-            for f in fx:
-                if api_lid and f['league']['id'] != api_lid:
+            # Varias ligas de la API pueden apuntar a la misma liga de Predicta
+            # (Apertura y Clausura). Se prueban todas, no solo la primera.
+            candidatas = [a for a in ligas_api if a.predicta_league_id == lid] if lid else []
+            best = None; best_s = 0.0; best_motivo = ''
+            for al in candidatas:
+                cand, motivo = match_fixture(fx, al.api_id, al.name,
+                                             bet.home_team, bet.away_team)
+                if cand is None:
+                    if not best_motivo:
+                        best_motivo = motivo
                     continue
-                s1 = difflib.SequenceMatcher(None, nh, norm(f['teams']['home']['name'])).ratio()
-                s2 = difflib.SequenceMatcher(None, na, norm(f['teams']['away']['name'])).ratio()
-                sc = s1 + s2
-                if sc > best_s:
-                    best_s = sc; best = f
-            if best is None or best_s < 1.4:
+                s1 = difflib.SequenceMatcher(None, norm(bet.home_team),
+                                             norm(cand['teams']['home']['name'])).ratio()
+                s2 = difflib.SequenceMatcher(None, norm(bet.away_team),
+                                             norm(cand['teams']['away']['name'])).ratio()
+                if s1 + s2 > best_s:
+                    best_s = s1 + s2; best = cand; best_motivo = motivo
+            if best is None and not candidatas:
+                # Liga sin equivalencia en la API: se prueba el emparejamiento
+                # sin filtro de liga como último recurso (y así se reporta).
+                best, best_motivo = match_fixture(fx, None, None,
+                                                  bet.home_team, bet.away_team)
+                if best is not None:
+                    s1 = difflib.SequenceMatcher(None, norm(bet.home_team),
+                                                 norm(best['teams']['home']['name'])).ratio()
+                    s2 = difflib.SequenceMatcher(None, norm(bet.away_team),
+                                                 norm(best['teams']['away']['name'])).ratio()
+                    best_s = s1 + s2
+            # match_fixture ya aplica el umbral (0.7 por equipo) y admite fases
+            # hermanas, así que basta con comprobar que encontró algo.
+            if best is None:
                 # Partido sin fixture en API (liga fuera de cobertura del plan).
                 # Pasadas 40h del start_time sin poder liquidar → VOID (stake devuelto).
                 if timezone.now() - bet.start_time > timedelta(hours=STALE_VOID_HOURS):

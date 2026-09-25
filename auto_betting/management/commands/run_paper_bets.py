@@ -42,12 +42,24 @@ class Command(BaseCommand):
         matches = fetch_upcoming_matches(hours_ahead=opts['hours'])
         self.stdout.write(f'Partidos próximos: {len(matches)}')
         n_new = 0
+        n_desc = 0
         for m in matches:
             league = find_predicta_league(m)
             if league is None:
                 continue
             home_db, away_db = map_teams(m, league)
             if not home_db or not away_db or home_db == away_db:
+                continue
+            # Compuerta anti "partido fantasma": solo se apuesta si el partido
+            # existe en API-Football, que es la fuente con la que se liquida.
+            # Se comprueba UNA vez por partido, antes de evaluar ningún mercado.
+            ok, _fx, motivo = self._partido_existe_en_api(m, league, m['start_time'])
+            if not ok:
+                n_desc += 1
+                self.stdout.write(
+                    f"  [SIN LIQUIDACIÓN] {m['home']} vs {m['away']} "
+                    f"({league.name}) -> {motivo}; no se apuesta"
+                )
                 continue
             lid = league.id
             hk = TEAM_KEYS.get(f'{lid}|{home_db}'); ak = TEAM_KEYS.get(f'{lid}|{away_db}')
@@ -68,7 +80,10 @@ class Command(BaseCommand):
             self._paper_sot(m, home_db, away_db, league, sot_state, fetch_market_odds(m['event_id'], 'Total de tiros a puerta (Resuelta usando Opta Data)'), start)
             self._paper_corners(m, home_db, away_db, league, fetch_market_odds(m['event_id'], 'Total de Tiros de Esquina'), start)
             self._paper_do(m, home_db, away_db, league, p_x, fetch_market_odds(m['event_id'], 'Doble Oportunidad'), start)
-        self.stdout.write(f'Recolección finalizada.')
+        self.stdout.write(
+            f'Recolección finalizada. Descartados por no existir en API '
+            f'(no liquidables): {n_desc}'
+        )
 
     # ---------- features (replicadas de btts_v2) ----------
     def _goals_feats(self, st, hk, ak, lid, start):
@@ -252,6 +267,55 @@ class Command(BaseCommand):
             p = probs[sel]
             if p >= 0.60 and (p - fair[t] / s) >= 0.06:
                 self._add(m, h, a, lg, 'Doble Oportunidad', 'x12_v2', sel, None, cuota, p, start)
+
+    def _partido_existe_en_api(self, m, lg, start):
+        """
+        ¿El partido de Kambi existe en API-Football (la fuente que LIQUIDA)?
+
+        Se apuesta con las cuotas de Kambi, pero la liquidación (score_paper_bets)
+        resuelve el resultado buscando el partido en API-Football. Si el partido
+        no está ahí, la apuesta NUNCA se podrá liquidar: queda colgada hasta que
+        caduca por antigüedad.
+
+        Ocurre con ligas de categorías bajas que Kambi sí ofrece y la API no
+        cubre, y con eventos mal listados en Kambi. Sin esta compuerta entran
+        "partidos fantasma" (medido: 3 de 16 apuestas abiertas).
+
+        Devuelve (ok, fixture|None, motivo). Cachea por (liga, fecha) para no
+        repetir la misma llamada.
+        """
+        from football_api.models import ApiLeague
+        api_league_id = ApiLeague.objects.filter(
+            predicta_league_id=lg.id).values_list('api_id', flat=True).first()
+        if not api_league_id:
+            # Sin equivalencia de liga en la API no hay forma de liquidar.
+            return False, None, 'liga sin equivalencia en API-Football'
+
+        from football_api.client import ApiFootballClient
+        from auto_betting.fixture_match import match_fixture
+
+        day = start.strftime('%Y-%m-%d')
+        key = (api_league_id, day)
+        if not hasattr(self, '_fx_cache'):
+            self._fx_cache = {}
+        if key in self._fx_cache:
+            fx = self._fx_cache[key]
+        else:
+            try:
+                fx = ApiFootballClient().fixtures(date=day).get('response', [])
+            except Exception as e:
+                # Si no se puede comprobar, NO se descarta el partido: un fallo
+                # temporal de la API no debe vaciar el paperbet. Solo se filtra
+                # con evidencia positiva de que el partido no existe.
+                logger.warning(f"paperbet: sin verificar {m.get('home')} vs {m.get('away')}: {e}")
+                return True, None, 'API no consultable (se permite)'
+            self._fx_cache[key] = fx
+
+        api_name = ApiLeague.objects.filter(predicta_league_id=lg.id).values_list('name', flat=True).first()
+        best, motivo = match_fixture(fx, api_league_id, api_name, m['home'], m['away'])
+        if best is None:
+            return False, None, motivo
+        return True, best, motivo
 
     def _add(self, m, home_db, away_db, liga, mercado, motor, seleccion, linea, cuota, prob, start):
         ev = prob*cuota - 1
