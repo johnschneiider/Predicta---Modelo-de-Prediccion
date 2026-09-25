@@ -352,6 +352,17 @@ class Command(BaseCommand):
 
         apuestas_colocadas = 0
 
+        # 2026-09-25 (decisión John): no apostar a partidos que juegan los
+        # domingos. El paperbet (run_paper_bets / run_paper_bets_llm) SÍ sigue
+        # apostando domingos sin restricción — este filtro es solo producción.
+        domingos = [m for m in matches if _tz_now.localtime(m['start_time']).weekday() == 6]
+        matches = [m for m in matches if _tz_now.localtime(m['start_time']).weekday() != 6]
+        if domingos:
+            self.stdout.write(
+                f"🚫 {len(domingos)} partidos excluidos (domingo): "
+                f"{', '.join(m['home'] + ' vs ' + m['away'] for m in domingos[:5])}"
+            )
+
         for match in matches:
             if apuestas_colocadas >= disponibles:
                 break
