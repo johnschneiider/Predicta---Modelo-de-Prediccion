@@ -341,11 +341,10 @@ class Command(BaseCommand):
         # 3. Partidos próximos
         matches = fetch_upcoming_matches(config.horas_adelante)
         if only_today:
-            from django.utils import timezone as _tz_now
-            _today_local = _tz_now.localdate()
+            _today_local = django_timezone.localdate()
             matches = [
                 m for m in matches
-                if _tz_now.localtime(m['start_time']).date() == _today_local
+                if django_timezone.localtime(m['start_time']).date() == _today_local
             ]
         self.stdout.write(
             f"📋 {len(matches)} partidos {'de HOY' if only_today else f'en próximas {config.horas_adelante}h'}.")
@@ -355,8 +354,8 @@ class Command(BaseCommand):
         # 2026-09-25 (decisión John): no apostar a partidos que juegan los
         # domingos. El paperbet (run_paper_bets / run_paper_bets_llm) SÍ sigue
         # apostando domingos sin restricción — este filtro es solo producción.
-        domingos = [m for m in matches if _tz_now.localtime(m['start_time']).weekday() == 6]
-        matches = [m for m in matches if _tz_now.localtime(m['start_time']).weekday() != 6]
+        domingos = [m for m in matches if django_timezone.localtime(m['start_time']).weekday() == 6]
+        matches = [m for m in matches if django_timezone.localtime(m['start_time']).weekday() != 6]
         if domingos:
             self.stdout.write(
                 f"🚫 {len(domingos)} partidos excluidos (domingo): "
