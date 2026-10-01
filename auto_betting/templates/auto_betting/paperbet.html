@@ -65,6 +65,55 @@
     </table>
   </div>
 
+  <div class="pb-section-title">Motores de arbitraje (paper)</div>
+  <div class="subtitle" style="color: var(--text-secondary); font-size: 0.82rem; margin-bottom: 0.8rem;">
+    Funding rate · Depeg de stablecoins · P2P USDT/COP — monitores en vivo, sin dinero real.
+    Papel acumulado: <strong class="{% if arb_paper_total >= 0 %}pos{% else %}neg{% endif %}">${{ arb_paper_total|floatformat:2 }}</strong>
+    {% if arb_monitors.generated_at %}· actualizado {{ arb_monitors.generated_at }} UTC{% endif %}
+  </div>
+  {% if arb_monitors %}
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Motor</th><th>Último dato</th><th>Detalle</th><th>Paper</th></tr>
+      <tr>
+        <td><strong>Funding rate</strong></td>
+        <td>{{ arb_monitors.funding.data.last_ts|default:'—' }}</td>
+        <td>
+          {% for s in arb_monitors.funding.data.spreads %}
+            {{ s.symbol }}: largo {{ s.long_exchange }} / corto {{ s.short_exchange }} → {{ s.spread_pct|floatformat:2 }}% anual{% if not forloop.last %}<br>{% endif %}
+          {% empty %}sin datos{% endfor %}
+        </td>
+        <td>{{ arb_monitors.funding.data.snapshots_24h|default:0 }} corridas 24 h</td>
+      </tr>
+      <tr>
+        <td><strong>Depeg stablecoins</strong></td>
+        <td>{{ arb_monitors.depeg.data.last_ts|default:'—' }}</td>
+        <td>
+          {% for p in arb_monitors.depeg.data.prices %}
+            {{ p.pair }} {{ p.venue }}: {{ p.price|floatformat:5 }} ({{ p.dev_bps|floatformat:1 }} bps){% if not forloop.last %}<br>{% endif %}
+          {% empty %}sin datos{% endfor %}
+        </td>
+        <td class="{% if arb_monitors.depeg.data.paper_total >= 0 %}pos{% else %}neg{% endif %}">${{ arb_monitors.depeg.data.paper_total|floatformat:2|default:'0.00' }} · {{ arb_monitors.depeg.data.open_episodes|default:0 }} abiertos</td>
+      </tr>
+      <tr>
+        <td><strong>P2P USDT/COP</strong></td>
+        <td>{{ arb_monitors.p2p.data.current.ts|default:'—' }}</td>
+        <td>
+          {% if arb_monitors.p2p.data.current %}
+            compra {{ arb_monitors.p2p.data.current.best_ask|floatformat:2 }} COP ({{ arb_monitors.p2p.data.current.ask_premium_pct|floatformat:2 }}%) · venta {{ arb_monitors.p2p.data.current.best_bid|floatformat:2 }} COP ({{ arb_monitors.p2p.data.current.bid_premium_pct|floatformat:2 }}%) · ref {{ arb_monitors.p2p.data.current.ref_cop|floatformat:2 }}
+          {% else %}sin datos{% endif %}
+        </td>
+        <td class="{% if arb_monitors.p2p.data.paper_total >= 0 %}pos{% else %}neg{% endif %}">${{ arb_monitors.p2p.data.paper_total|floatformat:2|default:'0.00' }} · {{ arb_monitors.p2p.data.open_episodes|default:0 }} abiertos</td>
+      </tr>
+    </table>
+  </div>
+  <div class="subtitle" style="color: var(--text-secondary); font-size: 0.78rem;">
+    Solo paper / solo lectura. No es asesoría financiera.
+  </div>
+  {% else %}
+  <div class="pb-card">Sin datos aún: el exportador corre cada 5 minutos.</div>
+  {% endif %}
+
   <div class="pb-section-title">Por mercado</div>
   <div class="pb-table-wrap">
     <table class="pb">
@@ -79,6 +128,37 @@
         <td>{{ r.open }}</td>
       </tr>
       {% empty %}<tr><td colspan="9">—</td></tr>{% endfor %}
+    </table>
+  </div>
+
+  <div class="pb-section-title">Opinión de la IA — winrate por mercado y motor</div>
+  <div class="subtitle" style="color: var(--text-secondary); font-size: 0.82rem; margin-bottom: 0.8rem;">
+    Cómo rinde cada mercado × motor según lo que dijo la IA (apuestas liquidadas; anuladas no cuentan).
+  </div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr>
+        <th>Mercado</th><th>Motor</th><th>N</th><th>WR</th>
+        <th colspan="4" style="text-align:center;">IA dice SI</th>
+        <th colspan="4" style="text-align:center;">IA dice NO</th>
+      </tr>
+      <tr>
+        <th></th><th></th><th></th><th></th>
+        <th>N</th><th>W</th><th>L</th><th>WR</th>
+        <th>N</th><th>W</th><th>L</th><th>WR</th>
+      </tr>
+      {% for r in llm_resumen %}
+      <tr>
+        <td><strong>{{ r.mercado }}</strong></td>
+        <td>{{ r.motor }}</td>
+        <td>{{ r.n }}</td>
+        <td>{{ r.wr|default:'—' }}%</td>
+        <td>{{ r.si_n }}</td><td class="pos">{{ r.si_won }}</td><td class="neg">{{ r.si_lost }}</td>
+        <td>{% if r.si_wr is not None %}{{ r.si_wr }}%{% else %}—{% endif %}</td>
+        <td>{{ r.no_n }}</td><td class="pos">{{ r.no_won }}</td><td class="neg">{{ r.no_lost }}</td>
+        <td>{% if r.no_wr is not None %}{{ r.no_wr }}%{% else %}—{% endif %}</td>
+      </tr>
+      {% empty %}<tr><td colspan="12">Aún no hay apuestas liquidadas con opinión de la IA.</td></tr>{% endfor %}
     </table>
   </div>
 

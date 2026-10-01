@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.db.models import Sum, Count, Avg, Min, Max
 from django.conf import settings
 import datetime
+import json
 import os
 import subprocess
 from .models import HistorialApuesta, OddsSnapshot, AutoBetConfig, MarketFilterConfig, AutoBet
@@ -654,10 +655,69 @@ def paperbet_dashboard(request):
 
     recientes = bets.order_by('-creado')[:120]
 
+    # Winrate de la opinión de la IA (SI/NO) por mercado × motor.
+    # Solo liquidados (WON/LOST); VOID se excluye del denominador.
+    def _wr(won, n):
+        return round(won / n * 100, 1) if n else None
+
+    _llm_agg = {}
+    for b in bets.filter(estado__in=['WON', 'LOST']):
+        key = (b.mercado or '—', b.motor or '—')
+        d = _llm_agg.setdefault(key, {
+            'n': 0, 'won': 0,
+            'si': {'n': 0, 'won': 0},
+            'no': {'n': 0, 'won': 0},
+        })
+        d['n'] += 1
+        if b.estado == 'WON':
+            d['won'] += 1
+        if b.llm_verdict is True:
+            d['si']['n'] += 1
+            if b.estado == 'WON':
+                d['si']['won'] += 1
+        elif b.llm_verdict is False:
+            d['no']['n'] += 1
+            if b.estado == 'WON':
+                d['no']['won'] += 1
+
+    llm_resumen = []
+    for (mercado, motor), d in _llm_agg.items():
+        llm_resumen.append({
+            'mercado': mercado,
+            'motor': motor,
+            'n': d['n'],
+            'wr': _wr(d['won'], d['n']),
+            'si_n': d['si']['n'], 'si_won': d['si']['won'],
+            'si_lost': d['si']['n'] - d['si']['won'],
+            'si_wr': _wr(d['si']['won'], d['si']['n']),
+            'no_n': d['no']['n'], 'no_won': d['no']['won'],
+            'no_lost': d['no']['n'] - d['no']['won'],
+            'no_wr': _wr(d['no']['won'], d['no']['n']),
+        })
+    llm_resumen.sort(key=lambda x: -(x['n']))
+
+    arb_monitors = None
+    try:
+        with open(os.path.join(settings.BASE_DIR, 'data', 'arb_monitors.json'), encoding='utf-8') as fh:
+            arb_monitors = json.load(fh)
+    except (OSError, ValueError):
+        arb_monitors = None
+    arb_paper_total = 0.0
+    if arb_monitors:
+        for key in ('depeg', 'p2p'):
+            block = (arb_monitors.get(key) or {}).get('data') or {}
+            try:
+                arb_paper_total += float(block.get('paper_total') or 0.0)
+            except (TypeError, ValueError):
+                pass
+
     return render(request, 'auto_betting/paperbet.html', {
         'global_stats': global_stats,
         'open_count': open_count,
         'por_motor': por_motor,
         'por_mercado': por_mercado,
+        'llm_resumen': llm_resumen,
         'recientes': recientes,
+        'arb_monitors': arb_monitors,
+        'arb_paper_total': arb_paper_total,
     })
