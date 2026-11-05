@@ -20,8 +20,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '--season',
             type=str,
-            default='2024-25',
-            help='Temporada a sincronizar (ej: 2024-25)'
+            default='2025-26',
+            help='Temporada a sincronizar (ej: 2025-26)'
         )
 
     def handle(self, *args, **options):
@@ -57,7 +57,7 @@ class Command(BaseCommand):
 
             if sync_type in ['games', 'all']:
                 self.stdout.write(f'🏀 Sincronizando partidos de la temporada {season}...')
-                result = nba_service.sync_current_season_games()
+                result = nba_service.sync_current_season_games(season=season)
                 if 'error' in result:
                     raise CommandError(f"Error sincronizando partidos: {result['error']}")
                 self.stdout.write(

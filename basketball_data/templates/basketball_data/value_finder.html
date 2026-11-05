@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Valor NBA — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+.bb-panel {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.bb-panel h3 {
+    font-family: var(--font-heading); font-size: 1.05rem; color: var(--text-primary);
+    margin: 0 0 1rem; padding-bottom: 0.75rem;
+    border-bottom: 0.5px solid var(--border-primary);
+}
+.bb-table-wrap { overflow-x: auto; border-radius: var(--radius-md); border: 0.5px solid var(--border-primary); }
+table.bb-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; background: var(--bg-surface); }
+table.bb-table thead th {
+    background: var(--bg-elevated); color: var(--text-tertiary);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    font-size: 0.7rem; padding: 0.6rem 0.5rem; text-align: center;
+    border-bottom: 1px solid var(--border-primary); white-space: nowrap;
+}
+table.bb-table thead th:first-child { text-align: left; }
+table.bb-table tbody td { padding: 0.45rem 0.5rem; border-bottom: 0.5px solid var(--border-secondary); white-space: nowrap; text-align: center; }
+table.bb-table tbody td:first-child { text-align: left; }
+table.bb-table tbody tr:hover td { background: var(--bg-overlay); }
+.edge-pos { color: #22c55e; font-weight: 700; }
+.edge-neg { color: #ef4444; }
+.edge-zero { color: var(--text-tertiary); }
+.pick { background: rgba(198, 241, 53, 0.07); border-radius: 4px; padding: 0.15rem 0.4rem; font-weight: 600; color: var(--accent-primary); }
+.note { font-size: 0.8rem; color: var(--text-tertiary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+
+  <div class="page-header">
+    <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-primary);">
+      💰 Valor NBA — modelo vs BetPlay
+    </h2>
+    <p class="page-subtitle">Ensemble (Poisson + Random Forest + Ridge) vs líneas de Total de Puntos. Edge = P(modelo) − P(implícita desvigada). EV = P × cuota − 1.</p>
+    <p class="note">Cuotas Kambi/BetPlay en vivo · Actualizado: {{ fetched_at }}</p>
+  </div>
+
+  {% for row in rows %}
+    <div class="bb-panel">
+      <h3>
+        {{ row.away.full_name }} @ {{ row.home.full_name }}
+        <span style="font-weight: 400; color: var(--text-tertiary); font-size: 0.8rem;">
+          · {{ row.start|slice:":16"|default:"?" }} UTC · total esperado {{ row.pred_total }} pts · {{ row.model }}
+        </span>
+      </h3>
+      <div class="bb-table-wrap">
+        <table class="bb-table">
+          <thead>
+            <tr><th>Línea</th><th>Lado</th><th>Cuota</th><th>P modelo</th><th>Fair</th><th>Edge</th><th>EV</th></tr>
+          </thead>
+          <tbody>
+            {% for m in row.markets %}
+              <tr>
+                <td>{% if forloop.first %}{{ m.line }}{% endif %}</td>
+                <td>Más de
+                  {% if row.best == m and m.edge_over >= 0.02 %}<span class="pick">★</span>{% endif %}
+                </td>
+                <td>{{ m.odds_over|floatformat:2 }}</td>
+                <td>{{ m.p_over|floatformat:3 }}</td>
+                <td>{{ m.fair_over|floatformat:3 }}</td>
+                <td class="{% if m.edge_over > 0.02 %}edge-pos{% elif m.edge_over < -0.02 %}edge-neg{% else %}edge-zero{% endif %}">{{ m.edge_over|floatformat:3 }}</td>
+                <td class="{% if m.ev_over > 0 %}edge-pos{% elif m.ev_over < 0 %}edge-neg{% else %}edge-zero{% endif %}">{{ m.ev_over|floatformat:3 }}</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>Menos de
+                  {% if row.best == m and m.edge_under >= 0.02 %}<span class="pick">★</span>{% endif %}
+                </td>
+                <td>{{ m.odds_under|floatformat:2 }}</td>
+                <td>{{ m.p_under|floatformat:3 }}</td>
+                <td>{{ m.fair_under|floatformat:3 }}</td>
+                <td class="{% if m.edge_under > 0.02 %}edge-pos{% elif m.edge_under < -0.02 %}edge-neg{% else %}edge-zero{% endif %}">{{ m.edge_under|floatformat:3 }}</td>
+                <td class="{% if m.ev_under > 0 %}edge-pos{% elif m.ev_under < 0 %}edge-neg{% else %}edge-zero{% endif %}">{{ m.ev_under|floatformat:3 }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% empty %}
+    <div class="bb-panel">
+      <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">
+        No hay partidos NBA próximos en BetPlay ahora mismo. (Pretemporada y temporada 2026-27 ya sincronizadas en la BD.)
+      </div>
+    </div>
+  {% endfor %}
+
+  <div class="note">
+    Referencia, no apuesta: el modelo predice solo el Total de Puntos; verifica la línea al momento de apostar.
+  </div>
+
+</div>
+{% endblock %}

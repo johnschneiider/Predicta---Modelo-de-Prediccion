@@ -1,367 +1,173 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Dashboard NBA - Predicta{% endblock %}
+{% block title %}Dashboard NBA — Predicta{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/basketball_data/dashboard.css' %}">
+{% block extra_head %}
+<style>
+.bb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.bb-stat-card {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md); padding: 1.25rem; text-align: center;
+}
+.bb-stat-card .num { font-size: 1.6rem; font-weight: 700; color: var(--accent-primary); }
+.bb-stat-card .lbl { font-size: 0.78rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+.bb-panel {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.bb-panel h3 {
+    font-family: var(--font-heading); font-size: 1.05rem; color: var(--text-primary);
+    margin: 0 0 1rem; padding-bottom: 0.75rem;
+    border-bottom: 0.5px solid var(--border-primary);
+}
+.bb-table-wrap { overflow-x: auto; border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-primary); }
+table.bb-table {
+    width: 100%; border-collapse: collapse; font-size: 0.85rem;
+    background: var(--bg-surface);
+}
+table.bb-table thead th {
+    background: var(--bg-elevated); color: var(--text-tertiary);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    font-size: 0.72rem; padding: 0.7rem 0.6rem; text-align: left;
+    border-bottom: 1px solid var(--border-primary); white-space: nowrap;
+}
+table.bb-table tbody td {
+    padding: 0.55rem 0.6rem; border-bottom: 0.5px solid var(--border-secondary);
+    white-space: nowrap;
+}
+table.bb-table tbody tr:hover td { background: var(--bg-overlay); }
+table.bb-table tbody tr:last-child td { border-bottom: none; }
+.bb-link { color: var(--accent-primary); text-decoration: none; font-weight: 600; }
+.bb-link:hover { text-decoration: underline; }
+.bb-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.4rem 0; }
+.bb-row .k { color: var(--text-secondary); }
+.bb-row .v { color: var(--text-primary); font-variant-numeric: tabular-nums; font-weight: 600; }
+.bb-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.bb-btn {
+    background: var(--accent-primary); color: var(--btn-primary-text);
+    border: none; padding: 0.6rem 1.4rem; border-radius: var(--radius-sm);
+    font-weight: 600; cursor: pointer; font-size: 0.9rem; text-decoration: none;
+}
+.bb-btn:hover { background: var(--accent-hover); }
+.bb-btn-ghost {
+    background: transparent; color: var(--text-secondary);
+    border: 0.5px solid var(--border-primary); padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-sm); text-decoration: none; font-size: 0.9rem; cursor: pointer;
+}
+.bb-btn-ghost:hover { color: var(--text-primary); border-color: var(--accent-primary); }
+.bb-note { font-size: 0.8rem; color: var(--text-tertiary); margin-top: 0.75rem; }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-header">
-                <h1><i class="fas fa-basketball-ball"></i> Dashboard NBA</h1>
-                <p class="text-muted">Análisis y predicciones de la NBA</p>
-            </div>
-        </div>
-    </div>
+<div style="max-width: 1100px; margin: 0 auto;">
 
-    <!-- Estadísticas generales -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ total_teams }}</h3>
-                    <p>Equipos NBA</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ total_players }}</h3>
-                    <p>Jugadores</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-gamepad"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ total_games }}</h3>
-                    <p>Partidos</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ total_predictions }}</h3>
-                    <p>Predicciones</p>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="page-header">
+    <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-primary);">
+      🏀 Dashboard NBA
+    </h2>
+    <p class="page-subtitle">Análisis y predicciones de puntos totales</p>
+  </div>
 
-    <div class="row">
-        <!-- Partidos recientes -->
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-clock"></i> Partidos Recientes</h5>
-                </div>
-                <div class="card-body">
-                    {% if recent_games %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Fecha</th>
-                                        <th>Partido</th>
-                                        <th>Puntos Totales</th>
-                                        <th>Resultado</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for game in recent_games %}
-                                    <tr>
-                                        <td>{{ game.game_date|date:"d/m/Y" }}</td>
-                                        <td>
-                                            <a href="{% url 'basketball_data:game_detail' game.id %}">
-                                                {{ game.home_team.abbreviation }} vs {{ game.away_team.abbreviation }}
-                                            </a>
-                                        </td>
-                                        <td>
-                                            {% if game.total_points %}
-                                                <span class="badge badge-primary">{{ game.total_points }}</span>
-                                            {% else %}
-                                                <span class="text-muted">-</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if game.home_win is not None %}
-                                                {% if game.home_win %}
-                                                    <span class="badge badge-success">{{ game.home_team.abbreviation }}</span>
-                                                {% else %}
-                                                    <span class="badge badge-info">{{ game.away_team.abbreviation }}</span>
-                                                {% endif %}
-                                            {% else %}
-                                                <span class="text-muted">-</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-basketball-ball fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No hay partidos disponibles</p>
-                            <button class="btn btn-primary" onclick="syncData('games')">
-                                <i class="fas fa-sync"></i> Sincronizar Partidos
-                            </button>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+  <div class="bb-grid">
+    <div class="bb-stat-card"><div class="num">{{ total_teams }}</div><div class="lbl">Equipos NBA</div></div>
+    <div class="bb-stat-card"><div class="num">{{ total_players }}</div><div class="lbl">Jugadores</div></div>
+    <div class="bb-stat-card"><div class="num">{{ total_games }}</div><div class="lbl">Partidos</div></div>
+    <div class="bb-stat-card"><div class="num">{{ total_predictions }}</div><div class="lbl">Predicciones</div></div>
+  </div>
 
-        <!-- Estadísticas de puntos -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-chart-bar"></i> Estadísticas de Puntos</h5>
-                </div>
-                <div class="card-body">
-                    <div class="stat-item">
-                        <div class="stat-label">Promedio Puntos Totales</div>
-                        <div class="stat-value">{{ avg_total_points }}</div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <h6>Distribución de Puntos</h6>
-                    <div class="point-distribution">
-                        <div class="distribution-item">
-                            <span class="distribution-label">&lt; 200</span>
-                            <span class="distribution-value">{{ point_ranges.under_200 }}</span>
-                        </div>
-                        <div class="distribution-item">
-                            <span class="distribution-label">200-220</span>
-                            <span class="distribution-value">{{ point_ranges.200_220 }}</span>
-                        </div>
-                        <div class="distribution-item">
-                            <span class="distribution-label">220-240</span>
-                            <span class="distribution-value">{{ point_ranges.220_240 }}</span>
-                        </div>
-                        <div class="distribution-item">
-                            <span class="distribution-label">&gt; 240</span>
-                            <span class="distribution-value">{{ point_ranges.over_240 }}</span>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="model-status">
-                        <h6><i class="fas fa-brain"></i> Estado del Modelo</h6>
-                        <div class="model-info">
-                            <small class="text-muted">Algoritmo: Random Forest</small><br>
-                            <small class="text-muted">Datos: {{ total_games }} partidos</small><br>
-                            <button class="btn btn-sm btn-outline-primary mt-2" onclick="trainModel()">
-                                <i class="fas fa-cog"></i> Entrenar Modelo
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="bb-panel">
+    <h3>Partidos recientes</h3>
+    {% if recent_games %}
+      <div class="bb-table-wrap">
+        <table class="bb-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Partido</th>
+              <th>Puntos Totales</th>
+              <th>Ganador</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for game in recent_games %}
+              <tr>
+                <td>{{ game.game_date|date:"d/m/Y" }}</td>
+                <td>
+                  <a href="{% url 'basketball_data:game_detail' game.id %}" class="bb-link">
+                    {{ game.home_team.abbreviation }} vs {{ game.away_team.abbreviation }}
+                  </a>
+                </td>
+                <td>{% if game.total_points is not None %}{{ game.total_points }}{% else %}—{% endif %}</td>
+                <td>
+                  {% if game.home_win is not None %}
+                    {% if game.home_win %}{{ game.home_team.abbreviation }}{% else %}{{ game.away_team.abbreviation }}{% endif %}
+                  {% else %}—{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">
+        No hay partidos. Sincroniza datos para empezar.
+      </div>
+    {% endif %}
+  </div>
 
-    <!-- Acciones rápidas -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-tools"></i> Acciones Rápidas</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <button class="btn btn-outline-primary btn-block" onclick="syncData('teams')">
-                                <i class="fas fa-sync"></i> Sincronizar Equipos
-                            </button>
-                        </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-outline-primary btn-block" onclick="syncData('players')">
-                                <i class="fas fa-sync"></i> Sincronizar Jugadores
-                            </button>
-                        </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-outline-primary btn-block" onclick="syncData('games')">
-                                <i class="fas fa-sync"></i> Sincronizar Partidos
-                            </button>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'basketball_data:prediction_form' %}" class="btn btn-outline-success btn-block">
-                                <i class="fas fa-crystal-ball"></i> Predecir Partido
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'basketball_data:statistics' %}" class="btn btn-outline-info btn-block">
-                                <i class="fas fa-chart-line"></i> Ver Estadísticas
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+  <div class="bb-panel">
+    <h3>Estadísticas de puntos</h3>
+    <div class="bb-row"><span class="k">Promedio puntos totales</span><span class="v">{{ avg_total_points }}</span></div>
+    <div class="bb-row"><span class="k">&lt; 200</span><span class="v">{{ point_ranges.under_200 }}</span></div>
+    <div class="bb-row"><span class="k">200 – 220</span><span class="v">{{ point_ranges.200_220 }}</span></div>
+    <div class="bb-row"><span class="k">220 – 240</span><span class="v">{{ point_ranges.220_240 }}</span></div>
+    <div class="bb-row"><span class="k">&gt; 240</span><span class="v">{{ point_ranges.over_240 }}</span></div>
+  </div>
 
-<!-- Barra de carga global -->
-<div id="globalLoadingBar" class="loading-overlay" style="display: none;">
-    <div class="loading-container">
-        <div class="loading-content">
-            <div class="loading-spinner">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Cargando...</span>
-                </div>
-            </div>
-            <div class="loading-text">
-                <h5 id="loadingTitle">Procesando...</h5>
-                <p id="loadingMessage">Por favor espera mientras procesamos tu solicitud</p>
-            </div>
-            <div class="loading-progress">
-                <div class="progress">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                         role="progressbar" style="width: 0%" id="loadingProgressBar">
-                    </div>
-                </div>
-                <small class="text-muted" id="loadingPercentage">0%</small>
-            </div>
-        </div>
+  <div class="bb-panel">
+    <h3>Acciones</h3>
+    <div class="bb-actions">
+      <a href="{% url 'basketball_data:prediction_form' %}" class="bb-btn">🔮 Predecir partido</a>
+      <a href="{% url 'basketball_data:games_list' %}" class="bb-btn-ghost">📋 Partidos</a>
+      <a href="{% url 'basketball_data:teams_list' %}" class="bb-btn-ghost">👥 Equipos</a>
+      <a href="{% url 'basketball_data:statistics' %}" class="bb-btn-ghost">📊 Estadísticas</a>
+      <button type="button" class="bb-btn-ghost" onclick="syncData('teams')">⬇️ Sync equipos</button>
+      <button type="button" class="bb-btn-ghost" onclick="syncData('players')">⬇️ Sync jugadores</button>
+      <button type="button" class="bb-btn-ghost" onclick="syncData('games')">⬇️ Sync partidos</button>
     </div>
+    <div class="bb-note" id="syncNote"></div>
+  </div>
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function syncData(type) {
-    const messages = {
-        'teams': { title: 'Sincronizando Equipos', message: 'Obteniendo datos de equipos NBA...' },
-        'players': { title: 'Sincronizando Jugadores', message: 'Descargando información de jugadores...' },
-        'games': { title: 'Sincronizando Partidos', message: 'Procesando partidos de la temporada actual...' }
-    };
-    
-    showLoadingBar(messages[type] || { title: 'Sincronizando', message: 'Procesando datos...' });
-    
-    fetch('{% url "basketball_data:sync_data" %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({
-            type: type
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideLoadingBar();
-        
+async function syncData(type) {
+    const note = document.getElementById('syncNote');
+    note.textContent = '⏳ Sincronizando ' + type + '… (puede tardar)';
+    try {
+        const r = await fetch('{% url "basketball_data:sync_data" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ type: type })
+        });
+        const data = await r.json();
         if (data.error) {
-            alert('Error: ' + data.error);
+            note.textContent = '❌ Error: ' + data.error;
         } else {
-            alert('Sincronización completada: ' + JSON.stringify(data));
-            location.reload();
+            note.textContent = '✅ Listo: ' + JSON.stringify(data);
+            setTimeout(() => location.reload(), 800);
         }
-    })
-    .catch(error => {
-        hideLoadingBar();
-        alert('Error en la sincronización: ' + error);
-    });
-}
-
-function trainModel() {
-    showLoadingBar({
-        title: 'Entrenando Modelo',
-        message: 'Procesando datos históricos y entrenando algoritmo de predicción...'
-    });
-    
-    fetch('{% url "basketball_data:train_model" %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideLoadingBar();
-        
-        if (data.success) {
-            alert(`Modelo entrenado exitosamente!\nMAE: ${data.mae}\nRMSE: ${data.rmse}\nMuestras: ${data.training_samples} entrenamiento, ${data.test_samples} prueba`);
-        } else {
-            alert('Error entrenando modelo: ' + data.error);
-        }
-    })
-    .catch(error => {
-        hideLoadingBar();
-        alert('Error entrenando modelo: ' + error);
-    });
-}
-
-// Funciones para manejar la barra de carga
-function showLoadingBar(config = {}) {
-    const loadingBar = document.getElementById('globalLoadingBar');
-    const title = document.getElementById('loadingTitle');
-    const message = document.getElementById('loadingMessage');
-    const progressBar = document.getElementById('loadingProgressBar');
-    const percentage = document.getElementById('loadingPercentage');
-    
-    // Configurar mensajes
-    title.textContent = config.title || 'Procesando...';
-    message.textContent = config.message || 'Por favor espera mientras procesamos tu solicitud';
-    
-    // Resetear progreso
-    progressBar.style.width = '0%';
-    percentage.textContent = '0%';
-    
-    // Mostrar barra
-    loadingBar.style.display = 'flex';
-    
-    // Simular progreso
-    simulateProgress();
-}
-
-function hideLoadingBar() {
-    const loadingBar = document.getElementById('globalLoadingBar');
-    loadingBar.style.display = 'none';
-}
-
-function simulateProgress() {
-    const progressBar = document.getElementById('loadingProgressBar');
-    const percentage = document.getElementById('loadingPercentage');
-    let progress = 0;
-    
-    const interval = setInterval(() => {
-        progress += Math.random() * 15;
-        if (progress > 90) progress = 90; // No llegar al 100% hasta que termine
-        
-        progressBar.style.width = progress + '%';
-        percentage.textContent = Math.round(progress) + '%';
-        
-        if (progress >= 90) {
-            clearInterval(interval);
-        }
-    }, 200);
-    
-    // Guardar referencia para poder limpiar
-    window.progressInterval = interval;
+    } catch (e) {
+        note.textContent = '❌ Error de conexión: ' + e;
+    }
 }
 </script>
 {% endblock %}

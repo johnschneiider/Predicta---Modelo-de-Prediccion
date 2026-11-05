@@ -5,6 +5,7 @@ Vistas del motor de Value Betting
 import json
 import logging
 import threading
+from datetime import timedelta
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponseNotAllowed
 from django.views import View
@@ -13,12 +14,34 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db.models import Avg, Count, Q
+from django.utils import timezone
 
 from .models import KambiMatch, KambiBetOffer, ValueOpportunity, ScanRun
 from .services import run_scan, check_kambi_api_health
+from football_data.models import Match as FootballMatch
 import subprocess, os
 
 logger = logging.getLogger('value_betting')
+
+# ── Promedios de remates por liga (página /value-betting/shots/) ──
+SHOTS_LEAGUES = [
+    (11, 'Francia · Ligue 1'),
+    (7, 'Italia · Serie A'),
+    (4, 'Inglaterra · Premier League'),
+    (5, 'Inglaterra · Championship'),
+    (6, 'Alemania · Bundesliga'),
+    (8, 'Países Bajos · Eredivisie'),
+    (14, 'Escocia · Scottish Premiership'),
+    (13, 'Bélgica · Jupiler Pro League'),
+    (32, 'Dinamarca · Superligaen'),
+    (24, 'Brasil · Serie A'),
+    (25, 'Brasil · Serie B'),
+    (27, 'Argentina · Primera División'),
+    (28, 'México · Liga MX'),
+    (29, 'USA · MLS'),
+]
+SHOTS_WINDOW_DAYS = 365
+SHOTS_MIN_MATCHES = 3
 
 # ── Estado del scraper de Flashscore ──
 _FS_PID_FILE = '/tmp/flashscore_scrape.pid'
@@ -242,3 +265,70 @@ class FlashscoreScrapeStatusView(View):
             'pid': pid,
             'log': log_tail,
         })
+
+
+@method_decorator(login_required, name='dispatch')
+class ShotsAveragesView(View):
+    """Promedio de remates totales a favor y en contra, por equipo y condición (local/visitante)."""
+
+    template_name = 'value_betting/shots_averages.html'
+
+    def get(self, request):
+        since = timezone.now().date() - timedelta(days=SHOTS_WINDOW_DAYS)
+        league_ids = [lid for lid, _ in SHOTS_LEAGUES]
+
+        base = FootballMatch.objects.filter(
+            league_id__in=league_ids,
+            date__gte=since,
+            hs__isnull=False,
+            as_field__isnull=False,
+        )
+        total_matches = base.count()
+
+        # Como local: a favor = hs, en contra = as_field
+        home_rows = base.values('league_id', 'home_team').annotate(
+            pj=Count('id'), avg_for=Avg('hs'), avg_against=Avg('as_field'),
+        )
+        # Como visitante: a favor = as_field, en contra = hs
+        away_rows = base.values('league_id', 'away_team').annotate(
+            pj=Count('id'), avg_for=Avg('as_field'), avg_against=Avg('hs'),
+        )
+
+        merged = {}
+        for r in home_rows:
+            merged.setdefault((r['league_id'], r['home_team']), {})['home'] = r
+        for r in away_rows:
+            merged.setdefault((r['league_id'], r['away_team']), {})['away'] = r
+
+        leagues_out = []
+        for lid, label in SHOTS_LEAGUES:
+            teams = []
+            for (league_id, team), sides in merged.items():
+                if league_id != lid:
+                    continue
+                h = sides.get('home')
+                a = sides.get('away')
+                if h and h['pj'] < SHOTS_MIN_MATCHES:
+                    h = None
+                if a and a['pj'] < SHOTS_MIN_MATCHES:
+                    a = None
+                if not h and not a:
+                    continue
+                teams.append({'name': team, 'home': h, 'away': a})
+            teams.sort(key=lambda t: t['name'])
+            if teams:
+                leagues_out.append({
+                    'id': lid,
+                    'label': label,
+                    'teams': teams,
+                    'team_count': len(teams),
+                })
+
+        context = {
+            'since': since,
+            'min_matches': SHOTS_MIN_MATCHES,
+            'window_days': SHOTS_WINDOW_DAYS,
+            'total_matches': total_matches,
+            'leagues': leagues_out,
+        }
+        return render(request, self.template_name, context)

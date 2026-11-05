@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ team.full_name }} — NBA — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+.bb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.bb-stat-card {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md); padding: 1.25rem; text-align: center;
+}
+.bb-stat-card .num { font-size: 1.6rem; font-weight: 700; color: var(--accent-primary); }
+.bb-stat-card .lbl { font-size: 0.78rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+.bb-table-wrap { overflow-x: auto; border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-primary); }
+table.bb-table {
+    width: 100%; border-collapse: collapse; font-size: 0.85rem;
+    background: var(--bg-surface);
+}
+table.bb-table thead th {
+    background: var(--bg-elevated); color: var(--text-tertiary);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    font-size: 0.72rem; padding: 0.7rem 0.6rem; text-align: left;
+    border-bottom: 1px solid var(--border-primary); white-space: nowrap;
+}
+table.bb-table tbody td {
+    padding: 0.55rem 0.6rem; border-bottom: 0.5px solid var(--border-secondary);
+    white-space: nowrap;
+}
+table.bb-table tbody tr:hover td { background: var(--bg-overlay); }
+table.bb-table tbody tr:last-child td { border-bottom: none; }
+.bb-link { color: var(--accent-primary); text-decoration: none; font-weight: 600; }
+.bb-link:hover { text-decoration: underline; }
+.win { color: #22c55e; font-weight: 700; }
+.loss { color: #ef4444; font-weight: 700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+
+  <div class="page-header">
+    <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-primary);">
+      {{ team.full_name }} ({{ team.abbreviation }})
+    </h2>
+    <p class="page-subtitle">{{ team.city }}, {{ team.state }} · Fundado en {{ team.year_founded }}</p>
+  </div>
+
+  <div class="bb-grid">
+    <div class="bb-stat-card"><div class="num">{{ team_stats.total_games }}</div><div class="lbl">Partidos registrados</div></div>
+    <div class="bb-stat-card"><div class="num">{{ team_stats.avg_points_scored }}</div><div class="lbl">Puntos prom. anotados</div></div>
+    <div class="bb-stat-card"><div class="num">{{ team_stats.avg_fg_pct|floatformat:3 }}</div><div class="lbl">% Tiros de campo</div></div>
+    <div class="bb-stat-card"><div class="num">{{ team_stats.avg_fg3_pct|floatformat:3 }}</div><div class="lbl">% Triples</div></div>
+    <div class="bb-stat-card"><div class="num">{{ team_stats.avg_ft_pct|floatformat:3 }}</div><div class="lbl">% Tiros libres</div></div>
+  </div>
+
+  <h3 style="font-family: var(--font-heading); font-size: 1.1rem; color: var(--text-primary); margin-bottom: 1rem;">
+    Últimos partidos
+  </h3>
+
+  {% if recent_games %}
+    <div class="bb-table-wrap">
+      <table class="bb-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Rival</th>
+            <th>Local / Visita</th>
+            <th>Puntos</th>
+            <th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for game in recent_games %}
+            <tr>
+              <td>{{ game.game_date|date:"d/m/Y" }}</td>
+              <td>
+                {% if game.home_team_id == team.id %}
+                  <a href="{% url 'basketball_data:team_detail' game.away_team_id %}" class="bb-link">{{ game.away_team.abbreviation }}</a>
+                {% else %}
+                  <a href="{% url 'basketball_data:team_detail' game.home_team_id %}" class="bb-link">{{ game.home_team.abbreviation }}</a>
+                {% endif %}
+              </td>
+              <td>{% if game.home_team_id == team.id %}Local{% else %}Visitante{% endif %}</td>
+              <td>
+                {% if game.home_team_id == team.id %}{{ game.home_points }} - {{ game.away_points }}{% else %}{{ game.away_points }} - {{ game.home_points }}{% endif %}
+              </td>
+              <td>
+                {% if game.home_win is not None %}
+                  {% if game.home_team_id == team.id and game.home_win or game.home_team_id != team.id and not game.home_win %}
+                    <span class="win">W</span>
+                  {% else %}
+                    <span class="loss">L</span>
+                  {% endif %}
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">Sin partidos registrados.</div>
+  {% endif %}
+
+  <div style="margin-top: 1.5rem;">
+    <a href="{% url 'basketball_data:teams_list' %}" style="color: var(--text-tertiary); font-size: 0.85rem; text-decoration: none;">← Volver a equipos</a>
+  </div>
+
+</div>
+{% endblock %}

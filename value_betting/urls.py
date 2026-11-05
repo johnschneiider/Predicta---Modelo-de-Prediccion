@@ -14,6 +14,7 @@ urlpatterns = [
     path('opportunity/<int:pk>/', views.OpportunityDetailView.as_view(), name='opportunity_detail'),
     path('matches/', views.MatchListView.as_view(), name='match_list'),
     path('health/', views.ApiHealthView.as_view(), name='api_health'),
+    path('shots/', views.ShotsAveragesView.as_view(), name='shots'),
     path('flashscore/run/', views.RunFlashscoreScrapeView.as_view(), name='run_flashscore'),
     path('flashscore/status/', views.FlashscoreScrapeStatusView.as_view(), name='flashscore_status'),
 ]

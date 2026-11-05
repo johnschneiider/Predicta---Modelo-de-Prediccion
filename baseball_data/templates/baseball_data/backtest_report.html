@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Backtest MLB — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+.bb-panel {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.bb-panel h3 {
+    font-family: var(--font-heading); font-size: 1.05rem; color: var(--text-primary);
+    margin: 0 0 1rem; padding-bottom: 0.75rem;
+    border-bottom: 0.5px solid var(--border-primary);
+}
+.bb-table-wrap { overflow-x: auto; border-radius: var(--radius-md); border: 0.5px solid var(--border-primary); }
+table.bb-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: var(--bg-surface); }
+table.bb-table thead th {
+    background: var(--bg-elevated); color: var(--text-tertiary);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    font-size: 0.72rem; padding: 0.7rem 0.6rem; text-align: left;
+    border-bottom: 1px solid var(--border-primary); white-space: nowrap;
+}
+table.bb-table tbody td { padding: 0.55rem 0.6rem; border-bottom: 0.5px solid var(--border-secondary); white-space: nowrap; }
+table.bb-table tbody tr:hover td { background: var(--bg-overlay); }
+table.bb-table tbody tr:last-child td { border-bottom: none; }
+.bb-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.4rem 0; }
+.bb-row .k { color: var(--text-secondary); }
+.bb-row .v { color: var(--text-primary); font-variant-numeric: tabular-nums; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+
+  <div class="page-header">
+    <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-primary);">📈 Backtest walking-forward</h2>
+    <p class="page-subtitle">Baseline Poisson rodante — sin lookahead</p>
+  </div>
+
+  {% if report %}
+    <div class="bb-panel">
+      <h3>Resumen</h3>
+      <div class="bb-row"><span class="k">Modelo</span><span class="v">{{ report.model }}</span></div>
+      <div class="bb-row"><span class="k">Temporada evaluada</span><span class="v">{{ report.season }} (calentamiento {{ report.warm_season }})</span></div>
+      <div class="bb-row"><span class="k">Partidos</span><span class="v">{{ report.n_games }}</span></div>
+      <div class="bb-row"><span class="k">MAE carreras local</span><span class="v">{{ report.mae_home_runs }} (RMSE {{ report.rmse_home_runs }})</span></div>
+      <div class="bb-row"><span class="k">MAE total de carreras</span><span class="v">{{ report.mae_total_runs }} (RMSE {{ report.rmse_total_runs }})</span></div>
+    </div>
+
+    <div class="bb-panel">
+      <h3>Brier y calibración por mercado</h3>
+      <div class="bb-table-wrap">
+        <table class="bb-table">
+          <thead>
+            <tr><th>Mercado</th><th>n</th><th>Frec. real</th><th>Brier</th><th>Brier ref</th><th>Skill</th><th>Log-loss</th></tr>
+          </thead>
+          <tbody>
+            {% for name, m in report.markets.items %}
+              <tr>
+                <td>{{ name }}</td>
+                <td>{{ m.n }}</td>
+                <td>{{ m.freq }}</td>
+                <td>{{ m.brier }}</td>
+                <td>{{ m.brier_ref }}</td>
+                <td>{{ m.brier_skill }}</td>
+                <td>{{ m.logloss }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="bb-panel">
+      <h3>Calibración por bins (total 7.5)</h3>
+      {% for name, m in report.markets.items %}
+        {% if name == 'total_7.5' %}
+          <div class="bb-table-wrap">
+            <table class="bb-table">
+              <thead><tr><th>Bin P</th><th>n</th><th>P promedio</th><th>Frecuencia real</th></tr></thead>
+              <tbody>
+                {% for b in m.calibration %}
+                  <tr><td>{{ b.bin }}</td><td>{{ b.n }}</td><td>{{ b.mean_p }}</td><td>{{ b.actual }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="bb-panel">
+      <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">
+        No hay informe todavía. Corre: <code>manage.py backtest_mlb --season 2026 --warm 2025</code>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

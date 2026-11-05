@@ -105,13 +105,13 @@ class NBADataService:
             print(f"❌ Error sincronizando jugadores: {e}")
             return {'error': str(e)}
     
-    def get_games_by_season(self, season: str = "2024-25") -> pd.DataFrame:
+    def get_games_by_season(self, season: str = "2025-26") -> pd.DataFrame:
         """Obtiene partidos de una temporada específica"""
         print(f"🔄 Obteniendo partidos de la temporada {season}...")
         
         try:
             self._delay_request()
-            gamefinder = LeagueGameFinder(season_nullable=season)
+            gamefinder = LeagueGameFinder(season_nullable=season, league_id_nullable="00")
             games_df = gamefinder.get_data_frames()[0]
             
             print(f"✅ Obtenidos {len(games_df)} partidos de la temporada {season}")
@@ -175,7 +175,7 @@ class NBADataService:
                     defaults={
                         'season_id': home_data['SEASON_ID'],
                         'game_date': game_date,
-                        'season_type': 'Regular Season',  # Por defecto, se puede mejorar
+                        'season_type': home_data.get('SEASON_TYPE', 'Regular Season'),
                         'home_team': home_team,
                         'away_team': away_team,
                         'home_win': home_data['WL'] == 'W',
@@ -241,12 +241,12 @@ class NBADataService:
         print(f"✅ Partidos sincronizados: {created_count} creados, {updated_count} actualizados, {error_count} errores")
         return {'created': created_count, 'updated': updated_count, 'errors': error_count}
     
-    def sync_current_season_games(self) -> Dict[str, int]:
-        """Sincroniza partidos de la temporada actual"""
-        print("🔄 Sincronizando partidos de la temporada actual...")
+    def sync_current_season_games(self, season: str = "2025-26") -> Dict[str, int]:
+        """Sincroniza partidos de la temporada indicada"""
+        print(f"🔄 Sincronizando partidos de la temporada {season}...")
         
         # Obtener partidos de la temporada actual
-        games_df = self.get_games_by_season("2024-25")
+        games_df = self.get_games_by_season(season)
         
         if games_df.empty:
             return {'error': 'No se pudieron obtener partidos'}

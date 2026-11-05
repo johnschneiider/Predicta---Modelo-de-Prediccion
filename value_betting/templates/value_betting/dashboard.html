@@ -354,6 +354,7 @@ table.vb-table tr:last-child td { border-bottom: none; }
       <span class="spinner"></span>
       <span class="btn-text">📊 Actualizar Datos Flashscore</span>
     </button>
+    <a href="{% url 'value_betting:shots' %}" class="vb-run-btn" style="background: var(--info); margin-left: 0.5rem; text-decoration: none;">⚽ Promedios de Remates</a>
     <div class="vb-scan-info" id="scanInfo">
       {% if last_scan %}
         Último escaneo: {{ last_scan.started_at|date:"d M Y, H:i" }}

@@ -36,11 +36,22 @@ urlpatterns = [
     path('ai/', include(('ai_predictions.urls', 'ai_predictions'), namespace='ai_predictions')),
     path('value-betting/', include(('value_betting.urls', 'value_betting'), namespace='value_betting')),
     path('auto-betting/', include(('auto_betting.urls', 'auto_betting'), namespace='auto_betting')),
+    path('parleys/', include(('parley_engine.urls', 'parley_engine'), namespace='parley_engine')),
     path('notificaciones/', include(('notificaciones.urls', 'notificaciones'), namespace='notificaciones')),
     path('inspector/', include(('inspector.urls', 'inspector'), namespace='inspector')),
 ]
 
-# Eliminado: rutas de basketball_data
+# Incluir rutas de basketball solo si la app está activa en INSTALLED_APPS
+if 'basketball_data' in settings.INSTALLED_APPS:
+    urlpatterns += [
+        path('basketball/', include(('basketball_data.urls', 'basketball_data'), namespace='basketball_data')),
+    ]
+
+# Rutas de baseball (MLB)
+if 'baseball_data' in settings.INSTALLED_APPS:
+    urlpatterns += [
+        path('baseball/', include(('baseball_data.urls', 'baseball_data'), namespace='baseball_data')),
+    ]
 
 # Servir archivos de media en desarrollo
 if settings.DEBUG:

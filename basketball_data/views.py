@@ -19,6 +19,133 @@ from .forms import PredictionForm
 from .predictor import nba_predictor
 from .multi_models import nba_multi_model_service
 
+KAMBI_BASE = "https://us.offering-api.kambicdn.com/offering/v2018/betplay"
+KAMBI_HEADERS = {"Accept": "application/json",
+                 "Origin": "https://betplay.com.co",
+                 "Referer": "https://betplay.com.co/"}
+KAMBI_PARAMS = {"channel_id": 1, "client_id": 200, "lang": "es_CO", "market": "CO",
+                "useCombined": "true", "useCombinedLive": "true"}
+
+
+def _norm_name(s):
+    import unicodedata
+    s = unicodedata.normalize('NFKD', str(s or ''))
+    return ''.join(c for c in s.lower() if c.isalnum())
+
+
+def _p_over_from_probs(probs, line):
+    """Interpola P(total > line) desde {over_200..over_250} (paso 10)."""
+    pts = []
+    for t in range(200, 260, 10):
+        k = f'over_{t}'
+        v = (probs or {}).get(k)
+        if v is not None:
+            pts.append((t, float(v)))
+    if not pts:
+        return None
+    if line <= pts[0][0]:
+        return pts[0][1]
+    if line >= pts[-1][0]:
+        return pts[-1][1]
+    for (t1, p1), (t2, p2) in zip(pts, pts[1:]):
+        if t1 <= line <= t2:
+            f = (line - t1) / (t2 - t1)
+            return p1 + f * (p2 - p1)
+    return None
+
+
+def _kambi_get(path):
+    import requests
+    try:
+        r = requests.get(f"{KAMBI_BASE}/{path}", params=KAMBI_PARAMS,
+                         headers=KAMBI_HEADERS, timeout=20)
+        r.raise_for_status()
+        return r.json()
+    except Exception:
+        return None
+
+
+@login_required
+def value_finder(request):
+    """Valor NBA: modelo (ensemble) vs líneas de Total de Puntos en BetPlay/Kambi."""
+    listing = _kambi_get("listView/basketball.json")
+    events = []
+    if listing:
+        for e in listing.get("events", []):
+            ev = e.get("event", {})
+            keys = [p.get("termKey", "") for p in ev.get("path", [])]
+            if ('nba' in keys or 'nba_preseason' in keys) and ev.get("state") == "NOT_STARTED":
+                events.append(ev)
+    teams = {_norm_name(t.full_name): t for t in NBATeam.objects.all()}
+
+    rows = []
+    for ev in events:
+        home = teams.get(_norm_name(ev.get("homeName")))
+        away = teams.get(_norm_name(ev.get("awayName")))
+        if not home or not away:
+            continue
+        try:
+            pred = nba_predictor.predict(home, away)
+        except Exception as e:
+            pred = {'error': str(e)[:120]}
+        if 'error' in pred:
+            continue
+        mu = pred.get('predicted_total')
+        probs = pred.get('probabilities') or {}
+        offers = _kambi_get(f"betoffer/event/{ev.get('id')}.json")
+        lines = {}
+        if offers:
+            for bo in offers.get("betOffers", []):
+                lab = (bo.get("criterion") or {}).get("label", "")
+                if not lab.startswith('Total de puntos'):
+                    continue
+                line = None
+                for o in bo.get("outcomes", []):
+                    if o.get('status') != 'OPEN' or o.get('line') is None:
+                        continue
+                    line = o['line'] / 1000.0
+                if line is None:
+                    continue
+                for o in bo.get("outcomes", []):
+                    if o.get('status') != 'OPEN' or o.get('odds') is None:
+                        continue
+                    side = 'over' if o.get('type') == 'OT_OVER' else ('under' if o.get('type') == 'OT_UNDER' else None)
+                    if not side:
+                        continue
+                    d = lines.setdefault(line, {})
+                    d[side] = o['odds'] / 1000.0
+        market_rows = []
+        for line, d in sorted(lines.items()):
+            if 'over' not in d or 'under' not in d:
+                continue
+            do, du = d['over'], d['under']
+            p_over = _p_over_from_probs(probs, line)
+            if p_over is None:
+                continue
+            inv_o, inv_u = 1 / do, 1 / du
+            s = inv_o + inv_u
+            fair_o, fair_u = inv_o / s, inv_u / s
+            market_rows.append({
+                'line': line, 'odds_over': do, 'odds_under': du,
+                'p_over': p_over, 'p_under': 1 - p_over,
+                'fair_over': fair_o, 'fair_under': fair_u,
+                'edge_over': p_over - fair_o, 'edge_under': (1 - p_over) - fair_u,
+                'ev_over': p_over * do - 1, 'ev_under': (1 - p_over) * du - 1,
+            })
+        if market_rows:
+            best = max(market_rows, key=lambda r: r['edge_over'] + r['edge_under'])
+            rows.append({
+                'home': home, 'away': away, 'start': ev.get('start'),
+                'pred_total': mu, 'confidence': pred.get('confidence'),
+                'model': (pred.get('model_info') or {}).get('primary_model', 'Ensemble NBA'),
+                'markets': market_rows, 'best': best,
+            })
+
+    return render(request, 'basketball_data/value_finder.html', {
+        'rows': rows,
+        'fetched_at': datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC'),
+    })
+
 
 @login_required
 def dashboard(request):

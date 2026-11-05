@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Parleys — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+  .parley-container { max-width: 1280px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .parley-header { text-align: center; margin-bottom: 1.2rem; }
+  .parley-header h2 { margin-bottom: 0.35rem; letter-spacing: -0.01em; }
+  .parley-header .subtitle { color: var(--text-secondary); font-size: 0.9rem; }
+  .parley-actions { display: flex; justify-content: center; gap: 0.6rem; margin-top: 0.7rem; }
+  .parley-actions a {
+    color: var(--accent-primary); text-decoration: none; font-size: 0.82rem;
+    border: 0.5px solid rgba(255,255,255,0.12); border-radius: 999px;
+    padding: 0.32rem 0.8rem; background: var(--bg-surface);
+  }
+  .parley-actions button.sync-btn {
+    color: #0b0f14; background: var(--accent-primary); border: 0;
+    border-radius: 999px; padding: 0.32rem 0.8rem; font-size: 0.82rem;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .parley-actions button.sync-btn:hover { background: var(--accent-hover); }
+  .parley-actions button.sync-btn:disabled { opacity: 0.55; cursor: wait; }
+  .parley-actions button.sync-btn .spin {
+    display: inline-block; animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .filter-panel {
+    display: flex; flex-direction: column; gap: 0.55rem;
+    background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg); padding: 0.85rem 1rem;
+    margin: 1rem auto 0; max-width: 980px; text-align: left;
+  }
+  .filter-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .filter-row-label {
+    font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-tertiary); min-width: 3.2rem;
+  }
+  .filter-chips { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+  .filter-tab {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.3rem 0.7rem; border-radius: 999px;
+    background: rgba(255,255,255,0.04); color: var(--text-secondary);
+    text-decoration: none; font-size: 0.78rem; border: 0.5px solid transparent;
+  }
+  .filter-tab.active { color: #0b0f14; background: var(--accent-primary); font-weight: 700; }
+  .chip-count { font-size: 0.68rem; opacity: 0.8; }
+  .date-filters { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .date-filters input[type=date] {
+    background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12);
+    color: var(--text-primary); border-radius: 8px; padding: 0.3rem 0.45rem;
+  }
+  .date-btn {
+    background: var(--accent-primary); color: #0b0f14; border: 0; border-radius: 8px;
+    padding: 0.32rem 0.75rem; font-weight: 700; cursor: pointer;
+  }
+  .stat-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.6rem; margin: 1rem 0;
+  }
+  .stat-card {
+    background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg); padding: 0.75rem 0.85rem;
+  }
+  .stat-card .label {
+    font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--text-tertiary); margin-bottom: 0.25rem;
+  }
+  .stat-card .value { font-size: 1.05rem; font-weight: 700; }
+  .pos { color: var(--verde-lima, #5CFF5C); }
+  .neg { color: #ff5c5c; }
+  .warn { color: #ffc857; }
+  .table-wrap {
+    background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg); overflow: auto;
+  }
+  table.parley-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  table.parley-table th, table.parley-table td {
+    padding: 0.55rem 0.6rem; text-align: left; border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    vertical-align: top;
+  }
+  table.parley-table th {
+    font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--text-tertiary); font-weight: 600; white-space: nowrap;
+  }
+  .badge {
+    display: inline-block; padding: 0.12rem 0.45rem; border-radius: 999px;
+    font-size: 0.67rem; font-weight: 700;
+  }
+  .badge.motor { background: rgba(92,255,92,0.14); color: var(--verde-lima, #5CFF5C); }
+  .badge.manual { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+  details.legs summary {
+    cursor: pointer; color: var(--accent-primary); font-size: 0.78rem;
+    list-style: none;
+  }
+  details.legs summary::-webkit-details-marker { display: none; }
+  table.legs-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.76rem; }
+  table.legs-table th, table.legs-table td {
+    padding: 0.35rem 0.45rem; text-align: left;
+    border-bottom: 0.5px solid rgba(255,255,255,0.05);
+  }
+  table.legs-table th { color: var(--text-tertiary); font-weight: 600; }
+  .empty { padding: 2rem; text-align: center; color: var(--text-secondary); }
+  .note { color: var(--text-tertiary); font-size: 0.72rem; margin-top: 0.7rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="parley-container">
+  <div class="parley-header">
+    <h2>Parleys</h2>
+    <div class="subtitle">Cupones combinados del sistema (motor independiente) · desde ayer en adelante</div>
+    <div class="parley-actions">
+      <a href="{% url 'auto_betting:historial' %}">← Historial general</a>
+      <button id="syncParleysBtn" class="sync-btn" type="button">⟳ Actualizar / liquidar</button>
+      {% csrf_token %}
+    </div>
+  </div>
+
+  <div class="filter-panel">
+    <div class="filter-row">
+      <span class="filter-row-label">Deporte</span>
+      <div class="filter-chips">
+        <a class="filter-tab {% if not sport %}active{% endif %}" href="{{ sport_todos.url }}">🌐 Todos <span class="chip-count">{{ sport_todos.count }}</span></a>
+        {% for s in sport_options %}
+        <a class="filter-tab {% if s.active %}active{% endif %}" href="{{ s.url }}">{{ s.icon }} {{ s.label }} <span class="chip-count">{{ s.count }}</span></a>
+        {% endfor %}
+      </div>
+    </div>
+    <form class="date-filters" method="get">
+      <span class="filter-row-label">Día</span>
+      <input type="date" name="desde" value="{{ desde }}" aria-label="Desde">
+      <span>→</span>
+      <input type="date" name="hasta" value="{{ hasta }}" aria-label="Hasta">
+      <input type="hidden" name="sport" value="{{ sport }}">
+      <button type="submit" class="date-btn">Filtrar</button>
+      {% if desde or hasta or sport %}
+      <a class="filter-tab" href="{% url 'parley_engine:historial' %}">✕ Limpiar</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="label">Cupones</div><div class="value accent">{{ stats.total }}</div></div>
+    <div class="stat-card"><div class="label">Asentados</div><div class="value">{{ stats.settled }}</div></div>
+    <div class="stat-card"><div class="label">Ganados</div><div class="value pos">{{ stats.won }}</div></div>
+    <div class="stat-card"><div class="label">Perdidos</div><div class="value neg">{{ stats.lost }}</div></div>
+    <div class="stat-card"><div class="label">Abiertos</div><div class="value warn">{{ stats.opened }}</div></div>
+    <div class="stat-card"><div class="label">Stake asentado</div><div class="value">COP {{ stats.stake|floatformat:0 }}</div></div>
+    <div class="stat-card"><div class="label">Payout</div><div class="value">COP {{ stats.payout|floatformat:0 }}</div></div>
+    <div class="stat-card"><div class="label">P&amp;L</div><div class="value {% if stats.pnl >= 0 %}pos{% else %}neg{% endif %}">COP {{ stats.pnl|floatformat:0 }}</div></div>
+    <div class="stat-card"><div class="label">ROI</div><div class="value {% if stats.roi >= 0 %}pos{% else %}neg{% endif %}">{{ stats.roi|floatformat:2 }}%</div></div>
+    <div class="stat-card"><div class="label">Winrate</div><div class="value">{{ stats.wr|floatformat:2 }}%</div></div>
+    <div class="stat-card"><div class="label">Drawdown máx.</div><div class="value neg">COP {{ stats.maxdd|floatformat:0 }}</div></div>
+    <div class="stat-card"><div class="label">Del motor</div><div class="value">{{ stats.motor }}</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="parley-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Cupón</th>
+          <th>Origen</th>
+          <th>Patas</th>
+          <th>Cuota</th>
+          <th>Stake</th>
+          <th>Payout</th>
+          <th>P&amp;L</th>
+          <th>Estado</th>
+          <th>Detalle</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in coupons %}
+        <tr>
+          <td>{% for f in c.fechas_encuentro %}{{ f|date:"Y-m-d" }}{% if not forloop.last %}<br>{% endif %}{% empty %}—{% endfor %}</td>
+          <td>{{ c.coupon_ref }}</td>
+          <td>{% if c.is_motor %}<span class="badge motor">Motor</span>{% else %}<span class="badge manual">Manual</span>{% endif %}</td>
+          <td>{{ c.n_legs }}</td>
+          <td>{{ c.played_odds|floatformat:2|default:"—" }}</td>
+          <td>COP {{ c.stake|floatformat:0 }}</td>
+          <td>{% if c.payout is not None %}COP {{ c.payout|floatformat:0 }}{% else %}—{% endif %}</td>
+          <td class="{% if c.pnl is not None and c.pnl >= 0 %}pos{% elif c.pnl is not None %}neg{% endif %}">
+            {% if c.pnl is not None %}COP {{ c.pnl|floatformat:0 }}{% else %}—{% endif %}
+          </td>
+          <td>{{ c.get_status_display }}</td>
+          <td>
+            <details class="legs">
+              <summary>Ver {{ c.n_legs }} patas ▾</summary>
+              <table class="legs-table">
+                <thead>
+                  <tr><th>#</th><th>Evento</th><th>Mercado</th><th>Selección</th><th>Línea</th><th>Cuota</th><th>Estado</th></tr>
+                </thead>
+                <tbody>
+                  {% for l in c.leg_rows.all %}
+                  <tr>
+                    <td>{{ l.position }}</td>
+                    <td>{{ l.home_team }} vs {{ l.away_team }}{% if l.liga %}<br><span class="note">{{ l.liga }}</span>{% endif %}</td>
+                    <td>{{ l.mercado|default:"—" }}</td>
+                    <td>{{ l.seleccion|default:"—" }}</td>
+                    <td>{% if l.linea is not None %}{{ l.linea }}{% else %}—{% endif %}</td>
+                    <td>{% if l.cuota_colocada %}{{ l.cuota_colocada|floatformat:2 }}{% else %}—{% endif %}</td>
+                    <td>{{ l.estado_final|default:"—" }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </details>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" class="empty">Todavía no hay cupones combinados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    Se muestran los cupones de 2 o más patas que coloca el sistema (motor de parleys) desde ayer en adelante; los cupones manuales o históricos quedan ocultos aquí (excepción: el cupón manual ganado ayer se muestra por ser el primer acierto del historial). El filtro de día aplica a la fecha del partido y permite consultar fechas anteriores. El motor usa un ledger interno independiente; este panel no altera el capital del motor real.
+  </div>
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById('syncParleysBtn');
+  if (!btn) return;
+  var original = btn.innerHTML;
+  btn.addEventListener('click', function () {
+    var input = document.querySelector('input[name=csrfmiddlewaretoken]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin">⟳</span> Liquidando...';
+    fetch('{% url "parley_engine:sync" %}', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': input ? input.value : '' }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data && data.ok) { location.reload(); }
+        else {
+          alert('No se pudo actualizar: ' + ((data && data.error) || 'error desconocido'));
+          btn.disabled = false;
+          btn.innerHTML = original;
+        }
+      })
+      .catch(function (e) {
+        alert('Error de red: ' + e);
+        btn.disabled = false;
+        btn.innerHTML = original;
+      });
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Paperbet OU al descanso (EUROPA/NBA) — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+  .pb-container { max-width: 1240px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .pb-header { text-align: center; margin-bottom: 1.2rem; }
+  .pb-header h2 { margin-bottom: 0.4rem; letter-spacing: -0.01em; }
+  .pb-header .subtitle { color: var(--text-secondary); font-size: 0.88rem; }
+  .pb-header .subtitle a {
+    color: var(--accent-primary); text-decoration: none; font-weight: 600;
+    border-bottom: 1px solid transparent; transition: border-color 0.15s;
+  }
+  .pb-header .subtitle a:hover { border-bottom-color: var(--accent-primary); }
+  .pb-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.8rem; margin: 1rem 0 1.6rem; }
+  .pb-card {
+    background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.10);
+    border-radius: var(--radius); padding: 0.9rem 1rem; text-align: center;
+  }
+  .pb-card .v { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
+  .pb-card .l { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pos { color: #2ecc71; } .neg { color: #e74c3c; }
+  .pb-table-wrap { overflow-x: auto; margin-bottom: 2rem; }
+  table.pb { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  table.pb th {
+    text-align: left; padding: 0.55rem 0.7rem; color: var(--text-secondary);
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+  }
+  table.pb td { padding: 0.5rem 0.7rem; border-bottom: 0.5px solid rgba(255,255,255,0.05); }
+  .badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: var(--radius-full); font-size: 0.72rem; font-weight: 700; }
+  .badge-won { background: rgba(46,204,113,0.16); color: #2ecc71; }
+  .badge-lost { background: rgba(231,76,60,0.16); color: #e74c3c; }
+  .badge-open { background: rgba(241,196,15,0.16); color: #f1c40f; }
+  .badge-void { background: rgba(149,165,166,0.18); color: #95a5a6; }
+  .badge-bet { background: rgba(108,92,231,0.20); color: #a29bfe; }
+  .badge-no { background: rgba(149,165,166,0.18); color: #95a5a6; }
+  .pb-section-title { margin: 1.6rem 0 0.6rem; font-size: 1.05rem; font-weight: 700; }
+  .pb-note { color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 1rem; }
+  .pb-note code { font-size: 0.78rem; }
+  .pb-cta { display: inline-block; background: var(--accent-primary); color: #fff;
+            padding: 0.65rem 1.2rem; border-radius: var(--radius-full); text-decoration: none;
+            font-weight: 700; font-size: 0.9rem; transition: opacity 0.15s; }
+  .pb-cta:hover { opacity: 0.88; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pb-container">
+  <div class="pb-header">
+    <h2>🧮 Paperbet Over/Under al descanso — EUROPA / NBA</h2>
+    <div class="subtitle">
+      Motor <strong>{{ motor }}</strong> · mercado <strong>{{ mercado }}</strong> · solo papel (sin dinero real) ·
+      port del modelo de los libros EUROPA.xlsx / NBA.xlsx ·
+      <a href="{% url 'auto_betting:paperbet_basket' %}">← Volver al paperbet 1Q+2Q</a> ·
+      <a href="{% url 'auto_betting:paperbet' %}">Paperbet general</a>
+    </div>
+    <div class="subtitle" style="margin-top:0.35rem;">Paper reanudado 2026-10-24 para acumular muestra (histórico previo depurado). La sombra sigue registrándose; no promover a real sin muestra suficiente y ROI positivo.</div>
+  </div>
+
+  <div class="pb-note">
+    Al descanso 2Q→3Q el motor proyecta el total con el <strong>patrón por cuartos (Patron)</strong> + la
+    <strong>línea viva</strong> (pesos A/C/L/M) y decide con los filtros del spec: prob ≥60 %, EV ≥3 %,
+    |proy − línea| ≥3–4 pts, cuota 1.70–2.20 y margen ≤18/20. Se registra <strong>siempre una sombra</strong>
+    por partido (aunque sea NO APOSTAR — anti-sesgo), y si pasa se abre apuesta paper de <strong>1 u</strong>
+    (10.000 COP; el stake Kelly queda como dato aparte, no se usa). Liquidación con el total final
+    (prórroga incluida, regla del mercado en BetPlay); empate exacto = push (cuenta en el denominador del ROI).
+    <br>Jobs: sombras/apuestas cada 2 min · calibración Patron diaria 07:30 UTC · backfill de líneas del
+    descanso (OddsPapi, BetPlay+Pinnacle) 10:30 UTC. Replay histórico de ROI:
+    <code>manage.py reporte_ou_descanso --dias 15</code> (informe en
+    <code>/root/opencode/reports/ou-descanso-roi-*.md</code>). Config congelada y versionada por apuesta
+    (<code>cfg_version</code>).
+  </div>
+
+  <div class="pb-cards">
+    <div class="pb-card"><div class="v">{{ n_sombras }}</div><div class="l">Sombras OU</div></div>
+    <div class="pb-card"><div class="v">{{ n_pendientes }}</div><div class="l">Sombras pendientes</div></div>
+    <div class="pb-card"><div class="v">{{ global_m.n_apuestas }}</div><div class="l">Apuestas (liq.)</div></div>
+    <div class="pb-card"><div class="v">{{ global_m.w }}/{{ global_m.l }}/{{ global_m.push }}</div><div class="l">W/L/Push</div></div>
+    <div class="pb-card"><div class="v">{{ global_m.wr_txt }}</div><div class="l">Acierto</div></div>
+    <div class="pb-card"><div class="v {% if global_m.roi is not None and global_m.roi >= 0 %}pos{% else %}neg{% endif %}">{{ global_m.roi_txt }}</div><div class="l">ROI plano (1 u)</div></div>
+    <div class="pb-card"><div class="v">{{ global_m.margen_txt }}</div><div class="l">Margen vs línea</div></div>
+    <div class="pb-card"><div class="v">{{ bets_stats.roi|default:'—' }}%</div><div class="l">ROI apuestas (COP)</div></div>
+  </div>
+
+  <div class="pb-section-title">Métricas por config (sombras liquidadas)</div>
+  <div class="pb-note">
+    Veredicto de la hoja Backtest del spec: con W+L &lt; 30 es «muestra insuficiente» —
+    no interpretar ROI como señal mientras n sea chico.
+  </div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Config</th><th>Partidos</th><th>Apuestas</th><th>W/L/Push</th><th>Acierto</th><th>ROI 1u</th><th>IC95</th><th>Margen/línea</th><th>Veredicto</th></tr>
+      <tr>
+        <td><strong>GLOBAL</strong></td>
+        <td>{{ global_m.n_shadow }}</td><td>{{ global_m.n_apuestas }}</td>
+        <td>{{ global_m.w }}/{{ global_m.l }}/{{ global_m.push }}</td>
+        <td>{{ global_m.wr_txt }}</td>
+        <td class="{% if global_m.roi is not None and global_m.roi >= 0 %}pos{% else %}neg{% endif %}">{{ global_m.roi_txt }}</td>
+        <td>{{ global_m.wilson_txt }}</td><td>{{ global_m.margen_txt }}</td>
+        <td>{{ global_m.veredicto }}</td>
+      </tr>
+      {% for m in por_cfg %}
+      <tr>
+        <td><strong>{{ m.cfg }}</strong></td>
+        <td>{{ m.n_shadow }}</td><td>{{ m.n_apuestas }}</td>
+        <td>{{ m.w }}/{{ m.l }}/{{ m.push }}</td>
+        <td>{{ m.wr_txt }}</td>
+        <td class="{% if m.roi is not None and m.roi >= 0 %}pos{% else %}neg{% endif %}">{{ m.roi_txt }}</td>
+        <td>{{ m.wilson_txt }}</td><td>{{ m.margen_txt }}</td>
+        <td>{{ m.veredicto }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="pb-section-title">Por liga (exploratorio)</div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Liga</th><th>Partidos</th><th>Apuestas</th><th>W/L/Push</th><th>Acierto</th><th>ROI 1u</th><th>Margen/línea</th></tr>
+      {% for m in por_liga %}
+      <tr>
+        <td><strong>{{ m.liga }}</strong></td>
+        <td>{{ m.n_shadow }}</td><td>{{ m.n_apuestas }}</td>
+        <td>{{ m.w }}/{{ m.l }}/{{ m.push }}</td>
+        <td>{{ m.wr_txt }}</td>
+        <td class="{% if m.roi is not None and m.roi >= 0 %}pos{% else %}neg{% endif %}">{{ m.roi_txt }}</td>
+        <td>{{ m.margen_txt }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7">Aún no hay sombras liquidadas. El bot corre cada 2 minutos en el scheduler.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="pb-section-title">Calibración Patron vigente</div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Config</th><th>n (partidos Patron)</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>Media liga</th><th>σ</th><th>Fuente σ</th><th>Calculada</th></tr>
+      {% for c in calibs %}
+      <tr>
+        <td><strong>{{ c.cfg }}</strong></td>
+        {% if c.row %}
+        <td>{{ c.row.n }}</td>
+        <td>{{ c.row.pct_1|floatformat:4 }}</td>
+        <td>{{ c.row.pct_2|floatformat:4 }}</td>
+        <td>{{ c.row.pct_3|floatformat:4 }}</td>
+        <td>{{ c.row.pct_4|floatformat:4 }}</td>
+        <td>{{ c.row.league_mean|floatformat:1 }}</td>
+        <td>{{ c.row.sigma|floatformat:2 }}</td>
+        <td>{{ c.row.sigma_fuente }}{% if c.row.congelada %} · CONGELADA{% endif %}</td>
+        <td>{{ c.row.calculada_en|date:'m-d H:i' }} UTC</td>
+        {% else %}
+        <td colspan="9">Sin calibración aún (defaults del libro: 25 % por cuarto).</td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="pb-section-title">Sombras recientes (últimas 60)</div>
+  <div class="pb-note">Descanso se muestra como <code>Q1 local-visita / Q2 local-visita</code>. La sombra se actualiza con el último snapshot válido del descanso.</div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Actualizado</th><th>Liga</th><th>Partido</th><th>Descanso</th><th>Línea</th><th>Cuota lado</th><th>Proy</th><th>Δ</th><th>Lado</th><th>P</th><th>EV</th><th>Decisión</th><th>Kelly u</th><th>Resultado</th></tr>
+      {% for r in recientes_sombras %}
+      <tr>
+        <td>{{ r.ts|date:'m-d H:i' }}</td>
+        <td>{{ r.liga }}</td>
+        <td>{{ r.partido }}</td>
+        <td>{{ r.descanso }}</td>
+        <td>{{ r.linea|default:'—' }}</td>
+        <td>{{ r.odds_side|default:'—' }}</td>
+        <td>{{ r.proy|floatformat:1|default:'—' }}</td>
+        <td>{{ r.diff|floatformat:1|default:'—' }}</td>
+        <td>{{ r.lado|default:'—' }}</td>
+        <td>{{ r.p_pct }}</td>
+        <td>{{ r.ev_pct }}</td>
+        <td>
+          {% if r.decision|slice:':7' == 'APOSTAR' %}<span class="badge badge-bet">{{ r.decision }}</span>
+          {% else %}<span class="badge badge-no">{{ r.decision|default:'—' }}</span>{% endif %}
+        </td>
+        <td>{{ r.stake_kelly|floatformat:1|default:'—' }}</td>
+        <td>
+          {% if r.resultado == 'GANA' %}<span class="badge badge-won">GANA {{ r.ganancia_u|floatformat:2 }}u</span>
+          {% elif r.resultado == 'PIERDE' %}<span class="badge badge-lost">PIERDE</span>
+          {% elif r.resultado %}<span class="badge badge-void">{{ r.resultado }}</span>
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="14">Aún no hay sombras. Se crean cuando haya partidos en el descanso 2Q→3Q de Euroliga/EuroCup/Europe Cup/NBA.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="pb-section-title">Apuestas paper recientes (motor {{ motor }}, últimas 60)</div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Fecha</th><th>Liga</th><th>Partido</th><th>Selección</th><th>Línea</th><th>Cuota</th><th>P</th><th>EV</th><th>Stake</th><th>Kelly u</th><th>Estado</th><th>Resultado</th></tr>
+      {% for b in recientes_bets %}
+      <tr>
+        <td>{{ b.ts|date:'m-d H:i' }}</td>
+        <td>{{ b.liga }}</td>
+        <td>{{ b.partido }}</td>
+        <td><strong>{{ b.seleccion }}</strong></td>
+        <td>{{ b.linea|default:'—' }}</td>
+        <td>{{ b.cuota|default:'—' }}</td>
+        <td>{{ b.prob|floatformat:3|default:'—' }}</td>
+        <td>{{ b.ev|floatformat:3|default:'—' }}</td>
+        <td>{{ b.stake|floatformat:0 }}</td>
+        <td>{{ b.kelly|floatformat:1|default:'—' }}</td>
+        <td>
+          {% if b.estado == 'WON' %}<span class="badge badge-won">GANADA</span>
+          {% elif b.estado == 'LOST' %}<span class="badge badge-lost">PERDIDA</span>
+          {% elif b.estado == 'VOID' %}<span class="badge badge-void">ANULADA</span>
+          {% else %}<span class="badge badge-open">PENDIENTE</span>{% endif %}
+        </td>
+        <td>{{ b.resultado|default:'—' }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="12">Aún no hay apuestas del motor {{ motor }}. Solo se abre apuesta cuando la decisión es APOSTAR y pasa todos los filtros.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="pb-section-title">Cobertura del replay (BasketOuSharp — líneas reales del descanso)</div>
+  <div class="pb-note">
+    Partidos con línea reconstruida del histórico real (OddsPapi: BetPlay + Pinnacle) para el backtest.
+    Última captura: {% if sharp_ultimo %}{{ sharp_ultimo.capturado_en|date:'m-d H:i' }} UTC{% else %}—{% endif %} ·
+    total: <strong>{{ sharp_total }}</strong>. El informe ROI se regenera con
+    <code>manage.py reporte_ou_descanso --dias 15</code>.
+  </div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Liga</th><th>Partidos con línea</th></tr>
+      {% for s in sharp_por_liga %}
+      <tr><td><strong>{{ s.clave_liga }}</strong></td><td>{{ s.n }}</td></tr>
+      {% empty %}
+      <tr><td colspan="2">Sin datos de backfill aún.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

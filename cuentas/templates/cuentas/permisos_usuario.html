@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Permisos de menú — {{ usuario.get_full_name }} — Predicta{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="section-tag">Administración</div>
+    <h2>PERMISOS DE MENÚ</h2>
+    <p class="page-subtitle">
+        Acceso a las opciones del menú de usuario para
+        <strong>{{ usuario.get_full_name|default:usuario.username }}</strong>
+        (@{{ usuario.username }}).
+    </p>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    {% for grupo in grupos %}
+    <div class="info-panel" style="margin-bottom:1.25rem;">
+        <div class="info-panel-header">{{ grupo.grupo_icono }} {{ grupo.grupo }}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0.5rem;">
+            {% for item in grupo.items %}
+            <label style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.7rem;border:0.5px solid var(--border-primary);border-radius:var(--radius-sm);cursor:pointer;font-size:0.9rem;color:var(--text-primary);">
+                <input type="checkbox" name="permitido" value="{{ item.codigo }}"
+                       {% if item.permitido %}checked{% endif %}
+                       style="width:1.05rem;height:1.05rem;accent-color:var(--accent-primary);">
+                <span>{{ item.etiqueta }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <p style="color:var(--text-secondary);font-size:0.82rem;margin-bottom:1.25rem;">
+        Las opciones sin marcar quedan denegadas (el usuario no las ve en el menú
+        y se le bloquea la URL directa). «Mi cuenta» y «Salir» están siempre
+        disponibles para cualquier usuario.
+    </p>
+
+    <div class="actions-bar">
+        <button type="submit" class="btn btn-primary">Guardar permisos</button>
+        <a href="{% url 'cuentas:panel_usuarios' %}" class="btn btn-secondary">Volver al panel</a>
+    </div>
+</form>
+{% endblock %}

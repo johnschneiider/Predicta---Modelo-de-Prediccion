@@ -1,0 +1,67 @@
+{
+  "model": "poisson_glm_v2",
+  "warm_season": 2025,
+  "season": 2026,
+  "n_games": 2438,
+  "mae_total_v1": 3.542,
+  "mae_total_v2": 3.571,
+  "rmse_total_v1": 4.474,
+  "rmse_total_v2": 4.519,
+  "brier": {
+    "total_5.5": 0.1963,
+    "total_6.5": 0.2244,
+    "total_7.5": 0.2531,
+    "total_8.5": 0.2532,
+    "total_9.5": 0.2422,
+    "total_10.5": 0.2257,
+    "total_11.5": 0.1967,
+    "ml": 0.2501,
+    "rl": 0.2342,
+    "f5_2.5": 0.1987,
+    "f5_3.5": 0.2452,
+    "f5_4.5": 0.2526,
+    "f5_5.5": 0.2393
+  },
+  "brier_v1": {
+    "total_5.5": 0.1961,
+    "total_6.5": 0.2226,
+    "total_7.5": 0.2504,
+    "total_8.5": 0.2493,
+    "total_9.5": 0.2384,
+    "total_10.5": 0.2218,
+    "total_11.5": 0.193,
+    "ml": 0.2465,
+    "rl": 0.2319
+  },
+  "roi": {
+    "totals": {
+      "n": 7248,
+      "hit_rate": 0.4111,
+      "roi": 0.1509,
+      "avg_edge": 0.0591,
+      "avg_ev": 0.2119
+    },
+    "moneyline": {
+      "n": 1276,
+      "hit_rate": 0.4389,
+      "roi": -0.0212,
+      "avg_edge": 0.0612,
+      "avg_ev": 0.144
+    },
+    "runline": {
+      "n": 1074,
+      "hit_rate": 0.446,
+      "roi": 0.0839,
+      "avg_edge": 0.0558,
+      "avg_ev": 0.1656
+    },
+    "first5": {
+      "n": 2816,
+      "hit_rate": 0.4002,
+      "roi": 0.149,
+      "avg_edge": 0.0503,
+      "avg_ev": 0.1755
+    }
+  },
+  "bet_rule": "P(v2) - P(implied) >= 0.02pp, vig Kambi observada"
+}

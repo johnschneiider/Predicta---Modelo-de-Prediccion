@@ -3,7 +3,7 @@
 Motores: btts_v2, goles_v2, sot_v2, x12_v2. Cuotas reales de Kambi (1 llamada/evento).
 Uso: manage.py run_paper_bets [--hours 48]
 """
-import pickle, math
+import pickle, math, logging
 from datetime import datetime, timezone, timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone as djtz
@@ -11,6 +11,9 @@ from scipy.stats import poisson, nbinom
 from auto_betting.services import fetch_upcoming_matches, fetch_market_odds
 from auto_betting.management.commands.run_auto_bets import find_predicta_league, map_teams
 from auto_betting.models import PaperBet
+from auto_betting.strategy import calibrate_probability
+
+logger = logging.getLogger('auto_betting')
 
 S = '/var/www/predicta.com.co/scripts'
 BTT_S = S + '/btts_v2/btts_state.pkl'
@@ -25,12 +28,26 @@ FEATS = ['h_n','a_n','gf_h','gf_a','ga_h','ga_a','bts_h','bts_a','scored_h','sco
 LABELS = ['Total de goles', 'Total de tiros a puerta (Resuelta usando Opta Data)',
           'Resultado Final', 'Ambos Equipos Marcarán']
 
-# 2026-10-01 (recalibración, opencode): córners_v2 APAGADO en paper.
-# Motivo: 54% de sus picks quedan VOID ("sin resultado >40h", la API no devuelve
-# córners) y su universo históricamente rentable (cuotas <2.0) está prohibido por
-# política. Reactivar solo si (a) la liquidación supera el 90% y (b) se decide el
-# universo de cuotas. En dinero real ya está OFF (MarketFilterConfig).
+# 2026-10-01 (recalibración): córners_v2 se apagó por VOIDs de liquidación (54%)
+# y universo de cuotas. 2026-10-07 (pedido de John): REACTIVADO SOLO EN PAPER
+# para recolectar la opinión de la IA (Luna) sobre los picks de córners con el
+# prompt específico (llm_validator.validate_corners). La limitación de
+# liquidación (VOIDs) sigue vigente: los picks sin resultado no puntúan en ROI.
+# En dinero real el gate de córners es independiente (MarketFilterConfig/V2).
+# 2026-10-24 (depuración): se vuelve a apagar; 50% VOID y CLV -5,6%.
 PAPER_CORNERS_ENABLED = False
+
+# Depuración 2026-10-24 (solo lectura de la base viva):
+#  - x12_v2 completo: ROI -12,5% (n=468; IC95% [-23,5; -1,8]); DO -18,2%.
+#  - sot_v2: ROI -9,4% (n=8) + sesgo real previo +23,7pp; no reactivar.
+#  - corners_v2: 50% VOID y CLV -5,6%; sin evidencia de edge.
+PAPER_X12_ENABLED = False
+PAPER_DO_ENABLED = False
+PAPER_SOT_ENABLED = False
+# Goles: Under acumula -16,3% (n=18) y las líneas 3.5/4.5 son negativas.
+# Se conserva solo Over 2.5 (+19,9%, n=13), que es la parte en observación.
+PAPER_GOALS_UNDER_ENABLED = False
+PAPER_GOALS_MAX_LINE = 2.5
 
 # Margen de calibración medido OOS 1-30 sep con n≈3.000 (ECE: btts 2.2%,
 # x12 2-3%, goles ~1pp). Se descuentan 2pp y se exige edge pequeño (3-5pp)
@@ -46,8 +63,10 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         btt_state = pickle.load(open(BTT_S, 'rb'))
         eng = pickle.load(open(PB + '/engines.pkl', 'rb'))
-        sot_state = pickle.load(open(PB + '/sot_state.pkl', 'rb'))
-        cor_state = pickle.load(open(PB + '/corners_state.pkl', 'rb'))
+        sot_state = (pickle.load(open(PB + '/sot_state.pkl', 'rb'))
+                     if PAPER_SOT_ENABLED else None)
+        cor_state = (pickle.load(open(PB + '/corners_state.pkl', 'rb'))
+                     if PAPER_CORNERS_ENABLED else None)
         TEAM_KEYS = btt_state['TEAM_KEYS']; hists = btt_state['hists']
         LSTATE = btt_state['LSTATE']; PAIR = btt_state['PAIR']
 
@@ -88,11 +107,14 @@ class Command(BaseCommand):
                 p_home = float(eng['x12_iso_h'].predict([p_x[0]])[0])
                 self._paper_btts(m, home_db, away_db, league, p_btts, fetch_market_odds(m['event_id'], 'Ambos Equipos Marcarán'), start)
                 self._paper_goals(m, home_db, away_db, league, lam_g, fetch_market_odds(m['event_id'], 'Total de goles'), start)
-                self._paper_x12(m, home_db, away_db, league, p_x, p_home, fetch_market_odds(m['event_id'], 'Resultado Final'), start)
+                if PAPER_X12_ENABLED:
+                    self._paper_x12(m, home_db, away_db, league, p_x, p_home, fetch_market_odds(m['event_id'], 'Resultado Final'), start)
                 # 2026-09-26 (fix): _paper_do depende de p_x (x12). Estaba fuera
                 # de este if y con hk/ak ausentes reventaba con NameError.
-                self._paper_do(m, home_db, away_db, league, p_x, fetch_market_odds(m['event_id'], 'Doble Oportunidad'), start)
-            self._paper_sot(m, home_db, away_db, league, sot_state, fetch_market_odds(m['event_id'], 'Total de tiros a puerta (Resuelta usando Opta Data)'), start)
+                if PAPER_DO_ENABLED:
+                    self._paper_do(m, home_db, away_db, league, p_x, fetch_market_odds(m['event_id'], 'Doble Oportunidad'), start)
+            if PAPER_SOT_ENABLED:
+                self._paper_sot(m, home_db, away_db, league, sot_state, fetch_market_odds(m['event_id'], 'Total de tiros a puerta (Resuelta usando Opta Data)'), start)
             if PAPER_CORNERS_ENABLED:
                 self._paper_corners(m, home_db, away_db, league, fetch_market_odds(m['event_id'], 'Total de Tiros de Esquina'), start)
         self.stdout.write(
@@ -267,12 +289,14 @@ class Command(BaseCommand):
                 p = 1 - nbinom.cdf(line, PHI, PHI/(PHI + lam_c))
                 p_cal = max(0.03, p - 0.25)
                 if p >= 0.50 and (p_cal - fair['OT_OVER']) >= 0.06 and abs(lam_c - line) >= 0.75:
-                    self._add(m, h, a, lg, 'Total de Tiros de Esquina', 'corners_v2', 'Más de', line, cuota, p_cal, start)
+                    self._add(m, h, a, lg, 'Total de Tiros de Esquina', 'corners_v2', 'Más de', line, cuota, p_cal, start,
+                              extra={'fair': fair['OT_OVER'], 'lambda': lam_c})
             elif t == 'OT_UNDER':
                 p = nbinom.cdf(line, PHI, PHI/(PHI + lam_c))
                 p_cal = max(0.03, p - 0.25)
                 if p >= 0.50 and (p_cal - fair['OT_UNDER']) >= 0.06 and abs(lam_c - line) >= 0.75:
-                    self._add(m, h, a, lg, 'Total de Tiros de Esquina', 'corners_v2', 'Menos de', line, cuota, p_cal, start)
+                    self._add(m, h, a, lg, 'Total de Tiros de Esquina', 'corners_v2', 'Menos de', line, cuota, p_cal, start,
+                              extra={'fair': fair['OT_UNDER'], 'lambda': lam_c})
 
     def _paper_do(self, m, h, a, lg, p_x, odds, start):
         """Doble Oportunidad derivada del x12_v2 (1X/X2/12)."""
@@ -362,7 +386,7 @@ class Command(BaseCommand):
             self._league_map = dict(ApiLeague.objects.values_list('api_id', 'id'))
         return self._team_map, self._league_map
 
-    def _add(self, m, home_db, away_db, liga, mercado, motor, seleccion, linea, cuota, prob, start):
+    def _add(self, m, home_db, away_db, liga, mercado, motor, seleccion, linea, cuota, prob, start, extra=None):
         # 2026-09-26 (auditoría paperbet): el comando base (sin filtro LLM)
         # queda deprecado. Sus 26 picks históricos (WR 31.6%) contaminaban las
         # métricas; todo pick debe pasar por run_paper_bets_llm (override).
@@ -384,8 +408,16 @@ class Command(BaseCommand):
         # (ECE 2.2%; tramo 0.50-0.60 dice 0.53 real 0.54). Se aplica solo el
         # margen de calibración (2pp) + edge>=3pp, cuota>=1.80. El gate prod
         # anterior (p>=0.75) disparaba n=2 en un mes -> motor asfixiado.
-        p_cal = max(0.03, p - CAL_MARGIN)
-        p_no_cal = max(0.03, (1 - p) - CAL_MARGIN)
+        # 2026-10-31 (recalibración, análisis datos btts_v2): el margen plano
+        # (-2pp) dejaba sobre-confianza en el bin 0.60-0.65 (prob media 62,2%
+        # vs WR real 51,7% en la ventana viva; gap +10,5pp; ECE 6,7pp). Se
+        # adopta la calibración estilo house (calibrate_probability: shrinkage
+        # 0.95 hasta 0.60 y 0.50 arriba, cap duro 0.58) + margen 2pp, igual
+        # que el resto del sistema. Cambio SOLO PAPER btts_v2: el real
+        # (run_auto_bets / strategy.py) ya usa esta calibración y no se toca.
+        # Sin import circular: strategy.py solo importa logging/math arriba.
+        p_cal = max(0.03, calibrate_probability(p, cap=0.58) - CAL_MARGIN)
+        p_no_cal = max(0.03, calibrate_probability(1 - p, cap=0.58) - CAL_MARGIN)
         for o in odds:
             cuota = o['odds_decimal']
             t = o.get('type')
@@ -407,14 +439,14 @@ class Command(BaseCommand):
             # 2026-10-01 (recalibración opencode): λ Poisson calibrado OOS
             # (línea 2.5 dice 0.581 real 0.593; sesgo λ −0.085). Margen 2pp,
             # edge>=4pp, cuota>=1.80 (antes 6pp y 2.00).
-            if cuota < 1.80 or line < 2.0 or line > 4.5:
+            if cuota < 1.80 or line < 2.0 or line > PAPER_GOALS_MAX_LINE:
                 continue
             if t == 'OT_OVER':
                 p = 1 - poisson.cdf(line, lam)
                 p_cal = max(0.03, p - CAL_MARGIN)
                 if p_cal >= 0.50 and (p_cal - fair['OT_OVER']) >= 0.04 and abs(lam - line) >= 0.4:
                     self._add(m, h, a, lg, 'Total de goles', 'goles_v2', 'Más de', line, cuota, p_cal, start)
-            elif t == 'OT_UNDER':
+            elif t == 'OT_UNDER' and PAPER_GOALS_UNDER_ENABLED:
                 p = poisson.cdf(line, lam)
                 p_cal = max(0.03, p - CAL_MARGIN)
                 if p_cal >= 0.50 and (p_cal - fair['OT_UNDER']) >= 0.04 and abs(lam - line) >= 0.4:

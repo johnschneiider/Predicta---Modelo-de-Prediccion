@@ -98,6 +98,14 @@
     </div>
   </div>
 
+  <div style="background: rgba(198,241,53,0.06); border: 0.5px solid rgba(198,241,53,0.3);
+              border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 1.2rem;
+              font-size: 0.88rem; color: var(--text-secondary);">
+    🧭 <strong>Regla de dinero real (V2):</strong> además de estos umbrales, toda apuesta pasa por el
+    <a href="{% url 'auto_betting:configuracion_v2' %}" style="color: var(--accent-primary); font-weight:600;">
+      Filtro V2 (liga × mercado × día)</a> — solo combinaciones con ROI positivo observado.
+  </div>
+
   <form method="post" class="cfg-form" novalidate>
     {% csrf_token %}
     {% if form.non_field_errors %}<div class="cfg-error">{{ form.non_field_errors }}</div>{% endif %}
@@ -188,6 +196,110 @@
     <button type="button" id="btn-run-auto" class="cfg-run-btn">▶️ Ejecutar auto-betting para todas las cuentas</button>
     <div id="run-status" class="cfg-run-status"></div>
   </div>
+
+  <form method="post" class="cfg-form" style="margin-top: 1.2rem;" novalidate>
+    {% csrf_token %}
+    <div class="cfg-group">
+      <h3>🧠 Opinión IA · apuestas reales (dinero real)</h3>
+      <div class="cfg-global-row">
+        <div class="cfg-global-item">
+          <div class="g-label">Opinión IA activada (switch)</div>
+          {{ llm_form.enabled }}
+          {% if llm_form.enabled.errors %}<div class="cfg-error">{{ llm_form.enabled.errors|striptags }}</div>{% endif %}
+          <div class="g-help">Apagado = no se consulta la IA en ninguna apuesta real
+            (ni al colocar ni en la ventana). El paper no se afecta.</div>
+        </div>
+        <div class="cfg-global-item">
+          <div class="g-label">Anticipación de la consulta (minutos antes del inicio)</div>
+          {{ llm_form.anticipacion_min }}
+          {% if llm_form.anticipacion_min.errors %}<div class="cfg-error">{{ llm_form.anticipacion_min.errors|striptags }}</div>{% endif %}
+          <div class="g-help">Única consulta por partido: se hace al alcanzar T‑X
+            (job cada 5 min). Si la apuesta se coloca ya dentro de la ventana, se consulta al colocar.</div>
+        </div>
+      </div>
+      <div class="cfg-global-row">
+        <div class="cfg-global-item">
+          <div class="g-label">Modelo LLM (lista en vivo del proveedor)</div>
+          {{ llm_form.modelo }}
+          {% if llm_form.modelo.errors %}<div class="cfg-error">{{ llm_form.modelo.errors|striptags }}</div>{% endif %}
+          <div class="g-help" id="llm-modelos-estado">Cargando modelos…</div>
+          <div class="cfg-error" id="llm-modelos-error" style="display:none;"></div>
+        </div>
+        <div class="cfg-global-item">
+          <div class="g-label">Endpoint / base URL (OpenAI-compatible)</div>
+          {{ llm_form.base_url }}
+          {% if llm_form.base_url.errors %}<div class="cfg-error">{{ llm_form.base_url.errors|striptags }}</div>{% endif %}
+          <div class="g-help">Ej. https://api.openai.com/v1 (vacío = default). Guarda
+            primero si cambias endpoint o key y luego pulsa ⟳ para recargar la lista.</div>
+        </div>
+      </div>
+      <div class="cfg-global-row">
+        <div class="cfg-global-item">
+          <div class="g-label">API key {% if llm_api_key_configurada %}(configurada){% else %}(NO configurada){% endif %}</div>
+          {{ llm_form.api_key }}
+          {% if llm_form.api_key.errors %}<div class="cfg-error">{{ llm_form.api_key.errors|striptags }}</div>{% endif %}
+          <div class="g-help">Solo escritura: nunca se muestra la actual. En blanco = conservar.
+            Se guarda server-side con permisos restringidos.</div>
+        </div>
+        <div class="cfg-global-item" style="justify-content:flex-end;">
+          <button type="button" id="btn-llm-refresh" class="cfg-run-btn" style="align-self:flex-start;">⟳ Recargar modelos</button>
+        </div>
+      </div>
+      <button type="submit" name="guardar_llm" value="1" class="cfg-save">💾 Guardar configuración IA</button>
+      <div class="cfg-meta">
+        Última actualización: {{ llm_cfg.actualizado|date:"d/m/Y H:i" }}{% if llm_cfg.actualizado_por %} por {{ llm_cfg.actualizado_por }}{% endif %}.
+        Modelo efectivo: <strong>{{ llm_modelo_efectivo }}</strong>.
+      </div>
+    </div>
+    <script>
+      (function () {
+        var sel = document.getElementById('llm-modelo-select');
+        var estado = document.getElementById('llm-modelos-estado');
+        var errBox = document.getElementById('llm-modelos-error');
+        var btn = document.getElementById('btn-llm-refresh');
+        var actual = "{{ llm_modelo_efectivo|escapejs }}";
+        function opcionFinDeLista() {
+          if (actual && !Array.from(sel.options).some(function (o) { return o.value === actual; })) {
+            var o = document.createElement('option');
+            o.value = actual; o.textContent = actual + ' (actual)';
+            sel.insertBefore(o, sel.firstChild);
+          }
+          if (actual) { sel.value = actual; }
+        }
+        function cargar() {
+          estado.textContent = 'Cargando modelos…';
+          errBox.style.display = 'none';
+          fetch("{% url 'auto_betting:llm_modelos' %}", { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              sel.innerHTML = '';
+              if (data.ok && data.modelos && data.modelos.length) {
+                data.modelos.forEach(function (m) {
+                  var o = document.createElement('option');
+                  o.value = m; o.textContent = m;
+                  sel.appendChild(o);
+                });
+                opcionFinDeLista();
+                estado.textContent = '✅ ' + data.modelos.length + ' modelos disponibles.';
+              } else {
+                opcionFinDeLista();
+                estado.textContent = '⚠️ No se pudo listar en vivo; se conserva el modelo actual.';
+                errBox.textContent = 'Error del proveedor: ' + (data.error || 'desconocido');
+                errBox.style.display = 'block';
+              }
+            })
+            .catch(function (e) {
+              opcionFinDeLista();
+              estado.textContent = '⚠️ Error de red al listar modelos.';
+              errBox.textContent = 'Error: ' + e;
+              errBox.style.display = 'block';
+            });
+        }
+        btn.addEventListener('click', cargar);
+        cargar();
+      })();
+    </script>
+  </form>
 
   <script>
     (function () {

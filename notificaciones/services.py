@@ -9,6 +9,7 @@ el servicio apagado, el aviso se OMITE (y queda auditado en NotificacionLog).
 
 import logging
 import os
+from datetime import datetime
 
 import requests
 
@@ -24,6 +25,10 @@ TIMEOUT_S = 15
 # Eventos conocidos
 EVENTO_TOKEN_VENCIDO = 'token_betplay_vencido'
 EVENTO_TOKEN_OK = 'token_betplay_ok'
+EVENTO_APUESTAS = 'apuestas_colocadas'
+EVENTO_PARLEYS = 'parleys_colocados'
+
+_EMOJI_DEPORTE = {'Fútbol': '⚽', 'NBA': '🏀', 'MLB': '⚾'}
 
 MENSAJE_BIENVENIDA = (
     '👋 ¡Hola! Soy *Predicta*, el sistema de apuestas inteligentes '
@@ -154,3 +159,109 @@ def notificar_usuario(usuario, evento, mensaje, estado_evento, forzar=False):
         prev.estado = estado_evento
         prev.save()
     return 'enviado' if ok else 'error'
+
+
+def construir_mensaje_apuestas(apuestas, deporte):
+    """Mensaje WhatsApp con las apuestas colocadas en una corrida.
+
+    `apuestas`: lista de dicts con partido, mercado, seleccion, cuota, stake_cop.
+    Formato legible en móvil: un bloque por apuesta (partido en negrita y la
+    selección en su propia línea) con línea en blanco entre bloques.
+    """
+    emoji = _EMOJI_DEPORTE.get(deporte, '🎯')
+    n = len(apuestas)
+    plural = 's' if n != 1 else ''
+    cab = f"{emoji} *Predicta — {n} apuesta{plural} colocada{plural}* ({deporte})"
+    stake = apuestas[0].get('stake_cop') if apuestas else None
+    if stake:
+        cab += f"\nStake: {stake:,.0f} COP c/u"
+    bloques = []
+    for i, a in enumerate(apuestas[:10], 1):
+        cuota = float(a.get('cuota') or 0)
+        mercado = (a.get('mercado') or '').strip()
+        seleccion = a.get('seleccion', '')
+        pick = f"→ {mercado}: {seleccion} @{cuota:.2f}" if mercado else f"→ {seleccion} @{cuota:.2f}"
+        bloques.append(f"{i}) *{a.get('partido', '')}*\n{pick}")
+    if n > 10:
+        bloques.append(f"… y {n - 10} más")
+    return cab + "\n\n" + "\n\n".join(bloques)
+
+
+def notificar_apuestas(usuario, apuestas, deporte):
+    """Resumen WhatsApp de las apuestas colocadas en esta corrida.
+
+    Solo se llama cuando hubo ≥1 apuesta (una notificación por corrida).
+    Devuelve el resultado de notificar_usuario: 'enviado' | 'error' | 'omitido'.
+    """
+    if not apuestas:
+        return 'sin_apuestas'
+    mensaje = construir_mensaje_apuestas(apuestas, deporte)
+    return notificar_usuario(
+        usuario, EVENTO_APUESTAS, mensaje,
+        estado_evento=datetime.now().isoformat(timespec='seconds'),
+        forzar=True,
+    )
+
+
+def construir_mensaje_parleys(parleys):
+    """Mensaje WhatsApp con los parleys colocados en una corrida.
+
+    `parleys`: lista de dicts con stake, odds, payout y legs
+    (cada pata: h, a, m, s, c). Formato móvil: cabecera con totales y un
+    bloque por parley (máximo 10, luego "… y N más").
+    """
+    n = len(parleys)
+    plural = 's' if n != 1 else ''
+    stake = float(parleys[0].get('stake') or 0) if parleys else 0.0
+    total_stake = sum(float(p.get('stake') or 0) for p in parleys)
+    total_payout = sum(float(p.get('payout') or 0) for p in parleys)
+
+    cab = f"🎲 *Predicta — {n} parley{plural} colocado{plural}*"
+    if stake:
+        cab += f"\nStake: {stake:,.0f} COP c/u"
+    if total_stake and abs(total_stake - stake) > 0.001:
+        cab += f" · Total: {total_stake:,.0f} COP"
+    if total_payout:
+        cab += f"\nPago potencial total: {total_payout:,.0f} COP"
+
+    bloques = []
+    for i, p in enumerate(parleys[:10], 1):
+        lineas = []
+        for leg in (p.get('legs') or []):
+            home = (leg.get('h') or '').strip()
+            away = (leg.get('a') or '').strip()
+            partido = f"{home} vs {away}".strip()
+            mercado = (leg.get('m') or '').strip()
+            seleccion = leg.get('s') or ''
+            cuota = float(leg.get('c') or 0)
+            pick = (f"→ {mercado}: {seleccion} @{cuota:.2f}"
+                    if mercado else f"→ {seleccion} @{cuota:.2f}")
+            lineas.append(f"*{partido}*\n{pick}" if partido else pick)
+        cuota_total = float(p.get('odds') or 0)
+        payout = float(p.get('payout') or 0)
+        pie = f"Cuota {cuota_total:.2f}" if cuota_total else ''
+        if payout:
+            pie += (f" · Pago {payout:,.0f} COP" if pie
+                    else f"Pago {payout:,.0f} COP")
+        bloques.append(
+            f"{i}) " + "\n".join(lineas) + (f"\n{pie}" if pie else ''))
+    if n > 10:
+        bloques.append(f"… y {n - 10} más")
+    return cab + "\n\n" + "\n\n".join(bloques)
+
+
+def notificar_parleys(usuario, parleys, referencia=''):
+    """Resumen WhatsApp de los parleys colocados en esta corrida.
+
+    Solo se llama cuando hubo ≥1 parley. Una notificación por corrida.
+    Devuelve 'enviado' | 'error' | 'omitido' | 'sin_parleys'.
+    """
+    if not parleys:
+        return 'sin_parleys'
+    mensaje = construir_mensaje_parleys(parleys)
+    return notificar_usuario(
+        usuario, EVENTO_PARLEYS, mensaje,
+        estado_evento=(referencia
+                       or datetime.now().isoformat(timespec='seconds')),
+        forzar=True,
+    )

@@ -3,7 +3,7 @@ configuración global de umbrales por submercado (solo admin)."""
 
 from django import forms
 
-from .models import AutoBetConfig, MarketFilterConfig
+from .models import AutoBetConfig, LlmRealConfig, MarketFilterConfig
 
 # Submercados: por cada uno hay 5 campos (p, confidence, enabled, ev, cuota).
 _SUBMERCADOS = [
@@ -12,6 +12,7 @@ _SUBMERCADOS = [
     'shots_on_target_over', 'shots_on_target_under',
     'remates_over', 'remates_under',
     'btts_si', 'btts_no',
+    'x12',
 ]
 _GLOBALES = [
     'cuota_minima_global', 'stop_loss_diario_cop',
@@ -19,6 +20,7 @@ _GLOBALES = [
 ]
 # Filtro por línea (Fix 2026-08-31): solo tiros a puerta over/under.
 _LINE_FIELDS = [
+    'goals_over_min_line', 'goals_over_max_line',
     'shots_on_target_over_min_line', 'shots_on_target_over_max_line',
     'shots_on_target_under_min_line', 'shots_on_target_under_max_line',
     'remates_over_min_line', 'remates_over_max_line',
@@ -176,3 +178,52 @@ class MarketFilterConfigForm(forms.ModelForm):
             if value is not None and value < 0:
                 self.add_error(name, 'No puede ser negativa.')
         return cleaned
+
+
+class LlmRealConfigForm(forms.ModelForm):
+    """Formulario de la OPINIÓN IA de apuestas reales (página de umbrales).
+
+    Switch ON/OFF, anticipación T-X (minutos), modelo, endpoint y API key.
+    La API key es de SOLO ESCRITURA: nunca se renderiza un valor; en blanco =
+    conservar la actual. El endpoint acepta una base OpenAI-compatible
+    (ej. https://api.openai.com/v1) o el endpoint completo .../responses.
+    """
+
+    api_key = forms.CharField(
+        required=False, label='API key (dejar en blanco para conservar)',
+        widget=forms.PasswordInput(attrs={'class': 'cfg-input',
+                                          'autocomplete': 'new-password',
+                                          'placeholder': '••••••••'},
+                                   render_value=False))
+
+    class Meta:
+        model = LlmRealConfig
+        fields = ('enabled', 'anticipacion_min', 'modelo', 'base_url')
+        widgets = {
+            'enabled': forms.CheckboxInput(attrs={'class': 'cfg-check'}),
+            'anticipacion_min': forms.NumberInput(attrs={'class': 'cfg-input',
+                                                         'min': '5', 'max': '240',
+                                                         'step': '5'}),
+            'modelo': forms.Select(attrs={'class': 'cfg-input',
+                                          'id': 'llm-modelo-select'}),
+            'base_url': forms.TextInput(attrs={'class': 'cfg-input',
+                                               'placeholder': 'https://api.openai.com/v1'}),
+        }
+
+    def clean_anticipacion_min(self):
+        v = self.cleaned_data['anticipacion_min']
+        if v is None or v < 5 or v > 240:
+            raise forms.ValidationError('Debe estar entre 5 y 240 minutos.')
+        return v
+
+    def clean_base_url(self):
+        v = (self.cleaned_data.get('base_url') or '').strip()
+        if v and not v.startswith(('http://', 'https://')):
+            raise forms.ValidationError('Debe ser una URL http(s), ej. https://api.openai.com/v1')
+        return v
+
+    def clean_api_key(self):
+        v = (self.cleaned_data.get('api_key') or '').strip()
+        if '\n' in v or '\r' in v:
+            raise forms.ValidationError('Valor inválido.')
+        return v

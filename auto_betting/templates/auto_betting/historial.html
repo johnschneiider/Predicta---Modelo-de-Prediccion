@@ -18,30 +18,47 @@
     display: inline-block;
   }
 
-  /* ── Tabs de filtro ── */
-  .filter-tabs {
-    display: flex; justify-content: center; gap: 0.5rem; margin: 1rem 0;
+  /* ── Panel de filtros ── */
+  .filter-panel {
+    display: flex; flex-direction: column; gap: 0.55rem;
+    background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg); padding: 0.85rem 1rem;
+    margin: 1rem auto 0; max-width: 980px; text-align: left;
   }
+  .filter-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .filter-row-label {
+    font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-secondary); font-weight: 700; min-width: 58px;
+  }
+  .filter-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .filter-tab {
-    padding: 0.5rem 1.2rem; border-radius: var(--radius-full);
-    font-size: 0.82rem; font-weight: 700; cursor: pointer;
+    padding: 0.38rem 0.9rem; border-radius: var(--radius-full);
+    font-size: 0.8rem; font-weight: 700; cursor: pointer;
     border: 0.5px solid rgba(255,255,255,0.12); background: transparent;
     color: var(--text-secondary); transition: all .18s ease;
-    text-decoration: none;
+    text-decoration: none; white-space: nowrap;
   }
   .filter-tab:hover { border-color: var(--accent-border); color: var(--text-primary); }
   .filter-tab.active {
     background: var(--accent-primary); color: #0a0a0a; border-color: var(--accent-primary);
   }
+  .filter-tab .chip-count {
+    font-size: 0.7rem; font-weight: 600; opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+  }
+  .filter-tab.active .chip-count { opacity: 0.85; }
 
   /* ── Filtro de fechas ── */
   .date-filters {
-    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
-    margin: 0.8rem 0 0; flex-wrap: wrap;
+    display: flex; align-items: center; gap: 0.6rem;
+    margin: 0; padding-top: 0.55rem;
+    border-top: 0.5px dashed rgba(255,255,255,0.08);
+    flex-wrap: wrap;
   }
   .date-filters label {
     font-size: 0.78rem; color: var(--text-secondary); font-weight: 600;
   }
+  .date-filters .date-sep { color: var(--text-tertiary); font-size: 0.8rem; }
   .date-filters input[type="date"] {
     background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.12);
     border-radius: var(--radius-full); color: var(--text-primary);
@@ -109,6 +126,10 @@
   .stat-card .value.neg { color: #ff5c5c; }
   .stat-card .value.warn { color: #ffc107; }
   .stat-card .value.accent { color: var(--accent-primary); }
+  .stat-card .sub {
+    font-size: 0.68rem; color: var(--text-secondary); margin-top: 0.35rem;
+    font-variant-numeric: tabular-nums;
+  }
 
   /* ── Tabla ── */
   .table-scroll {
@@ -201,24 +222,47 @@
       <span class="dot"></span>
       Sincronizado desde BetPlay · coupon/history.json
     </div>
-    <div class="filter-tabs">
-      <a class="filter-tab {% if filtro == 'todos' %}active{% endif %}" href="?filtro=todos{% if desde %}&desde={{ desde }}{% endif %}{% if hasta %}&hasta={{ hasta }}{% endif %}">📊 Todos ({{ stats.todos.total }})</a>
-      <a class="filter-tab {% if filtro == 'sistema' %}active{% endif %}" href="?filtro=sistema{% if desde %}&desde={{ desde }}{% endif %}{% if hasta %}&hasta={{ hasta }}{% endif %}">🤖 Sistema ({{ stats.sistema.total }})</a>
-      <a class="filter-tab {% if filtro == 'manual' %}active{% endif %}" href="?filtro=manual{% if desde %}&desde={{ desde }}{% endif %}{% if hasta %}&hasta={{ hasta }}{% endif %}">✋ Manual ({{ stats.manual.total }})</a>
-    </div>
+    <div class="filter-panel">
+      <div class="filter-row">
+        <span class="filter-row-label">Tipo</span>
+        <div class="filter-chips">
+          {% for t in tipo_tabs %}
+          <a class="filter-tab {% if t.key == filtro %}active{% endif %}" href="{{ t.url }}">{{ t.icon }} {{ t.label }} <span class="chip-count">{{ t.count }}</span></a>
+          {% endfor %}
+          <a class="filter-tab" href="{% url 'parley_engine:historial' %}">🎲 Parleys</a>
+        </div>
+      </div>
 
-    <form class="date-filters" method="get" id="dateForm">
-      <label for="desdeInput">📅 Desde</label>
-      <input type="date" id="desdeInput" name="desde" value="{{ desde }}" max="{{ hasta }}">
-      <label for="hastaInput">Hasta</label>
-      <input type="date" id="hastaInput" name="hasta" value="{{ hasta }}" min="{{ desde }}">
-      <input type="hidden" name="filtro" value="{{ filtro }}">
-      <button type="submit" class="date-btn">Filtrar</button>
-      {% if desde or hasta %}
-        <a class="date-clear" href="?filtro={{ filtro }}">✕ Quitar fechas</a>
-        <span class="date-active-badge">{{ desde|default:'' }} → {{ hasta|default:'hoy' }}</span>
-      {% endif %}
-    </form>
+      <div class="filter-row">
+        <span class="filter-row-label">Deporte</span>
+        <div class="filter-chips">
+          <a class="filter-tab {% if sport_todos.active %}active{% endif %}" href="{{ sport_todos.url }}">🌐 Todos <span class="chip-count">{{ sport_todos.count }}</span></a>
+          {% for s in sport_options %}
+          <a class="filter-tab {% if s.active %}active{% endif %}" href="{{ s.url }}">{{ s.icon }} {{ s.label }} <span class="chip-count">{{ s.count }}</span></a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <form class="date-filters" method="get" id="dateForm">
+        <span class="filter-row-label">F. partido</span>
+        <input type="date" id="desdeInput" name="desde" value="{{ desde }}" max="{{ hasta }}" aria-label="Desde (fecha del partido)" title="Desde — fecha del partido">
+        <span class="date-sep">→</span>
+        <input type="date" id="hastaInput" name="hasta" value="{{ hasta }}" min="{{ desde }}" aria-label="Hasta (fecha del partido)" title="Hasta — fecha del partido">
+        <input type="hidden" name="filtro" value="{{ filtro }}">
+        <input type="hidden" name="sport" value="{{ sport }}">
+        <button type="submit" class="date-btn">Filtrar</button>
+        {% if desde or hasta %}
+          <a class="date-clear" href="{{ clear_dates_url }}">✕ Quitar fechas</a>
+          <span class="date-active-badge" title="El rango aplica a la fecha del partido">{% if desde and hasta %}{{ desde }} → {{ hasta }}{% elif desde %}{{ desde }} → en adelante{% else %}hasta {{ hasta }}{% endif %}</span>
+        {% endif %}
+        {% if sport %}
+          <span class="date-active-badge">{{ sport_active_label }}</span>
+        {% endif %}
+        {% if hay_filtros %}
+          <a class="date-clear" href="{{ clear_url }}">✕ Limpiar todo</a>
+        {% endif %}
+      </form>
+    </div>
 
     <button id="syncBtn" class="sync-btn" type="button">⟳ Actualizar datos</button>
   </div>
@@ -256,6 +300,19 @@
       <div class="label">ROI (asent.)</div>
       <div class="value {% if stats_active.roi >= 0 %}pos{% else %}neg{% endif %}">{{ stats_active.roi }}%</div>
     </div>
+    {% if crecimiento_capital %}
+    <div class="stat-card" title="Crecimiento del capital de la cuenta (libre + en juego) entre el inicio y el fin del rango filtrado. Independiente del tipo y del deporte. Sin fechas, todo el periodo con capital registrado.">
+      <div class="label">Crecimiento capital (rango)</div>
+      <div class="value {% if crecimiento_capital.pct is not None %}{% if crecimiento_capital.pct >= 0 %}pos{% else %}neg{% endif %}{% endif %}">
+        {% if crecimiento_capital.pct is not None %}{{ crecimiento_capital.pct }}%{% else %}—{% endif %}
+      </div>
+      {% if crecimiento_capital.sin_datos %}
+      <div class="sub" title="El capital paralelo solo existe desde el ancla (activación del modo compuesto).">{{ crecimiento_capital.rango_fmt }} · {% if crecimiento_capital.motivo == 'sin_movimientos' %}sin movimientos de capital{% else %}capital no registrado aún (inicia {{ crecimiento_capital.ancla_fmt }}){% endif %}</div>
+      {% else %}
+      <div class="sub">{{ crecimiento_capital.inicio_fmt }} → {{ crecimiento_capital.fin_fmt }} · {{ crecimiento_capital.fecha_inicio }} → {{ crecimiento_capital.fecha_fin }}</div>
+      {% endif %}
+    </div>
+    {% endif %}
     <div class="stat-card">
       <div class="label">En juego (OPEN)</div>
       <div class="value warn">${{ stats_active.stake_open_cop|floatformat:0 }}</div>
@@ -268,6 +325,11 @@
       <div class="label">Void</div>
       <div class="value" style="color:var(--text-tertiary)">{{ stats_active.void }}</div>
     </div>
+  </div>
+
+  <div style="margin: 0.2rem 0 0.8rem; font-size: 0.82rem; color: var(--text-secondary);">
+    Solo apuestas <strong>simples</strong>: los parleys (combinadas) se ven aparte en
+    <a href="/parleys/" style="color: var(--accent-primary);">la página de Parleys →</a>
   </div>
 
   <!-- Sección CLV compacta -->
@@ -310,8 +372,55 @@
         <div class="chart-wrap"><canvas id="chartWinrate"></canvas></div>
       </div>
     </div>
+    {% if balance_timeline %}
+    <div class="chart-card tall" style="margin-bottom:1rem;">
+      <h4>{% if balance_timeline.filtrado %}💼 Dinero de los partidos del filtro (COP){% else %}💼 Movimiento del balance real (COP){% endif %}</h4>
+      <p style="color:var(--text-secondary); font-size:0.78rem; margin:0.2rem 0 0.6rem;">
+        {% if balance_timeline.filtrado %}
+        Solo los partidos del rango (fecha del partido): en juego
+        ${{ balance_timeline.en_juego|floatformat:0 }} + P&amp;L realizado
+        ${{ balance_timeline.realizado|floatformat:0 }} → total ${{ balance_timeline.total|floatformat:0 }}.
+        La línea <strong style="color:#5cc8ff;">Total</strong> es el valor de esos partidos
+        (stakes vivos + resultado de los asentados). Sin fechas, el gráfico muestra el balance de toda la cuenta.
+        {% else %}
+        Dinero real de la cuenta (capital paralelo): inicial ${{ balance_timeline.inicial|floatformat:0 }}
+        el {{ balance_timeline.ancla|slice:":10" }} → actual ${{ balance_timeline.final|floatformat:0 }}.
+        El balance paralelo arranca al activar el modo compuesto (ancla); antes de esa fecha no hay saldo declarado
+        (la historia completa de apuestas está en el P&amp;L acumulado).
+        Stakes descontados al colocar, payouts al asentar y ajustes incluidos.
+        La línea <strong style="color:#5cc8ff;">Total</strong> suma el dinero en juego (stakes OPEN):
+        ${{ balance_timeline.en_juego|floatformat:0 }} → total ${{ balance_timeline.total|floatformat:0 }}.
+        {% endif %}
+      </p>
+      <div class="chart-wrap"><canvas id="chartBalance"></canvas></div>
+    </div>
+    {% endif %}
+    {% if balance_cuenta %}
+    <div class="chart-card tall" style="margin-bottom:1rem;">
+      <h4>📈 Evolución del balance de la cuenta (COP)</h4>
+      <p style="color:var(--text-secondary); font-size:0.78rem; margin:0.2rem 0 0.6rem;">
+        {% if balance_cuenta.modo == 'filtrado' %}
+        Aporte de las apuestas del filtro al balance: parte del saldo real al inicio de la ventana
+        ({{ balance_cuenta.ancla|slice:":10" }}: ${{ balance_cuenta.inicial|floatformat:0 }} → ${{ balance_cuenta.final|floatformat:0 }}).
+        Solo aplica las apuestas del tipo y deporte seleccionados; las fechas delimitan la ventana.
+        {% else %}
+        Balance real de la cuenta (saldo libre) en el rango
+        {{ balance_cuenta.ancla|slice:":10" }}: ${{ balance_cuenta.inicial|floatformat:0 }} → ${{ balance_cuenta.final|floatformat:0 }},
+        ajustado a las fechas seleccionadas. Con «Todos» en tipo y deporte, el saldo real no cambia.
+        {% endif %}
+      </p>
+      <div class="chart-wrap"><canvas id="chartBalanceCuenta"></canvas></div>
+    </div>
+    {% endif %}
     <div class="chart-card tall" style="margin-bottom:1rem;">
       <h4>P&L acumulado (COP)</h4>
+      <p style="color:var(--text-secondary); font-size:0.78rem; margin:0.2rem 0 0.6rem;">
+        {% if desde or hasta %}
+        Solo apuestas liquidadas de los partidos del rango, ordenadas por fecha del partido (no incluye stakes pendientes ni ajustes).
+        {% else %}
+        Solo apuestas liquidadas, ordenadas por fecha de apuesta (no incluye stakes pendientes ni ajustes).
+        {% endif %}
+      </p>
       <div class="chart-wrap"><canvas id="chartTimeline"></canvas></div>
     </div>
     <div class="table-scroll" style="max-height:none;">
@@ -354,7 +463,7 @@
     <table class="hist">
       <thead>
         <tr>
-          <th>Fecha</th>
+          <th title="Fecha y hora del partido">Inicio</th>
           <th>Tipo</th>
           <th>Partido</th>
           <th>Liga</th>
@@ -362,6 +471,7 @@
           <th>Selección</th>
           <th class="num">Prob.</th>
           <th class="num">Conf.</th>
+          <th class="ctr" title="Opinión IA informativa (no operativa)">IA</th>
           <th class="num">Cuota</th>
           <th class="num">CLV</th>
           <th class="num">Stake</th>
@@ -372,7 +482,7 @@
       <tbody>
         {% for a in apuestas %}
         <tr>
-          <td class="cell-date">{{ a.placed_date|date:"d/m H:i" }}</td>
+          <td class="cell-date" title="Apuesta: {{ a.placed_date|date:'d/m H:i' }}">{% if a.event_start_date %}{{ a.event_start_date|date:"d/m H:i" }}{% else %}{{ a.placed_date|date:"d/m H:i" }}{% endif %}</td>
           <td>{% if a.is_system %}<span class="badge badge-sys">SYS</span>{% else %}<span class="badge badge-man">MAN</span>{% endif %}</td>
           <td class="cell-match">{{ a.home_team }} <span class="vs">vs</span> {{ a.away_team }}</td>
           <td class="cell-league">{{ a.liga }}</td>
@@ -380,10 +490,15 @@
           <td class="cell-selection">{{ a.seleccion }}{% if a.linea %} <span class="line">({{ a.linea }})</span>{% endif %}</td>
           <td class="cell-num">{% if a.pred_prob is not None %}{{ a.pred_prob|floatformat:0 }}%{% else %}<span class="clv-na">—</span>{% endif %}</td>
           <td class="cell-num">{% if a.pred_conf is not None %}{{ a.pred_conf|floatformat:0 }}%{% else %}<span class="clv-na">—</span>{% endif %}</td>
+          <td class="ctr" title="{{ a.ia_reason|default:'' }}">
+            {% if a.ia_verdict is True %}<span class="badge badge-won"{% if a.ia_conf is not None %} title="Confianza IA: {{ a.ia_conf }}"{% endif %}>SÍ</span>
+            {% elif a.ia_verdict is False %}<span class="badge badge-lost"{% if a.ia_conf is not None %} title="Confianza IA: {{ a.ia_conf }}"{% endif %}>NO</span>
+            {% else %}<span class="clv-na">—</span>{% endif %}
+          </td>
           <td class="cell-num">{{ a.played_odds|floatformat:2 }}</td>
           <td class="cell-num">
             {% if a.clv is not None %}
-              <span class="{% if a.clv >= 0 %}clv-pos{% else %}clv-neg{% endif %}">{{ a.clv }}%</span>
+              <span class="{% if a.clv > 0 %}clv-pos{% elif a.clv < 0 %}clv-neg{% else %}clv-na{% endif %}">{{ a.clv }}%</span>
             {% else %}
               <span class="clv-na">—</span>
             {% endif %}
@@ -400,7 +515,7 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="13" class="empty-row">Sin apuestas. Ejecuta <code>manage.py sync_bet_history</code>.</td></tr>
+        <tr><td colspan="14" class="empty-row">Sin apuestas. Ejecuta <code>manage.py sync_bet_history</code>.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -410,6 +525,8 @@
 {{ stats_active.por_mercado|json_script:"mercadoData" }}
 {{ stats_active.pnl_timeline|json_script:"timelineData" }}
 {{ stats_active.clv_por_mercado|json_script:"clvMercadoData" }}
+{% if balance_timeline %}{{ balance_timeline|json_script:"balanceData" }}{% endif %}
+{% if balance_cuenta %}{{ balance_cuenta|json_script:"balanceCuentaData" }}{% endif %}
 
 <script>
 (function () {
@@ -479,6 +596,105 @@
       scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 12, font: { size: 10 } } }, y: { grid: { color: 'rgba(255,255,255,0.06)' } } }
     }
   });
+
+  // Balance real (cuenta) o dinero de los partidos filtrados, según el modo
+  var balData = load('balanceData');
+  var balCanvas = document.getElementById('chartBalance');
+  if (balCanvas && balData && balData.points && balData.points.length > 1) {
+    var esFiltro = !!balData.filtrado;
+    var serie1 = balData.points.map(function(p){ return esFiltro ? p.en_juego : p.bal; });
+    var serie2 = balData.points.map(function(p){ return p.total; });
+    var conMarcadores = balData.points.length <= 180;
+    new Chart(balCanvas, {
+      type: 'bar',
+      data: {
+        labels: balData.points.map(function(p){ return p.t.slice(5,16).replace('T',' '); }),
+        datasets: [
+          {
+            type: 'bar',
+            label: esFiltro ? 'Total (en juego + P&L)' : 'Total (balance + en juego)',
+            data: serie2,
+            backgroundColor: 'rgba(92,200,255,0.28)',
+            borderColor: 'rgba(92,200,255,0.65)',
+            borderWidth: 1, borderRadius: 3,
+            order: 2
+          },
+          {
+            type: 'line',
+            label: esFiltro ? 'En juego (partidos del filtro)' : 'Balance (depósito)',
+            data: serie1,
+            borderColor: green, backgroundColor: 'rgba(92,255,92,0.08)',
+            fill: false, tension: 0.35, borderWidth: 2,
+            pointRadius: conMarcadores ? 3 : 0,
+            pointHoverRadius: 4,
+            pointBackgroundColor: green,
+            pointBorderColor: '#0a0a0a',
+            pointBorderWidth: 1,
+            order: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            display: true, position: 'top',
+            labels: { boxWidth: 14, boxHeight: 2, color: '#b9b9b0', font: { size: 10 } }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(ctx){
+                return ctx.dataset.label + ': $' + Math.round(ctx.parsed.y).toLocaleString('es-CO');
+              }
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxTicksLimit: 10, font: { size: 10 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.06)' },
+               ticks: { callback: function(v){ return '$' + Number(v).toLocaleString('es-CO'); }, font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  // Evolución del balance de la cuenta (línea única, independiente de filtros)
+  var balCuentaData = load('balanceCuentaData');
+  var balCuentaCanvas = document.getElementById('chartBalanceCuenta');
+  if (balCuentaCanvas && balCuentaData && balCuentaData.points && balCuentaData.points.length > 1) {
+    new Chart(balCuentaCanvas, {
+      type: 'line',
+      data: {
+        labels: balCuentaData.points.map(function(p){ return p.t.slice(5,16).replace('T',' '); }),
+        datasets: [{
+          data: balCuentaData.points.map(function(p){ return p.bal; }),
+          borderColor: green, backgroundColor: 'rgba(92,255,92,0.10)',
+          fill: true, tension: 0.35, borderWidth: 2,
+          pointRadius: 0, pointHoverRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx){
+                return 'Balance: $' + Math.round(ctx.parsed.y).toLocaleString('es-CO');
+              }
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxTicksLimit: 10, font: { size: 10 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.06)' },
+               ticks: { callback: function(v){ return '$' + Number(v).toLocaleString('es-CO'); }, font: { size: 10 } } }
+        }
+      }
+    });
+  }
 
   // CLV por mercado (si existe)
   var clvCanvas = document.getElementById('chartClvMarket');

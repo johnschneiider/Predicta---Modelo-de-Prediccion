@@ -30,6 +30,30 @@ class Usuario(AbstractUser):
         return f"{self.get_full_name()} ({self.email})"
 
 
+class PermisoMenu(models.Model):
+    """Acceso de un usuario a una opción del menú de usuario (navbar).
+
+    Controlado desde el panel del superadmin (cuentas:permisos_usuario).
+    Sin fila = denegado (decisión 2026-10-13: todo denegado por defecto, el
+    admin asigna). El catálogo de códigos vive en cuentas/menu.py.
+    """
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE,
+                                related_name='permisos_menu',
+                                verbose_name="Usuario")
+    codigo = models.CharField(max_length=50, verbose_name="Código de opción")
+    permitido = models.BooleanField(default=False, verbose_name="Permitido")
+    actualizado = models.DateTimeField(auto_now=True, verbose_name="Actualizado")
+
+    class Meta:
+        verbose_name = "Permiso de menú"
+        verbose_name_plural = "Permisos de menú"
+        unique_together = ('usuario', 'codigo')
+
+    def __str__(self):
+        estado = 'permitido' if self.permitido else 'denegado'
+        return f'{self.usuario} · {self.codigo} ({estado})'
+
+
 class LoginAttempt(models.Model):
     """
     Registro de intentos de inicio de sesión para protección contra fuerza bruta.

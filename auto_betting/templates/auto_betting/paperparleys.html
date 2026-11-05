@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Paperparleys — Parlays paper del motor real — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+  .pp-wrap { max-width: 1240px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .pp-header { text-align: center; margin-bottom: 1.2rem; }
+  .pp-header h2 { margin-bottom: 0.4rem; letter-spacing: -0.01em; }
+  .pp-header .subtitle { color: var(--text-secondary); font-size: 0.88rem; }
+  .pp-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.8rem; margin: 1rem 0 1.6rem; }
+  .pp-card { background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.10); border-radius: var(--radius); padding: 0.9rem 1rem; text-align: center; }
+  .pp-card .v { font-size: 1.35rem; font-weight: 800; }
+  .pp-card .l { font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pos { color: #2ecc71; } .neg { color: #e74c3c; }
+  .pp-table-wrap { overflow-x: auto; margin-bottom: 2rem; }
+  table.pp { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  table.pp th { text-align: left; padding: 0.5rem 0.7rem; color: var(--text-secondary); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid rgba(255,255,255,0.10); white-space: nowrap; }
+  table.pp td { padding: 0.45rem 0.7rem; border-bottom: 0.5px solid rgba(255,255,255,0.05); }
+  .badge { display: inline-block; padding: 0.12rem 0.5rem; border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 700; }
+  .badge-ganado { background: rgba(46,204,113,0.16); color: #2ecc71; }
+  .badge-perdido { background: rgba(231,76,60,0.16); color: #e74c3c; }
+  .badge-pendiente { background: rgba(241,196,15,0.16); color: #f1c40f; }
+  .badge-push, .badge-void { background: rgba(149,165,166,0.18); color: #95a5a6; }
+  .pp-section-title { margin: 1.6rem 0 0.6rem; font-size: 1.05rem; font-weight: 700; }
+  .pp-peek { max-width: 420px; display: block; color: var(--text-secondary); font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pp-wrap">
+  <div class="pp-header">
+    <h2>🧾 Paperparleys</h2>
+    <div class="subtitle">
+      Parlays en papel generados con los picks <b>reales</b> del motor (AutoBet),
+      prob recalibrada por deciles (p_rec) y EV conjunto &ge; {{ cfg.ev_gate|floatformat:2 }}.
+      Máx <b>{{ cfg.max_legs }}</b> patas · stake {{ cfg.stake }} COP · sin tope de parlays/día.
+      Se genera cada hora (cron) y se liquida con el resultado real de AutoBet.
+    </div>
+  </div>
+
+  <form method="post" class="text-right mb-3" style="text-align:right">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-secondary btn-sm"
+            {% if not user.is_superuser %}disabled{% endif %}>
+      ↻ Generar hoy + liquidar
+    </button>
+  </form>
+
+  <div class="pp-cards">
+    <div class="pp-card"><div class="v">{{ global_stats.n_total }}</div><div class="l">Parlays (30d, creados)</div></div>
+    <div class="pp-card"><div class="v">{{ global_stats.n }}</div><div class="l">Liquidados</div></div>
+    <div class="pp-card"><div class="v">{{ global_stats.wr|default:"—" }}%</div><div class="l">Winrate</div></div>
+    <div class="pp-card"><div class="v {{ global_stats.net|yesno:"pos,neg" }}">$ {{ global_stats.net|floatformat:0 }}</div>
+      <div class="l">Neto COP · ROI {{ global_stats.roi|default:"—" }}%</div></div>
+    <div class="pp-card"><div class="v">{{ global_stats.pendientes }}</div><div class="l">Pendientes</div></div>
+  </div>
+
+  <div class="pp-section-title">Por número de patas (liquidados, 30d)</div>
+  <div class="pp-table-wrap">
+    <table class="pp">
+      <thead><tr><th>K</th><th>N</th><th>WR</th><th>Neto</th></tr></thead>
+      <tbody>
+        {% for r in por_patas %}
+        <tr><td>{{ r.n_legs }}</td><td>{{ r.n }}</td><td>{{ r.wr }}%</td>
+          <td class="{% if r.neto >= 0 %}pos{% else %}neg{% endif %}">$ {{ r.neto|floatformat:0 }}</td></tr>
+        {% empty %}<tr><td colspan="4" style="color:var(--text-secondary)">Sin datos aún.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pp-section-title">Por día (creados · últimos 30)</div>
+  <div class="pp-table-wrap">
+    <table class="pp">
+      <thead><tr><th>Día</th><th>Creados</th><th>Ganó n/liquid.</th><th>Neto liquidados</th></tr></thead>
+      <tbody>
+        {% for f in por_dia %}
+        <tr><td>{{ f.dia }}</td><td>{{ f.n }}</td><td>{{ f.won }}</td>
+          <td class="{% if f.neto >= 0 %}pos{% else %}neg{% endif %}">$ {{ f.neto|floatformat:0 }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pp-section-title">Últimos parlays</div>
+  <div class="pp-table-wrap">
+    <table class="pp">
+      <thead><tr><th>Estado</th><th>Día</th><th>K</th><th>Cuota</th><th>EV</th><th>Stake</th><th>Payout</th><th>Piernas</th></tr></thead>
+      <tbody>
+        {% for p in ultimos %}
+        <tr>
+          <td><span class="badge badge-{{ p.estado|lower }}">{{ p.estado }}</span></td>
+          <td>{{ p.dia }}</td><td>{{ p.n_legs }}</td>
+          <td>{{ p.cuota_producto|floatformat:2 }}</td>
+          <td>{{ p.ev|floatformat:2 }}</td>
+          <td>{{ p.stake|floatformat:0 }}</td>
+          <td>{{ p.payout|default:"—" }}</td>
+          <td>
+            <span class="pp-peek">{% for d in p.legs|slice:":4" %}{{ d.s }}@{{ d.c }}{% if not forloop.last %} | {% endif %}{% endfor %}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pp-section-title">Ligas más usadas (30d)</div>
+  <div class="pp-table-wrap" style="margin-bottom:2.5rem">
+    <table class="pp">
+      <thead><tr><th>Liga</th><th>Legs</th><th>Legs ganadas</th></tr></thead>
+      <tbody>
+        {% for l in ligas_top %}
+        <tr><td>{{ l.liga|default:"—" }}</td><td>{{ l.n }}</td><td>{{ l.won }}</td></tr>
+        {% empty %}<tr><td colspan="3" style="color:var(--text-secondary)">Sin datos aún.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pp-section-title">Corridas recientes (trazabilidad)</div>
+  <div class="pp-table-wrap">
+    <table class="pp">
+      <thead><tr><th>Modo</th><th>Día</th><th>OK</th><th>Fit bets</th><th>Picks</th><th>Eventos</th><th>Cand.</th><th>Nuevos</th><th>ms</th><th>Cuando</th></tr></thead>
+      <tbody>
+        {% for r in runs %}
+        <tr><td>{{ r.modo }}</td><td>{{ r.dia }}{% if not r.dia %}—{% endif %}</td><td>{{ r.ok|yesno:"✔,✖" }}</td>
+          <td>{{ r.n_fit }}</td><td>{{ r.n_pool }}</td><td>{{ r.n_eventos }}</td>
+          {% with resp=r.args %}
+          <td colspan="2" title="{{ resp }}">{{ r.args|cut:"candidatos="|cut:"generados="|cut:"existentes=" }}</td>
+          {% endwith %}
+          <td>{{ r.elapsed_ms }}</td>
+          <td>{{ r.started_at|date:"d/m H:i" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="subtitle" style="color:var(--text-secondary);font-size:0.78rem;margin-top:0.4rem">
+      Fit últimos: bordes {{ runs.first.fit_edges|default:"—" }} · winrate por decil {{ runs.first.fit_rates|default:"—" }}
+    </div>
+  </div>
+</div>
+{% endblock %}

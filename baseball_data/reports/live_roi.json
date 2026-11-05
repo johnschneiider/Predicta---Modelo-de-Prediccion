@@ -1,0 +1,478 @@
+{
+  "markets": {
+    "totals": {
+      "n": 31,
+      "won": 21,
+      "stake": 31.0,
+      "net": 10.446130952380955,
+      "ev_sum": 8.576784613095237
+    },
+    "runline": {
+      "n": 7,
+      "won": 2,
+      "stake": 7.0,
+      "net": -1.5620000000000003,
+      "ev_sum": 6.423498985714284
+    },
+    "moneyline": {
+      "n": 3,
+      "won": 1,
+      "stake": 3.0,
+      "net": -0.7555555555555555,
+      "ev_sum": 0.28819466666666704
+    }
+  },
+  "bets": [
+    {
+      "game": 189823,
+      "date": "2026-10-02",
+      "teams": "Philadelphia Phillies @ Atlanta Braves",
+      "market": "totals",
+      "side": "over_8.5",
+      "odds": 2.3057142857142856,
+      "p_model": 0.4702,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 189823,
+      "date": "2026-10-02",
+      "teams": "Philadelphia Phillies @ Atlanta Braves",
+      "market": "totals",
+      "side": "over_7.5",
+      "odds": 1.9724999999999997,
+      "p_model": 0.6081,
+      "outcome": 1,
+      "net": 0.97
+    },
+    {
+      "game": 189823,
+      "date": "2026-10-02",
+      "teams": "Philadelphia Phillies @ Atlanta Braves",
+      "market": "totals",
+      "side": "over_5.5",
+      "odds": 1.4233333333333331,
+      "p_model": 0.8467,
+      "outcome": 1,
+      "net": 0.42
+    },
+    {
+      "game": 189823,
+      "date": "2026-10-02",
+      "teams": "Philadelphia Phillies @ Atlanta Braves",
+      "market": "totals",
+      "side": "over_6.5",
+      "odds": 1.5700000000000003,
+      "p_model": 0.7386,
+      "outcome": 1,
+      "net": 0.57
+    },
+    {
+      "game": 189823,
+      "date": "2026-10-02",
+      "teams": "Philadelphia Phillies @ Atlanta Braves",
+      "market": "runline",
+      "side": "away_+1.5",
+      "odds": 2.5016666666666665,
+      "p_model": 0.7025,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187803,
+      "date": "2026-10-01",
+      "teams": "Boston Red Sox @ New York Yankees",
+      "market": "totals",
+      "side": "over_8.5",
+      "odds": 2.816666666666667,
+      "p_model": 0.4961,
+      "outcome": 1,
+      "net": 1.82
+    },
+    {
+      "game": 187803,
+      "date": "2026-10-01",
+      "teams": "Boston Red Sox @ New York Yankees",
+      "market": "totals",
+      "side": "over_7.5",
+      "odds": 2.3057142857142856,
+      "p_model": 0.6324,
+      "outcome": 1,
+      "net": 1.31
+    },
+    {
+      "game": 187803,
+      "date": "2026-10-01",
+      "teams": "Boston Red Sox @ New York Yankees",
+      "market": "totals",
+      "side": "over_5.5",
+      "odds": 1.5250000000000001,
+      "p_model": 0.8607,
+      "outcome": 1,
+      "net": 0.53
+    },
+    {
+      "game": 187803,
+      "date": "2026-10-01",
+      "teams": "Boston Red Sox @ New York Yankees",
+      "market": "totals",
+      "side": "over_6.5",
+      "odds": 1.80875,
+      "p_model": 0.7585,
+      "outcome": 1,
+      "net": 0.81
+    },
+    {
+      "game": 187803,
+      "date": "2026-10-01",
+      "teams": "Boston Red Sox @ New York Yankees",
+      "market": "totals",
+      "side": "over_9.5",
+      "odds": 3.45,
+      "p_model": 0.3654,
+      "outcome": 1,
+      "net": 2.45
+    },
+    {
+      "game": 187803,
+      "date": "2026-10-01",
+      "teams": "Boston Red Sox @ New York Yankees",
+      "market": "runline",
+      "side": "away_+1.5",
+      "odds": 2.893333333333333,
+      "p_model": 0.6742,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187812,
+      "date": "2026-10-01",
+      "teams": "Chicago Cubs @ San Diego Padres",
+      "market": "moneyline",
+      "side": "away",
+      "odds": 2.1933333333333334,
+      "p_model": 0.5018,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187812,
+      "date": "2026-10-01",
+      "teams": "Chicago Cubs @ San Diego Padres",
+      "market": "totals",
+      "side": "over_8.5",
+      "odds": 2.432857142857143,
+      "p_model": 0.4902,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187812,
+      "date": "2026-10-01",
+      "teams": "Chicago Cubs @ San Diego Padres",
+      "market": "totals",
+      "side": "over_9.5",
+      "odds": 3.1,
+      "p_model": 0.3597,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187812,
+      "date": "2026-10-01",
+      "teams": "Chicago Cubs @ San Diego Padres",
+      "market": "totals",
+      "side": "over_7.5",
+      "odds": 2.06,
+      "p_model": 0.6269,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187812,
+      "date": "2026-10-01",
+      "teams": "Chicago Cubs @ San Diego Padres",
+      "market": "totals",
+      "side": "over_5.5",
+      "odds": 1.4175,
+      "p_model": 0.8576,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187812,
+      "date": "2026-10-01",
+      "teams": "Chicago Cubs @ San Diego Padres",
+      "market": "totals",
+      "side": "over_6.5",
+      "odds": 1.6300000000000001,
+      "p_model": 0.754,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187812,
+      "date": "2026-10-01",
+      "teams": "Chicago Cubs @ San Diego Padres",
+      "market": "runline",
+      "side": "away_+1.5",
+      "odds": 2.8983333333333334,
+      "p_model": 0.7006,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187802,
+      "date": "2026-09-30",
+      "teams": "Boston Red Sox @ New York Yankees",
+      "market": "totals",
+      "side": "over_8.5",
+      "odds": 3.1166666666666667,
+      "p_model": 0.4959,
+      "outcome": 1,
+      "net": 2.12
+    },
+    {
+      "game": 187802,
+      "date": "2026-09-30",
+      "teams": "Boston Red Sox @ New York Yankees",
+      "market": "totals",
+      "side": "over_7.5",
+      "odds": 2.7083333333333335,
+      "p_model": 0.6321,
+      "outcome": 1,
+      "net": 1.71
+    },
+    {
+      "game": 187802,
+      "date": "2026-09-30",
+      "teams": "Boston Red Sox @ New York Yankees",
+      "market": "totals",
+      "side": "over_5.5",
+      "odds": 1.7014285714285715,
+      "p_model": 0.8605,
+      "outcome": 1,
+      "net": 0.7
+    },
+    {
+      "game": 187802,
+      "date": "2026-09-30",
+      "teams": "Boston Red Sox @ New York Yankees",
+      "market": "totals",
+      "side": "over_6.5",
+      "odds": 2.025,
+      "p_model": 0.7583,
+      "outcome": 1,
+      "net": 1.02
+    },
+    {
+      "game": 187802,
+      "date": "2026-09-30",
+      "teams": "Boston Red Sox @ New York Yankees",
+      "market": "totals",
+      "side": "over_9.5",
+      "odds": 4.05,
+      "p_model": 0.3651,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187802,
+      "date": "2026-09-30",
+      "teams": "Boston Red Sox @ New York Yankees",
+      "market": "runline",
+      "side": "away_+1.5",
+      "odds": 2.877142857142857,
+      "p_model": 0.6804,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187809,
+      "date": "2026-09-30",
+      "teams": "Chicago Cubs @ San Diego Padres",
+      "market": "moneyline",
+      "side": "away",
+      "odds": 2.105555555555556,
+      "p_model": 0.508,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187809,
+      "date": "2026-09-30",
+      "teams": "Chicago Cubs @ San Diego Padres",
+      "market": "totals",
+      "side": "over_8.5",
+      "odds": 2.2471428571428573,
+      "p_model": 0.4907,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187809,
+      "date": "2026-09-30",
+      "teams": "Chicago Cubs @ San Diego Padres",
+      "market": "totals",
+      "side": "over_7.5",
+      "odds": 1.9387499999999998,
+      "p_model": 0.6273,
+      "outcome": 1,
+      "net": 0.94
+    },
+    {
+      "game": 187809,
+      "date": "2026-09-30",
+      "teams": "Chicago Cubs @ San Diego Padres",
+      "market": "totals",
+      "side": "over_5.5",
+      "odds": 1.3966666666666665,
+      "p_model": 0.8578,
+      "outcome": 1,
+      "net": 0.4
+    },
+    {
+      "game": 187809,
+      "date": "2026-09-30",
+      "teams": "Chicago Cubs @ San Diego Padres",
+      "market": "totals",
+      "side": "over_6.5",
+      "odds": 1.5485714285714287,
+      "p_model": 0.7544,
+      "outcome": 1,
+      "net": 0.55
+    },
+    {
+      "game": 187809,
+      "date": "2026-09-30",
+      "teams": "Chicago Cubs @ San Diego Padres",
+      "market": "runline",
+      "side": "away_+1.5",
+      "odds": 2.7357142857142853,
+      "p_model": 0.706,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187810,
+      "date": "2026-09-30",
+      "teams": "Philadelphia Phillies @ Atlanta Braves",
+      "market": "totals",
+      "side": "over_8.5",
+      "odds": 2.4683333333333333,
+      "p_model": 0.4714,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187810,
+      "date": "2026-09-30",
+      "teams": "Philadelphia Phillies @ Atlanta Braves",
+      "market": "totals",
+      "side": "over_7.5",
+      "odds": 2.0849999999999995,
+      "p_model": 0.6092,
+      "outcome": 0,
+      "net": -1.0
+    },
+    {
+      "game": 187810,
+      "date": "2026-09-30",
+      "teams": "Philadelphia Phillies @ Atlanta Braves",
+      "market": "totals",
+      "side": "over_5.5",
+      "odds": 1.4349999999999998,
+      "p_model": 0.8474,
+      "outcome": 1,
+      "net": 0.43
+    },
+    {
+      "game": 187810,
+      "date": "2026-09-30",
+      "teams": "Philadelphia Phillies @ Atlanta Braves",
+      "market": "totals",
+      "side": "over_6.5",
+      "odds": 1.642857142857143,
+      "p_model": 0.7395,
+      "outcome": 1,
+      "net": 0.64
+    },
+    {
+      "game": 187810,
+      "date": "2026-09-30",
+      "teams": "Philadelphia Phillies @ Atlanta Braves",
+      "market": "runline",
+      "side": "away_+1.5",
+      "odds": 2.4899999999999998,
+      "p_model": 0.7017,
+      "outcome": 1,
+      "net": 1.49
+    },
+    {
+      "game": 187811,
+      "date": "2026-09-30",
+      "teams": "Chicago White Sox @ Houston Astros",
+      "market": "moneyline",
+      "side": "away",
+      "odds": 2.2444444444444445,
+      "p_model": 0.4981,
+      "outcome": 1,
+      "net": 1.24
+    },
+    {
+      "game": 187811,
+      "date": "2026-09-30",
+      "teams": "Chicago White Sox @ Houston Astros",
+      "market": "totals",
+      "side": "over_8.5",
+      "odds": 2.2471428571428573,
+      "p_model": 0.5194,
+      "outcome": 1,
+      "net": 1.25
+    },
+    {
+      "game": 187811,
+      "date": "2026-09-30",
+      "teams": "Chicago White Sox @ Houston Astros",
+      "market": "totals",
+      "side": "over_7.5",
+      "odds": 1.9187500000000002,
+      "p_model": 0.6537,
+      "outcome": 1,
+      "net": 0.92
+    },
+    {
+      "game": 187811,
+      "date": "2026-09-30",
+      "teams": "Chicago White Sox @ Houston Astros",
+      "market": "totals",
+      "side": "over_5.5",
+      "odds": 1.36,
+      "p_model": 0.8724,
+      "outcome": 1,
+      "net": 0.36
+    },
+    {
+      "game": 187811,
+      "date": "2026-09-30",
+      "teams": "Chicago White Sox @ Houston Astros",
+      "market": "totals",
+      "side": "over_6.5",
+      "odds": 1.5350000000000001,
+      "p_model": 0.7756,
+      "outcome": 1,
+      "net": 0.54
+    },
+    {
+      "game": 187811,
+      "date": "2026-09-30",
+      "teams": "Chicago White Sox @ Houston Astros",
+      "market": "runline",
+      "side": "away_+1.5",
+      "odds": 2.948,
+      "p_model": 0.6949,
+      "outcome": 1,
+      "net": 1.95
+    }
+  ]
+}

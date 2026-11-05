@@ -280,10 +280,14 @@ class NBAMultiModelPredictionService:
             }
     
     def _train_random_forest_model(self):
-        """Entrena un modelo Random Forest con datos históricos"""
+        """Entrena un modelo Random Forest con datos históricos (caché diaria)."""
         try:
+            today = timezone.now().date()
+            cached = self.models_cache.get('rf')
+            if cached and cached[0] == today:
+                return cached[1]
             # Obtener datos históricos para entrenamiento
-            cutoff_date = timezone.now().date() - timedelta(days=730)  # 2 años
+            cutoff_date = today - timedelta(days=730)  # 2 años
             
             games = NBAGame.objects.filter(
                 game_date__gte=cutoff_date,
@@ -295,6 +299,7 @@ class NBAMultiModelPredictionService:
             ).order_by('-game_date')[:500]  # Últimos 500 partidos
             
             if len(games) < 50:
+                self.models_cache['rf'] = (today, None)
                 return None
             
             # Preparar datos de entrenamiento
@@ -339,6 +344,7 @@ class NBAMultiModelPredictionService:
             )
             
             model.fit(X, y)
+            self.models_cache['rf'] = (today, model)
             return model
             
         except Exception as e:
@@ -409,10 +415,14 @@ class NBAMultiModelPredictionService:
             }
     
     def _train_ridge_model(self):
-        """Entrena un modelo Ridge con datos históricos"""
+        """Entrena un modelo Ridge con datos históricos (caché diaria)."""
         try:
+            today = timezone.now().date()
+            cached = self.models_cache.get('ridge')
+            if cached and cached[0] == today:
+                return cached[1]
             # Obtener datos históricos para entrenamiento
-            cutoff_date = timezone.now().date() - timedelta(days=730)  # 2 años
+            cutoff_date = today - timedelta(days=730)  # 2 años
             
             games = NBAGame.objects.filter(
                 game_date__gte=cutoff_date,
@@ -450,11 +460,13 @@ class NBAMultiModelPredictionService:
                 y.append(game.total_points)
             
             if len(X) < 15:
+                self.models_cache['ridge'] = (today, None)
                 return None
             
             # Entrenar modelo
             model = Ridge(alpha=1.0, random_state=42)
             model.fit(X, y)
+            self.models_cache['ridge'] = (today, model)
             return model
             
         except Exception as e:

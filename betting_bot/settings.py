@@ -60,8 +60,11 @@ INSTALLED_APPS = [
     'ai_predictions',
     'value_betting',
     'auto_betting',
+    'parley_engine',
     'notificaciones',
     'inspector',
+    'basketball_data',
+    'baseball_data',
 ]
 
 MIDDLEWARE = [
@@ -72,6 +75,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Control de acceso a las opciones del menú de usuario (2026-10-13):
+    # bloquea la URL directa de secciones no asignadas por el superadmin.
+    'cuentas.middleware.PermisoMenuMiddleware',
 ]
 
 ROOT_URLCONF = 'betting_bot.urls'
@@ -87,6 +93,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'capital.context_processors.navbar_balance',
+                # {codigo: bool} del menú de usuario, según permisos del admin.
+                'cuentas.context_processors.menu_permisos',
             ],
         },
     },
@@ -185,6 +193,22 @@ LLM_PROVIDER = os.getenv('LLM_PROVIDER', 'openai')
 LLM_API_KEY = os.getenv('LLM_API_KEY', '')
 LLM_MODEL = os.getenv('LLM_MODEL', 'gpt-4.1-mini')
 LLM_TIMEOUT = int(os.getenv('LLM_TIMEOUT', '30'))
+# Modelo de los validadores IA del PAPER TRADING (2026-10-07): "Luna" para
+# TODOS los mercados (reemplaza a gpt-4o-mini en las opiniones de paper).
+# No afecta al dinero real. Override por env: LLM_MODEL_PAPER.
+LLM_MODEL_PAPER = os.getenv('LLM_MODEL_PAPER', 'gpt-5.6-luna')
+# Kill-switch de la OPINIÓN IA del paper (2026-10-13, pedido John): la opinión
+# de Luna en paper no es operativa y su coste en tokens es alto. Desactivada
+# por defecto: el pipeline de paper sigue registrando picks, pero SIN opinión.
+# Re-activar con LLM_PAPER_ENABLED=true. No afecta a la IA del dinero real.
+LLM_PAPER_ENABLED = os.getenv('LLM_PAPER_ENABLED', 'false').lower() == 'true'
+
+# Opinión IA INFORMATIVA (no operativa) sobre las apuestas REALES (2026-10-07):
+# se registra después de colocar en BetPlay y nunca bloquea/filtra la apuesta.
+# Kill-switch: LLM_REAL_ENABLED=false. Tope de llamadas por corrida/cuenta.
+LLM_MODEL_REAL = os.getenv('LLM_MODEL_REAL', 'gpt-5.6-luna')
+LLM_REAL_ENABLED = os.getenv('LLM_REAL_ENABLED', 'true').lower() == 'true'
+LLM_REAL_MAX_CALLS = int(os.getenv('LLM_REAL_MAX_CALLS', '8'))
 APIFOOTBALL_KEY = os.getenv('APIFOOTBALL_KEY', '')
 ODDS_API_BASE_URL = 'https://api.the-odds-api.com/v4'
 

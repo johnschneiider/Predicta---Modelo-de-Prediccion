@@ -1,0 +1,225 @@
+{
+  "version": 1,
+  "creado_utc": "2026-10-31",
+  "motor": "basket_1q2q",
+  "regla": "operar SOLO en celdas liga x dia (America/Bogota) con ROI>0 in-sample y >=5 liquidadas",
+  "corte_in_sample": "datos hasta 2026-10-31; NO recalcular dinamicamente",
+  "celdas": [
+    {
+      "liga": "Australia / NBL",
+      "dia": 5,
+      "dia_nombre": "Sáb",
+      "n_dec": 6,
+      "w": 4,
+      "roi_in_sample": 23.5
+    },
+    {
+      "liga": "Austria / ÖBL",
+      "dia": 5,
+      "dia_nombre": "Sáb",
+      "n_dec": 7,
+      "w": 5,
+      "roi_in_sample": 32.1
+    },
+    {
+      "liga": "China / CBA",
+      "dia": 3,
+      "dia_nombre": "Jue",
+      "n_dec": 5,
+      "w": 3,
+      "roi_in_sample": 10.8
+    },
+    {
+      "liga": "Corea del Sur / KBL",
+      "dia": 6,
+      "dia_nombre": "Dom",
+      "n_dec": 6,
+      "w": 6,
+      "roi_in_sample": 80.2
+    },
+    {
+      "liga": "España / Leb Plata",
+      "dia": 5,
+      "dia_nombre": "Sáb",
+      "n_dec": 5,
+      "w": 3,
+      "roi_in_sample": 11.2
+    },
+    {
+      "liga": "España / Liga ACB",
+      "dia": 5,
+      "dia_nombre": "Sáb",
+      "n_dec": 6,
+      "w": 4,
+      "roi_in_sample": 24.0
+    },
+    {
+      "liga": "EuroCup",
+      "dia": 1,
+      "dia_nombre": "Mar",
+      "n_dec": 6,
+      "w": 4,
+      "roi_in_sample": 22.0
+    },
+    {
+      "liga": "EuroCup",
+      "dia": 2,
+      "dia_nombre": "Mié",
+      "n_dec": 18,
+      "w": 12,
+      "roi_in_sample": 21.3
+    },
+    {
+      "liga": "EuroCup (F)",
+      "dia": 2,
+      "dia_nombre": "Mié",
+      "n_dec": 9,
+      "w": 7,
+      "roi_in_sample": 39.6
+    },
+    {
+      "liga": "Francia / Elite 2",
+      "dia": 4,
+      "dia_nombre": "Vie",
+      "n_dec": 10,
+      "w": 6,
+      "roi_in_sample": 0.5
+    },
+    {
+      "liga": "Grecia / GBL",
+      "dia": 5,
+      "dia_nombre": "Sáb",
+      "n_dec": 7,
+      "w": 7,
+      "roi_in_sample": 59.0
+    },
+    {
+      "liga": "Italia / Serie B",
+      "dia": 6,
+      "dia_nombre": "Dom",
+      "n_dec": 6,
+      "w": 4,
+      "roi_in_sample": 21.3
+    },
+    {
+      "liga": "Japón / B.League",
+      "dia": 0,
+      "dia_nombre": "Lun",
+      "n_dec": 16,
+      "w": 9,
+      "roi_in_sample": 3.7
+    },
+    {
+      "liga": "Japón / B.League",
+      "dia": 2,
+      "dia_nombre": "Mié",
+      "n_dec": 8,
+      "w": 5,
+      "roi_in_sample": 12.1
+    },
+    {
+      "liga": "Japón / B.League",
+      "dia": 5,
+      "dia_nombre": "Sáb",
+      "n_dec": 19,
+      "w": 12,
+      "roi_in_sample": 8.9
+    },
+    {
+      "liga": "Japón / Liga B2",
+      "dia": 5,
+      "dia_nombre": "Sáb",
+      "n_dec": 23,
+      "w": 15,
+      "roi_in_sample": 5.2
+    },
+    {
+      "liga": "Japón / Liga B2",
+      "dia": 6,
+      "dia_nombre": "Dom",
+      "n_dec": 18,
+      "w": 14,
+      "roi_in_sample": 43.9
+    },
+    {
+      "liga": "Lituania / NKL",
+      "dia": 3,
+      "dia_nombre": "Jue",
+      "n_dec": 7,
+      "w": 4,
+      "roi_in_sample": 3.7
+    },
+    {
+      "liga": "NBA",
+      "dia": 0,
+      "dia_nombre": "Lun",
+      "n_dec": 6,
+      "w": 4,
+      "roi_in_sample": 24.2
+    },
+    {
+      "liga": "NBA",
+      "dia": 2,
+      "dia_nombre": "Mié",
+      "n_dec": 9,
+      "w": 6,
+      "roi_in_sample": 25.0
+    },
+    {
+      "liga": "NBA",
+      "dia": 4,
+      "dia_nombre": "Vie",
+      "n_dec": 15,
+      "w": 10,
+      "roi_in_sample": 22.5
+    },
+    {
+      "liga": "NBA",
+      "dia": 6,
+      "dia_nombre": "Dom",
+      "n_dec": 5,
+      "w": 3,
+      "roi_in_sample": 10.6
+    },
+    {
+      "liga": "Portugal / LPB",
+      "dia": 5,
+      "dia_nombre": "Sáb",
+      "n_dec": 5,
+      "w": 4,
+      "roi_in_sample": 19.3
+    },
+    {
+      "liga": "Suecia / BasketLigan",
+      "dia": 4,
+      "dia_nombre": "Vie",
+      "n_dec": 7,
+      "w": 4,
+      "roi_in_sample": 0.1
+    },
+    {
+      "liga": "Suiza / SB League (F)",
+      "dia": 6,
+      "dia_nombre": "Dom",
+      "n_dec": 5,
+      "w": 3,
+      "roi_in_sample": 8.8
+    },
+    {
+      "liga": "Turquía / Super Liga",
+      "dia": 6,
+      "dia_nombre": "Dom",
+      "n_dec": 5,
+      "w": 3,
+      "roi_in_sample": 4.7
+    },
+    {
+      "liga": "Uruguay / Tercera de Ascenso",
+      "dia": 2,
+      "dia_nombre": "Mié",
+      "n_dec": 5,
+      "w": 5,
+      "roi_in_sample": 67.2
+    }
+  ]
+}

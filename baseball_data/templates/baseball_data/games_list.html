@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Partidos MLB — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+.bb-filters { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1.5rem; }
+.bb-filters select, .bb-filters input {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm); color: var(--text-primary);
+    padding: 0.55rem 0.8rem; font-size: 0.9rem;
+}
+.bb-filters label { display: block; font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.bb-btn { background: var(--accent-primary); color: var(--btn-primary-text); border: none; padding: 0.55rem 1.5rem; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; font-size: 0.9rem; text-decoration: none; }
+.bb-btn:hover { background: var(--accent-hover); }
+.bb-btn-ghost { background: transparent; color: var(--text-tertiary); border: 0.5px solid var(--border-primary); padding: 0.55rem 1rem; border-radius: var(--radius-sm); text-decoration: none; font-size: 0.9rem; }
+.bb-table-wrap { overflow-x: auto; border-radius: var(--radius-md); border: 0.5px solid var(--border-primary); }
+table.bb-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: var(--bg-surface); }
+table.bb-table thead th {
+    background: var(--bg-elevated); color: var(--text-tertiary);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    font-size: 0.72rem; padding: 0.7rem 0.6rem; text-align: left;
+    border-bottom: 1px solid var(--border-primary); white-space: nowrap;
+}
+table.bb-table tbody td { padding: 0.55rem 0.6rem; border-bottom: 0.5px solid var(--border-secondary); white-space: nowrap; }
+table.bb-table tbody tr:hover td { background: var(--bg-overlay); }
+table.bb-table tbody tr:last-child td { border-bottom: none; }
+.bb-link { color: var(--accent-primary); text-decoration: none; font-weight: 600; }
+.bb-link:hover { text-decoration: underline; }
+.bb-pagination { display: flex; gap: 0.25rem; list-style: none; padding: 0; margin: 1.5rem 0 0; }
+.bb-pagination a, .bb-pagination span {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 36px; height: 36px; border-radius: var(--radius-sm);
+    text-decoration: none; font-size: 0.85rem; font-weight: 600;
+    border: 0.5px solid var(--border-primary); color: var(--text-secondary);
+    padding: 0 0.5rem;
+}
+.bb-pagination a:hover { background: var(--bg-overlay); color: var(--text-primary); }
+.bb-pagination .current { background: var(--accent-primary); color: var(--btn-primary-text); border-color: var(--accent-primary); }
+.bb-count { color: var(--text-tertiary); font-size: 0.85rem; margin-bottom: 1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+
+  <div class="page-header">
+    <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-primary);">📋 Partidos MLB</h2>
+    <p class="page-subtitle">Resultados y marcadores por temporada</p>
+  </div>
+
+  <form method="GET" class="bb-filters">
+    <div>
+      <label>Temporada</label>
+      <select name="season" onchange="this.form.submit()">
+        <option value="">Todas</option>
+        {% for s in seasons %}
+          <option value="{{ s }}" {% if season == s|stringformat:"s" %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Equipo</label>
+      <input type="text" name="team" placeholder="Nombre..." value="{{ team_q }}">
+    </div>
+    <button type="submit" class="bb-btn">🔎 Filtrar</button>
+    <a href="{% url 'baseball_data:games_list' %}" class="bb-btn-ghost">Limpiar</a>
+  </form>
+
+  {% if games %}
+    <div class="bb-count">{{ games.start_index }}–{{ games.end_index }} de {{ games.paginator.count }} partidos</div>
+    <div class="bb-table-wrap">
+      <table class="bb-table">
+        <thead>
+          <tr><th>Fecha</th><th>Partido</th><th>Marcador</th><th>Total</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          {% for g in games %}
+            <tr>
+              <td>{{ g.date|date:"d/m/Y" }}</td>
+              <td><a href="{% url 'baseball_data:game_detail' g.id %}" class="bb-link">{{ g.away_team.name }} @ {{ g.home_team.name }}</a></td>
+              <td>{{ g.away_runs|default:"—" }} - {{ g.home_runs|default:"—" }}</td>
+              <td>{% if g.total_runs is not None %}{{ g.total_runs }}{% else %}—{% endif %}</td>
+              <td>{{ g.status }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <ul class="bb-pagination">
+      {% if games.has_previous %}<a href="?season={{ season }}&team={{ team_q }}&page={{ games.previous_page_number }}">‹</a>{% endif %}
+      {% for i in games.paginator.page_range %}
+        {% if games.number == i %}
+          <span class="current">{{ i }}</span>
+        {% elif i > games.number|add:"-3" and i < games.number|add:"3" %}
+          <a href="?season={{ season }}&team={{ team_q }}&page={{ i }}">{{ i }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if games.has_next %}<a href="?season={{ season }}&team={{ team_q }}&page={{ games.next_page_number }}">›</a>{% endif %}
+    </ul>
+  {% else %}
+    <div style="text-align: center; padding: 3rem; color: var(--text-tertiary);">
+      <p style="font-size: 1.1rem;">No hay partidos con esos criterios.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

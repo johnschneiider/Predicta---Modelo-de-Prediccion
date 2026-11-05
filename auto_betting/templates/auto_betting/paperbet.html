@@ -9,6 +9,11 @@
   .pb-header { text-align: center; margin-bottom: 1.2rem; }
   .pb-header h2 { margin-bottom: 0.4rem; letter-spacing: -0.01em; }
   .pb-header .subtitle { color: var(--text-secondary); font-size: 0.88rem; }
+  .pb-header .subtitle a {
+    color: var(--accent-primary); text-decoration: none; font-weight: 600;
+    border-bottom: 1px solid transparent; transition: border-color 0.15s;
+  }
+  .pb-header .subtitle a:hover { border-bottom-color: var(--accent-primary); }
   .pb-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.8rem; margin: 1rem 0 1.6rem; }
   .pb-card {
     background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.10);
@@ -29,6 +34,7 @@
   .badge-won { background: rgba(46,204,113,0.16); color: #2ecc71; }
   .badge-lost { background: rgba(231,76,60,0.16); color: #e74c3c; }
   .badge-open { background: rgba(241,196,15,0.16); color: #f1c40f; }
+  .badge-void { background: rgba(149,165,166,0.18); color: #95a5a6; }
   .pb-section-title { margin: 1.6rem 0 0.6rem; font-size: 1.05rem; font-weight: 700; }
 </style>
 {% endblock %}
@@ -37,7 +43,9 @@
 <div class="pb-container">
   <div class="pb-header">
     <h2>📄 Paperbet — Motores Independientes</h2>
-    <div class="subtitle">Apuestas en papel (sin dinero real) de los motores btts_v2 · goles_v2 · sot_v2 · x12_v2 — cuotas reales Kambi.</div>
+    <div class="subtitle">Apuestas en papel (sin dinero real) de los motores activos: btts_v2 · goles_v2 (solo Over 2.5) · basket_1q2q (solo UNDER) — cuotas reales Kambi.</div>
+    <div class="subtitle" style="margin-top:0.35rem;">🏀 <a href="/auto-betting/paperbet/baloncesto/">Baloncesto 1Q+2Q — página dedicada (motor basket_1q2q)</a></div>
+    <div class="subtitle" style="margin-top:0.35rem;">📈 <a href="/auto-betting/papertrading/">Papertrading FX — página dedicada (motor fx_deriv, MT5 Quant Lab)</a></div>
   </div>
 
   <div class="pb-cards">
@@ -46,22 +54,24 @@
     <div class="pb-card"><div class="v">{{ global_stats.roi|default:'—' }}%</div><div class="l">ROI</div></div>
     <div class="pb-card"><div class="v {% if global_stats.net >= 0 %}pos{% else %}neg{% endif %}">{{ global_stats.net|floatformat:0 }}</div><div class="l">Net (COP)</div></div>
     <div class="pb-card"><div class="v">{{ open_count }}</div><div class="l">Pendientes</div></div>
+    <div class="pb-card"><div class="v">{{ global_stats.void }}</div><div class="l">Anuladas</div></div>
   </div>
 
   <div class="pb-section-title">Por motor</div>
   <div class="pb-table-wrap">
     <table class="pb">
-      <tr><th>Motor</th><th>Liquidadas</th><th>W</th><th>L</th><th>WR</th><th>Stake</th><th>Net</th><th>ROI</th><th>Pendientes</th></tr>
+      <tr><th>Motor</th><th>Liquidadas</th><th>W</th><th>L</th><th>Anuladas</th><th>WR</th><th>Stake</th><th>Net</th><th>ROI</th><th>Pendientes</th></tr>
       {% for r in por_motor %}
       <tr>
         <td><strong>{{ r.motor }}</strong></td>
         <td>{{ r.n }}</td><td class="pos">{{ r.won }}</td><td class="neg">{{ r.lost }}</td>
+        <td>{{ r.void }}</td>
         <td>{{ r.wr|default:'—' }}%</td><td>{{ r.stake|floatformat:0 }}</td>
         <td class="{% if r.net >= 0 %}pos{% else %}neg{% endif %}">{{ r.net|floatformat:0 }}</td>
         <td class="{% if r.roi >= 0 %}pos{% else %}neg{% endif %}">{{ r.roi|default:'—' }}%</td>
         <td>{{ r.open }}</td>
       </tr>
-      {% empty %}<tr><td colspan="9">Aún no hay apuestas paper.</td></tr>{% endfor %}
+      {% empty %}<tr><td colspan="10">Aún no hay apuestas paper.</td></tr>{% endfor %}
     </table>
   </div>
 
@@ -117,17 +127,18 @@
   <div class="pb-section-title">Por mercado</div>
   <div class="pb-table-wrap">
     <table class="pb">
-      <tr><th>Mercado</th><th>Liquidadas</th><th>W</th><th>L</th><th>WR</th><th>Stake</th><th>Net</th><th>ROI</th><th>Pendientes</th></tr>
+      <tr><th>Mercado</th><th>Liquidadas</th><th>W</th><th>L</th><th>Anuladas</th><th>WR</th><th>Stake</th><th>Net</th><th>ROI</th><th>Pendientes</th></tr>
       {% for r in por_mercado %}
       <tr>
         <td><strong>{{ r.mercado }}</strong></td>
         <td>{{ r.n }}</td><td class="pos">{{ r.won }}</td><td class="neg">{{ r.lost }}</td>
+        <td>{{ r.void }}</td>
         <td>{{ r.wr|default:'—' }}%</td><td>{{ r.stake|floatformat:0 }}</td>
         <td class="{% if r.net >= 0 %}pos{% else %}neg{% endif %}">{{ r.net|floatformat:0 }}</td>
         <td class="{% if r.roi >= 0 %}pos{% else %}neg{% endif %}">{{ r.roi|default:'—' }}%</td>
         <td>{{ r.open }}</td>
       </tr>
-      {% empty %}<tr><td colspan="9">—</td></tr>{% endfor %}
+      {% empty %}<tr><td colspan="10">—</td></tr>{% endfor %}
     </table>
   </div>
 
@@ -179,14 +190,15 @@
         <td>{{ b.prob|floatformat:2 }}</td>
         <td class="{% if b.ev >= 0 %}pos{% else %}neg{% endif %}">{{ b.ev|floatformat:2 }}</td>
         <td class="{% if b.clv_pct >= 0 %}pos{% else %}neg{% endif %}">{{ b.clv_pct|default:'—' }}</td>
-        <td>
-          {% if b.llm_verdict is True %}<span class="badge badge-won">SI</span>
-          {% elif b.llm_verdict is False %}<span class="badge badge-lost">NO</span>
+        <td title="{{ b.llm_reason|default:'' }}">
+          {% if b.llm_verdict is True %}<span class="badge badge-won"{% if b.llm_confidence is not None %} title="Confianza IA: {{ b.llm_confidence }}"{% endif %}>SI</span>
+          {% elif b.llm_verdict is False %}<span class="badge badge-lost"{% if b.llm_confidence is not None %} title="Confianza IA: {{ b.llm_confidence }}"{% endif %}>NO</span>
           {% else %}<span class="badge badge-open">—</span>{% endif %}
         </td>
         <td>
           {% if b.estado == 'WON' %}<span class="badge badge-won">GANADA</span>
           {% elif b.estado == 'LOST' %}<span class="badge badge-lost">PERDIDA</span>
+          {% elif b.estado == 'VOID' %}<span class="badge badge-void">ANULADA</span>
           {% else %}<span class="badge badge-open">PENDIENTE</span>{% endif %}
         </td>
         <td>{{ b.resultado_real|default:'—' }}</td>

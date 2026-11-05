@@ -57,6 +57,65 @@ COMANDOS = {
     'score_paper_bets': [
         'venv/bin/python', 'manage.py', 'score_paper_bets', '--days-back', '3',
     ],
+    'run_nba_bets': [
+        'venv/bin/python', 'manage.py', 'run_nba_bets', '--real', '--yes',
+    ],
+    'sync_nba_daily': [
+        'venv/bin/python', 'manage.py', 'sync_nba_apisports', '--season', '2026-2027',
+    ],
+    'run_mlb_under_bets': [
+        'venv/bin/python', 'manage.py', 'run_mlb_under_bets', '--real', '--yes',
+    ],
+    'run_paper_bets_basket': [
+        'venv/bin/python', 'manage.py', 'run_paper_bets_basket',
+    ],
+    'run_paper_bets_basket_gated': [
+        'venv/bin/python', 'manage.py', 'run_paper_bets_basket_gated',
+    ],
+    'run_basket_1q2q_bets': [
+        'venv/bin/python', 'manage.py', 'run_basket_1q2q_bets',
+        '--real', '--yes',
+    ],
+    'score_paper_bets_basket': [
+        'venv/bin/python', 'manage.py', 'score_paper_bets_basket',
+        '--days-back', '10',
+    ],
+    'train_basket_models': [
+        'venv/bin/python', 'manage.py', 'train_basket_models',
+    ],
+    'run_paper_trades_fx': [
+        'venv/bin/python', 'manage.py', 'run_paper_trades_fx',
+    ],
+    'run_paper_bets_ou': [
+        'venv/bin/python', 'manage.py', 'run_paper_bets_ou',
+    ],
+    'score_paper_bets_ou': [
+        'venv/bin/python', 'manage.py', 'score_paper_bets_ou',
+        '--days-back', '10',
+    ],
+    'calibrar_ou': [
+        'venv/bin/python', 'manage.py', 'calibrar_ou',
+    ],
+    'backfill_ou_sharp': [
+        'venv/bin/python', 'manage.py', 'backfill_ou_sharp', '--dias', '3',
+        '--limite', '6',
+    ],
+    'reporte_ligas_ou': [
+        'venv/bin/python', 'manage.py', 'reporte_ligas_ou',
+    ],
+    'ask_llm_real_ventana': [
+        'venv/bin/python', 'manage.py', 'ask_llm_real', '--ventana',
+        '--max', '4',
+    ],
+    'run_value_scan': [
+        'venv/bin/python', 'manage.py', 'run_value_scan',
+    ],
+    'paperparleys': [
+        'scripts/paperparleys_cron.sh',
+    ],
+    'real_parleys': [
+        'venv/bin/python', 'manage.py', 'run_real_parleys',
+    ],
 }
 
 # Logs por tarea
@@ -76,6 +135,24 @@ LOGS = {
     # logs/paperbet_llm.log con la tarea de root run_paper_bets_llm, que lo
     # recrea como root:root y dejaba al scheduler (www-data) sin poder abrirlo.
     'score_paper_bets': 'logs/score_paper_bets.log',
+    'run_nba_bets': 'logs/nba_betting.log',
+    'sync_nba_daily': 'logs/nba_sync.log',
+    'run_mlb_under_bets': 'logs/mlb_betting.log',
+    'run_paper_bets_basket': 'logs/paperbet_basket.log',
+    'run_paper_bets_basket_gated': 'logs/paperbet_basket_gated.log',
+    'run_basket_1q2q_bets': 'logs/basket_1q2q_real.log',
+    'score_paper_bets_basket': 'logs/score_paper_bets_basket.log',
+    'train_basket_models': 'logs/basket_train.log',
+    'run_paper_trades_fx': 'logs/papertrading_fx.log',
+    'run_paper_bets_ou': 'logs/paperbet_ou.log',
+    'score_paper_bets_ou': 'logs/score_paper_bets_ou.log',
+    'calibrar_ou': 'logs/basket_ou.log',
+    'backfill_ou_sharp': 'logs/backfill_ou.log',
+    'reporte_ligas_ou': 'logs/ligas_ou.log',
+    'ask_llm_real_ventana': 'logs/llm_real_ventana.log',
+    'run_value_scan': 'logs/value_betting.log',
+    'paperparleys': 'logs/paperparleys.log',
+    'real_parleys': 'logs/real_parleys.log',
 }
 
 # Tareas que NO deben solaparse (pgrep pattern para guard anti-concurrencia)
@@ -85,6 +162,23 @@ ANTI_CONCURRENCY = {
     'api_football_backfill': 'manage.py backfill',
     'build_showcase_pick': 'manage.py build_showcase_pick',
     'inspect_bets': 'manage.py inspect_bets',
+    'run_nba_bets': 'manage.py run_nba_bets',
+    'run_mlb_under_bets': 'manage.py run_mlb_under_bets',
+    'run_paper_bets_basket': 'manage.py run_paper_bets_basket$',
+    'run_paper_bets_basket_gated': 'manage.py run_paper_bets_basket_gated$',
+    'run_basket_1q2q_bets': 'manage.py run_basket_1q2q_bets',
+    'score_paper_bets_basket': 'manage.py score_paper_bets_basket',
+    'train_basket_models': 'manage.py train_basket_models',
+    'run_paper_trades_fx': 'manage.py run_paper_trades_fx',
+    'run_paper_bets_ou': 'manage.py run_paper_bets_ou',
+    'score_paper_bets_ou': 'manage.py score_paper_bets_ou',
+    'calibrar_ou': 'manage.py calibrar_ou',
+    'backfill_ou_sharp': 'manage.py backfill_ou_sharp',
+    'reporte_ligas_ou': 'manage.py reporte_ligas_ou',
+    'ask_llm_real_ventana': 'manage.py ask_llm_real',
+    'run_value_scan': 'manage.py run_value_scan',
+    'paperparleys': 'manage.py paperparleys',
+    'real_parleys': 'manage.py run_real_parleys',
 }
 
 

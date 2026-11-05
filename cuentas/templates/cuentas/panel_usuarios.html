@@ -51,6 +51,7 @@
                         <button type="submit" class="btn btn-secondary btn-sm" style="font-size:0.78rem;">{% if usuario.is_active %}Suspender{% else %}Activar{% endif %}</button>
                     </form>
                     <a href="{% url 'cuentas:cambiar_contraseña' user_id=usuario.id %}" class="btn btn-secondary btn-sm" style="font-size:0.78rem;margin-right:0.35rem;">Contraseña</a>
+                    <a href="{% url 'cuentas:permisos_usuario' user_id=usuario.id %}" class="btn btn-secondary btn-sm" style="font-size:0.78rem;margin-right:0.35rem;">Permisos</a>
                     <a href="{% url 'cuentas:eliminar_usuario' user_id=usuario.id %}" class="btn btn-secondary btn-sm" style="font-size:0.78rem;color:var(--danger);border-color:rgba(255,107,107,0.25);">Eliminar</a>
                     {% endif %}
                 </td>

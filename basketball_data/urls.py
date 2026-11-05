@@ -21,6 +21,7 @@ urlpatterns = [
     
     # Predicciones
     path('predictions/', views.predictions_list, name='predictions_list'),
+    path('valor/', views.value_finder, name='value_finder'),
     path('predict/', views.prediction_form, name='prediction_form'),
     path('predict/result/', views.prediction_result, name='prediction_result'),
     

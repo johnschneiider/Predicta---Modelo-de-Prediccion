@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Estadísticas NBA — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+.bb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.bb-stat-card {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md); padding: 1.25rem; text-align: center;
+}
+.bb-stat-card .num { font-size: 1.6rem; font-weight: 700; color: var(--accent-primary); }
+.bb-stat-card .lbl { font-size: 0.78rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+.bb-table-wrap { overflow-x: auto; border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-primary); }
+table.bb-table {
+    width: 100%; border-collapse: collapse; font-size: 0.85rem;
+    background: var(--bg-surface);
+}
+table.bb-table thead th {
+    background: var(--bg-elevated); color: var(--text-tertiary);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    font-size: 0.72rem; padding: 0.7rem 0.6rem; text-align: left;
+    border-bottom: 1px solid var(--border-primary); white-space: nowrap;
+}
+table.bb-table tbody td {
+    padding: 0.55rem 0.6rem; border-bottom: 0.5px solid var(--border-secondary);
+    white-space: nowrap;
+}
+table.bb-table tbody tr:hover td { background: var(--bg-overlay); }
+table.bb-table tbody tr:last-child td { border-bottom: none; }
+.bb-link { color: var(--accent-primary); text-decoration: none; font-weight: 600; }
+.bb-link:hover { text-decoration: underline; }
+.bb-panel {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.bb-panel h3 {
+    font-family: var(--font-heading); font-size: 1.05rem; color: var(--text-primary);
+    margin: 0 0 1rem; padding-bottom: 0.75rem;
+    border-bottom: 0.5px solid var(--border-primary);
+}
+.bb-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.4rem 0; }
+.bb-row .k { color: var(--text-secondary); }
+.bb-row .v { color: var(--text-primary); font-variant-numeric: tabular-nums; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+
+  <div class="page-header">
+    <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-primary);">
+      📊 Estadísticas NBA
+    </h2>
+    <p class="page-subtitle">Distribución de puntos y rendimiento por equipo</p>
+  </div>
+
+  <div class="bb-grid">
+    <div class="bb-stat-card"><div class="num">{{ total_games }}</div><div class="lbl">Partidos registrados</div></div>
+    <div class="bb-stat-card"><div class="num">{{ avg_total_points }}</div><div class="lbl">Puntos totales promedio</div></div>
+  </div>
+
+  <div class="bb-panel">
+    <h3>Distribución de puntos totales</h3>
+    <div class="bb-row"><span class="k">Menos de 200</span><span class="v">{{ point_distribution.under_200 }}</span></div>
+    <div class="bb-row"><span class="k">200 – 220</span><span class="v">{{ point_distribution.200_220 }}</span></div>
+    <div class="bb-row"><span class="k">220 – 240</span><span class="v">{{ point_distribution.220_240 }}</span></div>
+    <div class="bb-row"><span class="k">Más de 240</span><span class="v">{{ point_distribution.over_240 }}</span></div>
+  </div>
+
+  <div class="bb-panel">
+    <h3>Equipos con mayor promedio de puntos</h3>
+    {% if top_teams %}
+      <div class="bb-table-wrap">
+        <table class="bb-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Equipo</th>
+              <th>Promedio de puntos</th>
+              <th>Partidos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in top_teams %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                  <a href="{% url 'basketball_data:team_detail' item.team.id %}" class="bb-link">
+                    {{ item.team.full_name }}
+                  </a>
+                </td>
+                <td>{{ item.avg_points }}</td>
+                <td>{{ item.total_games }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">Sin datos todavía.</div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

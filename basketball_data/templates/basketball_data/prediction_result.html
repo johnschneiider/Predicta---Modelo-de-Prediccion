@@ -1,79 +1,144 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Resultado de Predicción NBA - Predicta{% endblock %}
+{% block title %}Resultado de Predicción NBA — Predicta{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/basketball_data/prediction.css' %}">
+{% block extra_head %}
+<style>
+.bb-panel {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.bb-panel h3 {
+    font-family: var(--font-heading); font-size: 1.05rem; color: var(--text-primary);
+    margin: 0 0 1rem; padding-bottom: 0.75rem;
+    border-bottom: 0.5px solid var(--border-primary);
+}
+.bb-matchup {
+    display: flex; align-items: center; justify-content: center; gap: 1.5rem;
+    text-align: center; flex-wrap: wrap; margin-bottom: 1.25rem;
+}
+.bb-matchup .team { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
+.bb-matchup .abbr { font-size: 0.75rem; color: var(--text-tertiary); }
+.bb-matchup .vs { color: var(--text-tertiary); font-weight: 700; }
+.bb-big {
+    text-align: center; background: var(--bg-primary);
+    border: 0.5px solid var(--border-secondary); border-radius: var(--radius-md);
+    padding: 1.5rem;
+}
+.bb-big .val { font-size: 3rem; font-weight: 700; color: var(--accent-primary); }
+.bb-big .lbl { font-size: 0.8rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+.bb-big .meta { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.4rem; }
+.bb-prob-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-top: 1.25rem; }
+.bb-prob {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm); padding: 0.8rem; text-align: center;
+}
+.bb-prob .line { font-size: 0.72rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+.bb-prob .p { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); }
+.bb-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+.bb-stats {
+    background: var(--bg-primary); border: 0.5px solid var(--border-secondary);
+    border-radius: var(--radius-sm); padding: 1rem;
+}
+.bb-stats h4 { font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 0.75rem; }
+.bb-row { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 0.3rem 0; }
+.bb-row .k { color: var(--text-tertiary); }
+.bb-row .v { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.bb-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.bb-btn {
+    background: var(--accent-primary); color: var(--btn-primary-text);
+    border: none; padding: 0.7rem 1.6rem; border-radius: var(--radius-sm);
+    font-weight: 600; cursor: pointer; font-size: 0.95rem; text-decoration: none;
+}
+.bb-btn:hover { background: var(--accent-hover); }
+.bb-btn-ghost {
+    background: transparent; color: var(--text-secondary);
+    border: 0.5px solid var(--border-primary); padding: 0.7rem 1.2rem;
+    border-radius: var(--radius-sm); text-decoration: none; font-size: 0.95rem;
+}
+.bb-btn-ghost:hover { color: var(--text-primary); border-color: var(--accent-primary); }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-header">
-                <h1><i class="fas fa-chart-line"></i> Resultado de Predicción</h1>
-                <p class="text-muted">Análisis detallado del partido {{ home_team.abbreviation }} vs {{ away_team.abbreviation }}</p>
-            </div>
-        </div>
+<div style="max-width: 900px; margin: 0 auto;">
+
+  <div class="page-header">
+    <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-primary);">
+      📈 Resultado de Predicción
+    </h2>
+    <p class="page-subtitle">{{ home_team.full_name }} vs {{ away_team.full_name }}</p>
+  </div>
+
+  <div class="bb-panel">
+    <div class="bb-matchup">
+      <div>
+        <div class="team">{{ home_team.full_name }}</div>
+        <div class="abbr">LOCAL · {{ home_team.abbreviation }}</div>
+      </div>
+      <div class="vs">VS</div>
+      <div>
+        <div class="team">{{ away_team.full_name }}</div>
+        <div class="abbr">VISITANTE · {{ away_team.abbreviation }}</div>
+      </div>
     </div>
 
-    <!-- Predicción principal -->
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="prediction-result-card">
-                <div class="card-header">
-                    <h5><i class="fas fa-basketball-ball"></i> Predicción de Puntos Totales</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <!-- Equipos -->
-                        <div class="col-md-4 text-center">
-                            <div class="team-info">
-                                <h6 class="text-muted">LOCAL</h6>
-                                <h4>{{ home_team.full_name }}</h4>
-                                <p class="text-muted">{{ home_team.abbreviation }}</p>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4 text-center">
-                            <div class="vs-section">
-                                <h2 class="vs-text">VS</h2>
-                                <div class="prediction-main">
-                                    <h1 class="prediction-value">{{ prediction.predicted_total }}</h1>
-                                    <p class="prediction-label">Puntos Totales Predichos</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4 text-center">
-                            <div class="team-info">
-                                <h6 class="text-muted">VISITANTE</h6>
-                                <h4>{{ away_team.full_name }}</h4>
-                                <p class="text-muted">{{ away_team.abbreviation }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="bb-big">
+      <div class="lbl">Puntos totales predichos</div>
+      <div class="val">{{ prediction.predicted_total }}</div>
+      {% if prediction.confidence %}
+        <div class="meta">Confianza: {{ prediction.confidence|floatformat:2 }} · Modelo: {{ prediction.model_info.primary_model|default:"Ensemble NBA" }}</div>
+      {% endif %}
+      {% if prediction.model_info %}
+        <div class="meta">Partidos analizados: {{ prediction.model_info.total_matches|default:0 }}</div>
+      {% endif %}
     </div>
 
+    {% if prediction.probabilities %}
+      <div class="bb-prob-grid">
+        {% for line, p in prediction.probabilities.items %}
+          <div class="bb-prob">
+            <div class="line">{{ line|title }}</div>
+            <div class="p">{{ p|floatformat:2 }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="bb-prob-grid">
+        <div class="bb-prob"><div class="line">Over 220</div><div class="p">{{ prediction.over_220_probability|floatformat:2 }}</div></div>
+        <div class="bb-prob"><div class="line">Over 230</div><div class="p">{{ prediction.over_230_probability|floatformat:2 }}</div></div>
+        <div class="bb-prob"><div class="line">Over 240</div><div class="p">{{ prediction.over_240_probability|floatformat:2 }}</div></div>
+      </div>
+    {% endif %}
+  </div>
 
-    <!-- Acciones -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body text-center">
-                    <a href="{% url 'basketball_data:prediction_form' %}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-redo"></i> Nueva Predicción
-                    </a>
-                    <a href="{% url 'basketball_data:dashboard' %}" class="btn btn-outline-secondary btn-lg">
-                        <i class="fas fa-home"></i> Volver al Dashboard
-                    </a>
-                </div>
-            </div>
+  {% if prediction.home_stats and prediction.away_stats %}
+    <div class="bb-panel">
+      <h3>Estadísticas recientes usadas</h3>
+      <div class="bb-grid2">
+        <div class="bb-stats">
+          <h4>{{ home_team.abbreviation }}</h4>
+          <div class="bb-row"><span class="k">% Tiros</span><span class="v">{{ prediction.home_stats.fg_pct|floatformat:3 }}</span></div>
+          <div class="bb-row"><span class="k">% Triples</span><span class="v">{{ prediction.home_stats.fg3_pct|floatformat:3 }}</span></div>
+          <div class="bb-row"><span class="k">% Libres</span><span class="v">{{ prediction.home_stats.ft_pct|floatformat:3 }}</span></div>
+          <div class="bb-row"><span class="k">Ritmo (pace)</span><span class="v">{{ prediction.home_stats.pace|floatformat:1 }}</span></div>
         </div>
+        <div class="bb-stats">
+          <h4>{{ away_team.abbreviation }}</h4>
+          <div class="bb-row"><span class="k">% Tiros</span><span class="v">{{ prediction.away_stats.fg_pct|floatformat:3 }}</span></div>
+          <div class="bb-row"><span class="k">% Triples</span><span class="v">{{ prediction.away_stats.fg3_pct|floatformat:3 }}</span></div>
+          <div class="bb-row"><span class="k">% Libres</span><span class="v">{{ prediction.away_stats.ft_pct|floatformat:3 }}</span></div>
+          <div class="bb-row"><span class="k">Ritmo (pace)</span><span class="v">{{ prediction.away_stats.pace|floatformat:1 }}</span></div>
+        </div>
+      </div>
     </div>
+  {% endif %}
+
+  <div class="bb-actions">
+    <a href="{% url 'basketball_data:prediction_form' %}" class="bb-btn">🔄 Nueva predicción</a>
+    <a href="{% url 'basketball_data:dashboard' %}" class="bb-btn-ghost">🏀 Dashboard NBA</a>
+  </div>
+
 </div>
 {% endblock %}

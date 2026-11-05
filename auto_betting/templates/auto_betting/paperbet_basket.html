@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Paperbet Baloncesto 1Q+2Q — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+  .pb-container { max-width: 1240px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .pb-header { text-align: center; margin-bottom: 1.2rem; }
+  .pb-header h2 { margin-bottom: 0.4rem; letter-spacing: -0.01em; }
+  .pb-header .subtitle { color: var(--text-secondary); font-size: 0.88rem; }
+  .pb-header .subtitle a {
+    color: var(--accent-primary); text-decoration: none; font-weight: 600;
+    border-bottom: 1px solid transparent; transition: border-color 0.15s;
+  }
+  .pb-header .subtitle a:hover { border-bottom-color: var(--accent-primary); }
+  .pb-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.8rem; margin: 1rem 0 1.6rem; }
+  .pb-card {
+    background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.10);
+    border-radius: var(--radius); padding: 0.9rem 1rem; text-align: center;
+  }
+  .pb-card .v { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
+  .pb-card .l { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pos { color: #2ecc71; } .neg { color: #e74c3c; }
+  .pb-table-wrap { overflow-x: auto; margin-bottom: 2rem; }
+  table.pb { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  table.pb th {
+    text-align: left; padding: 0.55rem 0.7rem; color: var(--text-secondary);
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+  }
+  table.pb td { padding: 0.5rem 0.7rem; border-bottom: 0.5px solid rgba(255,255,255,0.05); }
+  .badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: var(--radius-full); font-size: 0.72rem; font-weight: 700; }
+  .badge-won { background: rgba(46,204,113,0.16); color: #2ecc71; }
+  .badge-lost { background: rgba(231,76,60,0.16); color: #e74c3c; }
+  .badge-open { background: rgba(241,196,15,0.16); color: #f1c40f; }
+  .badge-void { background: rgba(149,165,166,0.18); color: #95a5a6; }
+  .pb-section-title { margin: 1.6rem 0 0.6rem; font-size: 1.05rem; font-weight: 700; }
+  .pb-chip { display: inline-block; background: var(--bg-surface); border: 0.5px solid rgba(255,255,255,0.10);
+             border-radius: var(--radius-full); padding: 0.2rem 0.7rem; margin: 0.15rem; font-size: 0.78rem; }
+  .pb-note { color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 1rem; }
+  .pb-note code { font-size: 0.78rem; }
+  .pb-cta { display: inline-block; background: var(--accent-primary); color: #fff;
+            padding: 0.65rem 1.2rem; border-radius: var(--radius-full); text-decoration: none;
+            font-weight: 700; font-size: 0.9rem; transition: opacity 0.15s; }
+  .pb-cta:hover { opacity: 0.88; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pb-container">
+  <div class="pb-header">
+    <h2>🏀 Paperbet Baloncesto — Total 1Q+2Q</h2>
+    <div class="subtitle">
+      Motor <strong>{{ motor }}</strong>{% if ver_gated %} · compuerta |Δ| {{ delta_min }}–{{ delta_max }} · EV ≥ {{ ev_min|floatformat:1 }}%{% endif %} · solo papel (sin dinero real) · sección dedicada.
+      Apuesta en el descanso 2Q→3Q con cuota viva de BetPlay/Kambi ·
+      <a href="{% url 'auto_betting:paperbet' %}">← Volver al paperbet general</a>
+    </div>
+    <div class="subtitle" style="margin-top:0.35rem;">Depuración 2026-10-24: solo se registra el lado UNDER (OVER: ROI -20,1%, n=625).</div>
+  </div>
+
+  <div style="text-align:center;margin:0.4rem 0 0.4rem;">
+    {% if ver_gated %}
+      <a class="pb-cta" href="{% url 'auto_betting:paperbet_basket' %}{% if ver_todas %}?todas=1{% endif %}">← Ver paper completo (muestreo)</a>
+    {% else %}
+      <a class="pb-cta" href="?gated=1&amp;todas=1">Ver paper gated (|Δ| 3-5 + EV≥2%) →</a>
+    {% endif %}
+  </div>
+
+  <div style="text-align:center;margin:0.4rem 0 0.4rem;">
+    <a class="pb-cta" href="{% url 'auto_betting:paperbet_basket_ou' %}">
+      🧮 Abrir motor Over/Under al descanso (EUROPA / NBA) →
+    </a>
+  </div>
+
+  <div class="pb-note">
+    Modelo MCO por liga: <code>TOTAL = b0 + b1·1Q + b2·2Q</code> (entrenado con partidos reales de
+    API-Sports, RMSE con holdout). Probabilidad del lado: <code>Φ(Δ / ({{ factor_rmse }} · RMSE_test))</code>.
+    Compuerta: <code>{{ delta_min }} ≤ |Δ| ≤ {{ delta_max }}</code> pts · cuota del lado abierta ·
+    {% if ev_min > 0 %}<code>EV ≥ {{ ev_min|floatformat:1 }}%</code>{% else %}<strong>sin filtro de EV</strong> (modo muestreo; el EV se registra para trazabilidad){% endif %}.
+    Liquidación con el total final (prórroga incluida);
+    empate exacto en la línea = anulada (stake devuelto).
+    <br>Captura de mercado (Fase 1, point-in-time): <strong>{{ snap_total|default:0 }}</strong> snapshots as-of
+    {% if snap_ultimo %}· último {{ snap_ultimo.capturado_en|date:'m-d H:i' }} UTC{% else %}· aún sin datos{% endif %}.
+    <br>Pinnacle (solo datos, The Odds API): <strong>{{ pin_total|default:0 }}</strong> snapshots
+    {% if pin_ultima %}· última llamada {{ pin_ultima.capturado_en|date:'m-d H:i' }} UTC
+    ({{ pin_ultima.sport_key }} {{ pin_ultima.tipo }}{% if pin_ultima.creditos_restantes is not None %}, créditos restantes {{ pin_ultima.creditos_restantes }}{% endif %}){% else %}· aún sin llamadas{% endif %}.
+  </div>
+
+  <div class="pb-cards">
+    <div class="pb-card"><div class="v">{{ global_stats.n }}</div><div class="l">Liquidadas{% if modo == 'ligadia' %} (filtro liga-día){% elif modo == 'ganadoras' %} (ganadoras){% endif %}</div></div>
+    <div class="pb-card"><div class="v">{{ global_stats.wr|default:'—' }}%</div><div class="l">Winrate</div></div>
+    <div class="pb-card"><div class="v">{{ global_stats.roi|default:'—' }}%</div><div class="l">ROI{% if modo == 'ligadia' %} (filtro liga-día){% elif modo == 'ganadoras' %} (ganadoras){% endif %}</div></div>
+    <div class="pb-card"><div class="v {% if global_stats.net >= 0 %}pos{% else %}neg{% endif %}">{{ global_stats.net|floatformat:0 }}</div><div class="l">Net (COP){% if modo == 'ligadia' %} filtrado{% elif modo == 'ganadoras' %} ganadoras{% endif %}</div></div>
+    <div class="pb-card"><div class="v {% if global_stats.clv is not None and global_stats.clv >= 0 %}pos{% else %}neg{% endif %}">{{ global_stats.clv|default:'—' }}%</div><div class="l">CLV medio{% if modo == 'ligadia' %} (filtro){% endif %}</div></div>
+    <div class="pb-card"><div class="v">{{ open_count }}</div><div class="l">Pendientes (todas)</div></div>
+    <div class="pb-card"><div class="v">{{ global_stats.void }}</div><div class="l">Anuladas{% if modo != 'todas' %} (filtro){% endif %}</div></div>
+  </div>
+
+  <div class="pb-note">
+    {% if modo == 'todas' %}
+      Mostrando <strong>todas las ligas</strong> ({{ ligas_totales }}).
+      <a href="{% url 'auto_betting:paperbet_basket' %}{% if ver_gated %}?gated=1{% endif %}">Ver con filtro liga×día →</a>
+      &nbsp;·&nbsp;<a href="?filtro=ganadoras{% if ver_gated %}&amp;gated=1{% endif %}">Ver solo ganadoras →</a>
+    {% elif modo == 'ligadia' %}
+      <strong>Filtro liga×día (pre-registrado 31-oct, in-sample, corte de datos 2026-10-31):</strong>
+      el bot opera y esta página muestra solo las <strong>{{ n_celdas }}</strong> celdas liga×día
+      (America/Bogota) con ROI&gt;0 histórico ({{ descartadas }} apuestas quedaron fuera).
+      Seguimiento OOS en curso; hipótesis y gate: <code>/root/opencode/reports/paper-basket-filtro-ligadia-hipotesis.md</code>.
+      Referencia todas: ROI {{ global_stats_todas.roi|default:'—' }}% ({{ global_stats_todas.n }} liquidadas).
+      <br><strong>Aviso:</strong> el filtro es selección in-sample; no es una estimación del ROI futuro.
+      <a href="?filtro=ganadoras{% if ver_gated %}&amp;gated=1{% endif %}">Ver solo ganadoras →</a>
+      &nbsp;·&nbsp;<a href="?todas=1{% if ver_gated %}&amp;gated=1{% endif %}">Ver todas las ligas →</a>
+    {% else %}
+      Cálculo filtrado a <strong>{{ por_liga|length }} ligas con neto histórico positivo</strong>;
+      {{ ligas_excluidas }} ligas perdedoras excluidas.
+      Referencia todas: ROI {{ global_stats_todas.roi|default:'—' }}%
+      ({{ global_stats_todas.n }} liquidadas).
+      <br><strong>Aviso:</strong> es una selección in-sample (corte dinámico con el histórico actual);
+      no es una estimación del ROI futuro.
+      <a href="?todas=1{% if ver_gated %}&amp;gated=1{% endif %}">Ver todas las ligas →</a>
+      &nbsp;·&nbsp;<a href="{% url 'auto_betting:paperbet_basket' %}{% if ver_gated %}?gated=1{% endif %}">Ver con filtro liga×día →</a>
+    {% endif %}
+  </div>
+
+  <div class="pb-section-title">Por liga {% if modo == 'todas' %}(todas){% elif modo == 'ganadoras' %}(solo ganadoras){% else %}(filtro liga-día){% endif %}</div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Liga</th><th>Liquidadas</th><th>W</th><th>L</th><th>Anuladas</th><th>WR</th><th>Stake</th><th>Net</th><th>ROI</th><th>Pendientes</th></tr>
+      {% for r in por_liga %}
+      <tr>
+        <td><strong>{{ r.liga }}</strong></td>
+        <td>{{ r.n }}</td><td class="pos">{{ r.won }}</td><td class="neg">{{ r.lost }}</td>
+        <td>{{ r.void }}</td>
+        <td>{{ r.wr|default:'—' }}%</td><td>{{ r.stake|floatformat:0 }}</td>
+        <td class="{% if r.net >= 0 %}pos{% else %}neg{% endif %}">{{ r.net|floatformat:0 }}</td>
+        <td class="{% if r.roi >= 0 %}pos{% else %}neg{% endif %}">{{ r.roi|default:'—' }}%</td>
+        <td>{{ r.open }}</td>
+      </tr>
+      {% empty %}<tr><td colspan="10">Aún no hay apuestas de baloncesto. El bot corre cada 2 minutos en el scheduler.</td></tr>{% endfor %}
+    </table>
+  </div>
+
+  <div class="pb-note">
+    El motor <strong>Over/Under al descanso</strong> (modelo de libros EUROPA/NBA) tiene su
+    <a href="{% url 'auto_betting:paperbet_basket_ou' %}">página propia de seguimiento →</a>
+    (sombras, apuestas, calibración Patron y ROI).
+  </div>
+
+  <div class="pb-section-title">Modelos MCO entrenados ({{ modelos|length }})</div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Liga</th><th>Muestras</th><th>b0</th><th>b1 (1Q)</th><th>b2 (2Q)</th><th>R²</th><th>RMSE test</th><th>Origen</th><th>Fechas</th><th>Entrenado</th></tr>
+      {% for m in modelos %}
+      <tr>
+        <td><strong>{{ m.liga }}</strong></td>
+        <td>{{ m.n }}</td>
+        <td>{{ m.b0|floatformat:2 }}</td>
+        <td>{{ m.b1|floatformat:3 }}</td>
+        <td>{{ m.b2|floatformat:3 }}</td>
+        <td>{{ m.r2_dos|floatformat:3 }}</td>
+        <td>{{ m.rmse_test_dos|floatformat:2 }}</td>
+        <td>{{ m.origen }}</td>
+        <td>{% if m.fecha_min %}{{ m.fecha_min|date:'y-m-d' }} → {{ m.fecha_max|date:'y-m-d' }}{% else %}—{% endif %}</td>
+        <td>{{ m.entrenado_en|date:'m-d H:i' }}</td>
+      </tr>
+      {% empty %}<tr><td colspan="10">Sin modelos aún: corre <code>manage.py train_basket_models</code>.</td></tr>{% endfor %}
+    </table>
+  </div>
+
+  {% if pendientes %}
+  <div class="pb-section-title">Ligas mapeadas sin modelo todavía</div>
+  <div class="pb-note">El bot no apuesta en estas ligas hasta que tengan modelo propio (≥30 muestras).</div>
+  <div>
+    {% for clave, n in pendientes %}
+      <span class="pb-chip">{{ clave }}{% if n %} · {{ n }} muestras{% endif %}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="pb-section-title">Últimas apuestas</div>
+  <div class="pb-table-wrap">
+    <table class="pb">
+      <tr><th>Creada</th><th>Partido</th><th>Liga</th><th>Selección</th><th>Línea</th><th>Δ</th><th>Cuota</th><th title="Total de Pinnacle en prepartido (The Odds API); (Over/Under)">P. PRE</th><th title="Total de Pinnacle en vivo al descanso 2Q→3Q; (Over/Under); hora UTC en el tooltip">P. 2Q→3Q</th><th>L. cierre</th><th>C. cierre</th><th>CLV</th><th>P</th><th>EV</th><th>Estado</th><th>Resultado</th><th>Payout</th></tr>
+      {% for b in recientes %}
+      <tr>
+        <td>{{ b.creado|date:'m-d H:i' }}</td>
+        <td>{{ b.home_team }} vs {{ b.away_team }}</td>
+        <td>{{ b.liga }}</td>
+        <td>{{ b.seleccion }}</td>
+        <td>{{ b.linea|default:'—' }}</td>
+        <td>{{ b.diferencia|floatformat:1|default:'—' }}</td>
+        <td>{{ b.cuota|floatformat:2 }}</td>
+        <td>{% if b.pin_pre %}{{ b.pin_pre.linea|floatformat:1 }} <small>({{ b.pin_pre.cuota_over|floatformat:2 }}/{{ b.pin_pre.cuota_under|floatformat:2 }})</small>{% else %}—{% endif %}</td>
+        <td title="{% if b.pin_break %}capturado {{ b.pin_break.capturado_en|date:'m-d H:i' }} UTC{% endif %}">{% if b.pin_break %}{{ b.pin_break.linea|floatformat:1 }} <small>({{ b.pin_break.cuota_over|floatformat:2 }}/{{ b.pin_break.cuota_under|floatformat:2 }})</small>{% else %}—{% endif %}</td>
+        <td>{{ b.closing_linea|default:'—' }}</td>
+        <td>{{ b.closing_odds|floatformat:2|default:'—' }}</td>
+        <td class="{% if b.clv_pct >= 0 %}pos{% else %}neg{% endif %}">{{ b.clv_pct|default:'—' }}</td>
+        <td>{{ b.prob|floatformat:2 }}</td>
+        <td class="{% if b.ev >= 0 %}pos{% else %}neg{% endif %}">{{ b.ev|floatformat:2 }}</td>
+        <td>
+          {% if b.estado == 'WON' %}<span class="badge badge-won">GANADA</span>
+          {% elif b.estado == 'LOST' %}<span class="badge badge-lost">PERDIDA</span>
+          {% elif b.estado == 'VOID' %}<span class="badge badge-void">ANULADA</span>
+          {% else %}<span class="badge badge-open">PENDIENTE</span>{% endif %}
+        </td>
+        <td>{{ b.resultado_real|default:'—' }}</td>
+        <td class="{% if b.net >= 0 %}pos{% else %}neg{% endif %}">{{ b.payout|floatformat:0|default:'—' }}</td>
+      </tr>
+      {% empty %}<tr><td colspan="17">Aún no hay apuestas registradas.</td></tr>{% endfor %}
+    </table>
+  </div>
+
+  <div class="pb-note">
+    <strong>P. PRE</strong> = total de Pinnacle en prepartido ·
+    <strong>P. 2Q→3Q</strong> = total de Pinnacle en vivo al descanso 2Q→3Q
+    (The Odds API; cuotas Over/Under entre paréntesis; hora de captura UTC en el tooltip).
+    Solo recolección de datos: no interviene en ninguna decisión de apuesta.
+  </div>
+
+  <div class="pb-note">
+    Solo papel: los stakes son COP virtuales y no se coloca ninguna apuesta real desde este motor.
+    La liquidación usa API-Sports (total final con prórroga); sin resultado a las 40 h → anulada.
+  </div>
+</div>
+{% endblock %}

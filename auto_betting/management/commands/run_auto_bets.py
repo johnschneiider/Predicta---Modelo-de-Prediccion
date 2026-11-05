@@ -19,11 +19,13 @@ Comando de management que ejecuta el auto-betting v7 — Predicción Oficial + V
 
 import logging
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone as django_timezone
 
+from auto_betting import basket_1q2q as basket_1q2q
 from auto_betting.models import AutoBetConfig, AutoBet, DailyCounter
 from auto_betting.services import (
     login, fetch_upcoming_matches,
@@ -133,6 +135,30 @@ def _build_market_data(match, home_team, away_team, league, sot_test=False):
     except Exception as e:
         logger.error(f'remates_v2: error en {home_team} vs {away_team}: {e}')
 
+    # Resultado Final 1X2 — motor x12_v2 migrado del paperbet (2026-10-03,
+    # pedido de John). Usa el MISMO modelo/features/margen que el paper
+    # (auto_betting/x12_engine.py): la probabilidad que llega aquí ya está
+    # calibrada (precalibrated=True), así que select_bets no la vuelve a
+    # encoger. La compuerta (P>=0.45, edge>=5pp vs fair devig, cuota>=1.80)
+    # es la misma del ROI en papel y vive en MarketFilterConfig['x12'].
+    # Es independiente de la Predicción Oficial (no usa `official`), por eso
+    # va antes del early-return de abajo.
+    # OJO: a diferencia del paper, producción excluye domingos y aplica el
+    # anti-movimiento de línea + dedup por evento/mercado (reglas vigentes).
+    try:
+        from auto_betting.x12_engine import predict_x12_probs
+        probs_x12 = predict_x12_probs(match, home_team, away_team, league)
+        if probs_x12:
+            markets.append({
+                'market': 'x12', 'type': 'x12',
+                'probs': probs_x12,
+                'confidence': 1.0,
+                'precalibrated': True,
+                'odds': fetch_market_odds(match['event_id'], 'Resultado Final'),
+            })
+    except Exception as e:
+        logger.error(f'x12_v2: error en {home_team} vs {away_team}: {e}')
+
     official = get_official_predictions(home_team, away_team, league)
     if not official:
         return markets
@@ -234,11 +260,16 @@ class Command(BaseCommand):
             '--sot-test', action='store_true', default=False,
             help='Bypass del CLV breaker SOLO para tiros a puerta en esta corrida (test de modelo nuevo). El cron no usa este flag.',
         )
+        parser.add_argument(
+            '--dry-run', action='store_true', default=False,
+            help='Simula la corrida completa SIN apostar: no hace login, no valida ni coloca, no escribe AutoBet. Útil para probar umbrales/mercados nuevos con --email.',
+        )
 
     def handle(self, *args, **options):
         email = options.get('email')
         only_today = options.get('today', False)
         sot_test = options.get('sot_test', False)
+        dry_run = options.get('dry_run', False)
         configs = AutoBetConfig.objects.filter(activo=True).select_related('usuario')
         if email:
             configs = configs.filter(usuario__email=email)
@@ -246,25 +277,35 @@ class Command(BaseCommand):
             self.stderr.write("❌ No hay configuraciones activas. Crea AutoBetConfig en admin.")
             return
         for config in configs:
-            self._run_for_config(config, only_today=only_today, sot_test=sot_test)
+            self._run_for_config(config, only_today=only_today, sot_test=sot_test, dry_run=dry_run)
 
-    def _run_for_config(self, config, only_today=False, sot_test=False):
+    def _run_for_config(self, config, only_today=False, sot_test=False, dry_run=False):
         owner = config.usuario
-        self.stdout.write(f"\n👤 Usuario: {owner.email}")
+        self.stdout.write(f"\n👤 Usuario: {owner.email}{' [DRY-RUN]' if dry_run else ''}")
 
         # 1. Límite diario + reconciliación (Fix 3)
+        # Dry-run: lectura pura, sin crear/reconciliar el contador.
         hoy = django_timezone.localdate()
-        counter, _ = DailyCounter.objects.get_or_create(usuario=owner, fecha=hoy)
+        if dry_run:
+            counter = DailyCounter.objects.filter(usuario=owner, fecha=hoy).first()
+            if counter is None:
+                counter = DailyCounter(usuario=owner, fecha=hoy, apuestas_colocadas=0)
+        else:
+            counter, _ = DailyCounter.objects.get_or_create(usuario=owner, fecha=hoy)
         # Reconciliar contador desde el conteo real de AutoBet hoy
         # Protege contra runs manuales que no persistieron el counter (bug v3)
-        count_real = AutoBet.objects.filter(usuario=owner, creado__date=hoy).count()
+        count_real = (AutoBet.objects
+                      .filter(usuario=owner, creado__date=hoy)
+                      .exclude(mercado=basket_1q2q.MERCADO)
+                      .count())
         if counter.apuestas_colocadas != count_real:
             self.stdout.write(
                 f"⚠️ DailyCounter desincronizado: DB={counter.apuestas_colocadas} "
                 f"vs real={count_real}. Reconciliando."
             )
             counter.apuestas_colocadas = count_real
-            counter.save()
+            if not dry_run:
+                counter.save()
         if counter.apuestas_colocadas >= config.max_apuestas_diarias:
             self.stdout.write(f"✅ Límite diario alcanzado ({counter.apuestas_colocadas}/{config.max_apuestas_diarias}).")
             return
@@ -310,33 +351,37 @@ class Command(BaseCommand):
         )
 
         # 2. Login
-        token, routing_key = login(config.ticket, config.punter_id)
-        if not token:
-            self.stderr.write("❌ Login BetPlay falló. Verifica el ticket en AutoBetConfig.")
-            # WhatsApp: alerta al usuario (forzar=False → respeta dedupe del chequeo hourly)
-            try:
-                from notificaciones.services import notificar_usuario
-                from notificaciones.models import NotificacionEstado
-                est, _ = NotificacionEstado.objects.get_or_create(
-                    usuario=config.usuario, evento='token_betplay_vencido',
-                    defaults={'estado': ''}
-                )
-                if est.estado != 'FALLO':
-                    nombre = config.usuario.first_name or config.usuario.username or 'usuario'
-                    msg = (
-                        f"🔴 *Predicta — No se pudieron colocar tus apuestas*\n\n"
-                        f"Hola {nombre}, tu sesión BetPlay venció y el sistema "
-                        f"no pudo colocar tus apuestas automáticas de hoy.\n\n"
-                        f"Renueva tu ticket cuanto antes:\n"
-                        f"👉 https://www.predicta.com.co/auto-betting/configuracion/\n\n"
-                        f"— Predicta · Monitoreo automático"
+        token = routing_key = None
+        if dry_run:
+            self.stdout.write("🧪 DRY-RUN: sin login BetPlay (no se valida ni coloca nada).")
+        else:
+            token, routing_key = login(config.ticket, config.punter_id)
+            if not token:
+                self.stderr.write("❌ Login BetPlay falló. Verifica el ticket en AutoBetConfig.")
+                # WhatsApp: alerta al usuario (forzar=False → respeta dedupe del chequeo hourly)
+                try:
+                    from notificaciones.services import notificar_usuario
+                    from notificaciones.models import NotificacionEstado
+                    est, _ = NotificacionEstado.objects.get_or_create(
+                        usuario=config.usuario, evento='token_betplay_vencido',
+                        defaults={'estado': ''}
                     )
-                    notificar_usuario(config.usuario, 'token_betplay_vencido', msg,
-                                     estado_evento='FALLO', forzar=False)
-                    self.stdout.write("📱 WhatsApp enviado por ticket vencido.")
-            except Exception as e:
-                logger.error(f"No se pudo enviar WhatsApp por ticket vencido: {e}")
-            return
+                    if est.estado != 'FALLO':
+                        nombre = config.usuario.first_name or config.usuario.username or 'usuario'
+                        msg = (
+                            f"🔴 *Predicta — No se pudieron colocar tus apuestas*\n\n"
+                            f"Hola {nombre}, tu sesión BetPlay venció y el sistema "
+                            f"no pudo colocar tus apuestas automáticas de hoy.\n\n"
+                            f"Renueva tu ticket cuanto antes:\n"
+                            f"👉 https://www.predicta.com.co/auto-betting/configuracion/\n\n"
+                            f"— Predicta · Monitoreo automático"
+                        )
+                        notificar_usuario(config.usuario, 'token_betplay_vencido', msg,
+                                         estado_evento='FALLO', forzar=False)
+                        self.stdout.write("📱 WhatsApp enviado por ticket vencido.")
+                except Exception as e:
+                    logger.error(f"No se pudo enviar WhatsApp por ticket vencido: {e}")
+                return
 
         # 3. Partidos próximos
         matches = fetch_upcoming_matches(config.horas_adelante)
@@ -350,17 +395,14 @@ class Command(BaseCommand):
             f"📋 {len(matches)} partidos {'de HOY' if only_today else f'en próximas {config.horas_adelante}h'}.")
 
         apuestas_colocadas = 0
+        v2_skipped = 0
+        apuestas_hechas = []
+        # Opinión IA real (informativa, no operativa): tope de llamadas por corrida.
+        ai_calls = 0
+        ai_max = int(getattr(settings, 'LLM_REAL_MAX_CALLS', 8) or 8)
 
-        # 2026-09-25 (decisión John): no apostar a partidos que juegan los
-        # domingos. El paperbet (run_paper_bets / run_paper_bets_llm) SÍ sigue
-        # apostando domingos sin restricción — este filtro es solo producción.
-        domingos = [m for m in matches if django_timezone.localtime(m['start_time']).weekday() == 6]
-        matches = [m for m in matches if django_timezone.localtime(m['start_time']).weekday() != 6]
-        if domingos:
-            self.stdout.write(
-                f"🚫 {len(domingos)} partidos excluidos (domingo): "
-                f"{', '.join(m['home'] + ' vs ' + m['away'] for m in domingos[:5])}"
-            )
+        # 2026-10-03 (decisión John): restricción de domingos ELIMINADA.
+        # El control por día ahora vive en el Filtro V2 (liga × mercado × día),
 
         for match in matches:
             if apuestas_colocadas >= disponibles:
@@ -408,8 +450,14 @@ class Command(BaseCommand):
             # submercado (MarketFilterConfig.*_min_cuota) ya no se aplican —
             # serían un piso global que pisaría la cuota mínima per-user.
             # Se neutralizan (0) y queda solo cuota_minima_efectiva del usuario.
-            market_filters = get_market_filters()
-            market_filters = {k: {**v, 'min_cuota': 0.0} for k, v in market_filters.items()}
+            # EXCEPCIÓN x12_v2 (2026-10-03): su cuota mínima (1.80) es parte de
+            # la compuerta exacta del ROI en papel, no un piso global; se
+            # conserva solo para x12 (ver select_bets, rama 'x12').
+            all_filters = get_market_filters()
+            x12_min_cuota = (all_filters.get('x12') or {}).get('min_cuota') or 0.0
+            market_filters = {k: {**v, 'min_cuota': 0.0} for k, v in all_filters.items()}
+            if x12_min_cuota:
+                market_filters.setdefault('x12', {})['min_cuota'] = x12_min_cuota
 
             candidates = select_bets(
                 markets, cuota_minima_efectiva,
@@ -426,6 +474,25 @@ class Command(BaseCommand):
             for best in candidates:
                 if apuestas_colocadas >= disponibles:
                     break
+
+                # ── FILTRO V2 (2026-10-03, regla de dinero real) ──
+                # Solo combinaciones liga × mercado × día con ROI positivo
+                # observado. Clave = submercado real (market + lado), ej.
+                # 'remates_over', 'btts_si', 'x12'. Editable en /configuracion/v2/.
+                from auto_betting.v2_filter import (
+                    is_allowed as _v2_allowed, v2_activo as _v2_on, submarket_key as _v2_key)
+                if _v2_on():
+                    _local_dt = django_timezone.localtime(match['start_time'])
+                    _v2_mkt = _v2_key(best['market'], best.get('side'))
+                    if not _v2_allowed(league.name, _v2_mkt, _local_dt):
+                        v2_skipped += 1
+                        if v2_skipped <= 8:
+                            self.stdout.write(
+                                f"  ⏭️ v2 fuera: {home_team} vs {away_team} "
+                                f"[{_v2_mkt} · {league.name} · "
+                                f"{_local_dt.strftime('%a')}]"
+                            )
+                        continue
 
                 # Deduplicación por evento + mercado (sin restricción de fecha)
                 # Fix 2026-08-21: antes solo miraba creado__date=hoy, lo que permitía
@@ -486,6 +553,18 @@ class Command(BaseCommand):
                 except Exception as e:
                     logger.warning(f"Anti-movimiento check error: {e}")
 
+                # Dry-run: reportar el candidato sin tocar BetPlay ni la BD.
+                if dry_run:
+                    self.stdout.write(
+                        f"🧪 [DRY-RUN] Apostaría {apuestas_colocadas + 1}: "
+                        f"{home_team} vs {away_team} | {market_label} {seleccion} "
+                        f"@{best['cuota']} | P={best['p']*100:.1f}% "
+                        f"EV={best['ev']*100:+.1f}% "
+                        f"edge={best.get('edge_vs_market', 0)*100:+.1f}pp"
+                    )
+                    apuestas_colocadas += 1
+                    continue
+
                 # 7. Validar
                 success, val_resp = validate_coupon(token, outcome, event_data, stake_kambi)
                 if not success:
@@ -500,7 +579,7 @@ class Command(BaseCommand):
 
                 # 9. Guardar
                 with transaction.atomic():
-                    AutoBet.objects.create(
+                    nueva_apuesta = AutoBet.objects.create(
                         usuario=owner,
                         evento_id=match['event_id'],
                         home_team=home_team,
@@ -526,15 +605,61 @@ class Command(BaseCommand):
                     counter.apuestas_colocadas += 1
                     counter.save()
 
+                # Opinión IA INFORMATIVA (LLM_MODEL_REAL) — se pide DESPUÉS de
+                # colocar y NUNCA bloquea ni filtra: si falla, queda NULL.
+                # Desde 2026-10-16 la consulta se traslada a T-X (config web):
+                # solo se pide aquí si el partido ya entró en esa ventana; si
+                # no, la hará el job ask_llm_real_ventana (una sola por partido).
+                from auto_betting.llm_validator import llm_ventana_alcanzada
+                if ai_calls < ai_max and llm_ventana_alcanzada(nueva_apuesta.start_time):
+                    ai_calls += 1
+                    try:
+                        from auto_betting.llm_validator import opinar_apuesta
+                        ok_ia, why_ia = opinar_apuesta(nueva_apuesta, {
+                            'home': home_team, 'away': away_team, 'liga': league.name,
+                            'mercado': market_label, 'motor': best.get('market', ''),
+                            'seleccion': seleccion, 'linea': best.get('line'),
+                            'cuota': best['cuota'], 'prob': best['p'],
+                            'ev': best['ev'],
+                            'edge_pp': best.get('edge_vs_market', 0) * 100,
+                            'lambda': pred_value, 'start_time': match['start_time'],
+                        })
+                        _tag_ia = ('🧠 IA APROBÓ' if ok_ia is True else
+                                   ('🧠 IA RECHAZÓ' if ok_ia is False else '🧠 IA SIN RESPUESTA'))
+                        self.stdout.write(
+                            f"  {_tag_ia}: {home_team} vs {away_team} [{seleccion}] "
+                            f"— {(why_ia or '')[:110]}"
+                        )
+                    except Exception as e:
+                        logger.warning(f"Opinión IA falló (no afecta la apuesta): {e}")
+
                 apuestas_colocadas += 1
                 self.stdout.write(
                     f"✅ Apuesta {apuestas_colocadas}: {home_team} vs {away_team} | {market_label} "
                     f"{seleccion} @{best['cuota']} | P={best['p']*100:.1f}% (raw={best.get('p_raw',best['p'])*100:.1f}%) "
                     f"EV={best['ev']*100:+.1f}% | coupon={place_resp.get('coupon_ref')}"
                 )
+                apuestas_hechas.append({
+                    'partido': f"{home_team} vs {away_team}",
+                    'mercado': market_label,
+                    'seleccion': seleccion,
+                    'cuota': best['cuota'],
+                    'stake_cop': stake_cop_efectivo,
+                })
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"\n🏁 Auto-betting v4 completado: {apuestas_colocadas} apuestas colocadas."
+                f"\n🏁 Auto-betting v2 completado: {apuestas_colocadas} "
+                f"{'apuestas simuladas [DRY-RUN]' if dry_run else 'apuestas colocadas'}"
+                + (f" · {v2_skipped} descartadas por filtro v2." if v2_skipped else ".")
             )
         )
+
+        # Resumen WhatsApp al usuario (solo real y solo si hubo apuestas)
+        if apuestas_hechas and not dry_run:
+            try:
+                from notificaciones.services import notificar_apuestas
+                wa = notificar_apuestas(owner, apuestas_hechas, 'Fútbol')
+                self.stdout.write(f"📱 WhatsApp resumen a {owner.email}: {wa}")
+            except Exception as e:
+                logger.warning(f"WhatsApp resumen apuestas falló: {e}")

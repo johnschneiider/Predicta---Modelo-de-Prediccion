@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Predicción MLB — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+.bb-panel {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.bb-panel h3 {
+    font-family: var(--font-heading); font-size: 1.05rem; color: var(--text-primary);
+    margin: 0 0 1rem; padding-bottom: 0.75rem;
+    border-bottom: 0.5px solid var(--border-primary);
+}
+.bb-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 600px) { .bb-form-grid { grid-template-columns: 1fr; } }
+.bb-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
+.bb-btn {
+    background: var(--accent-primary); color: var(--btn-primary-text);
+    border: none; padding: 0.7rem 1.6rem; border-radius: var(--radius-sm);
+    font-weight: 600; cursor: pointer; font-size: 0.95rem; text-decoration: none;
+}
+.bb-btn:hover { background: var(--accent-hover); }
+.errorlist { color: var(--danger); font-size: 0.8rem; list-style: none; padding: 0; margin: 0.3rem 0 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+
+  <div class="page-header">
+    <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-primary);">
+      ⚾ Predicción MLB
+    </h2>
+    <p class="page-subtitle">Baseline Poisson: total de carreras, ganador, run line y primeros 5 innings</p>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="message message-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="bb-panel">
+    <h3>Seleccionar equipos</h3>
+    <form method="post">
+      {% csrf_token %}
+      <div class="bb-form-grid">
+        <div class="form-group">
+          <label for="{{ form.home_team.id_for_label }}" class="form-label">🏠 {{ form.home_team.label }}</label>
+          {{ form.home_team }}
+          {% if form.home_team.errors %}<ul class="errorlist">{% for e in form.home_team.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.away_team.id_for_label }}" class="form-label">✈️ {{ form.away_team.label }}</label>
+          {{ form.away_team }}
+          {% if form.away_team.errors %}<ul class="errorlist">{% for e in form.away_team.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      </div>
+      {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      <div class="bb-actions">
+        <button type="submit" class="bb-btn">✨ Predecir</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="bb-panel">
+    <h3>Más útil: valor real contra las cuotas</h3>
+    <p style="font-size: 0.9rem; color: var(--text-secondary);">
+      Con pocos partidos al día, lo rentable es comparar el modelo contra las líneas de BetPlay en
+      <strong>todos</strong> los mercados (ganador, run line, total y primeros 5 innings).
+    </p>
+    <div class="bb-actions">
+      <a href="{% url 'baseball_data:value_finder' %}" class="bb-btn">💰 Ir al buscador de valor</a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

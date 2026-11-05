@@ -3,6 +3,26 @@ Navbar compartido: usado por base.html (app interna) e index.html (landing).
 Una sola fuente de verdad: cambios aquí se propagan a todo el sitio.
 Requiere: contexto 'user', 'navbar_balance'/'navbar_balance_negativo' (context processor capital).
 {% endcomment %}
+<style>
+  /* Grupos colapsables del menú de usuario */
+  .user-dropdown-group { margin: 0.1rem 0; }
+  .user-dropdown-group-btn {
+    display: flex; align-items: center; justify-content: space-between; width: 100%;
+    background: none; border: 0; cursor: pointer; text-align: left;
+    padding: 0.6rem 0.8rem; color: var(--text-secondary, #9ca3af);
+    font-family: var(--font-body, inherit); font-size: 0.85rem;
+    border-radius: var(--radius-sm, 6px); transition: all 0.15s; white-space: nowrap;
+  }
+  .user-dropdown-group-btn:hover { background: var(--bg-overlay, rgba(255,255,255,0.06)); color: var(--text-primary, #fff); }
+  .user-dropdown-group .group-caret { font-size: 0.7rem; color: var(--text-tertiary, #6b7280); transition: transform 0.2s; }
+  .user-dropdown-group.open .group-caret { transform: rotate(90deg); }
+  .user-dropdown-group-items { display: none; }
+  .user-dropdown-group.open .user-dropdown-group-items { display: block; }
+  .user-dropdown-group-items .user-dropdown-item { padding-left: 1.6rem; }
+  @media (max-width: 480px) {
+    .user-dropdown-group-btn { font-size: 0.95rem; padding: 0.7rem 0.9rem; }
+  }
+</style>
 <nav>
     <a href="/" class="logo">PREDIC<span>TA</span></a>
     <div class="nav-links">
@@ -21,26 +41,67 @@ Requiere: contexto 'user', 'navbar_balance'/'navbar_balance_negativo' (context p
                     <span class="user-caret">▾</span>
                 </button>
                 <div class="user-dropdown" id="userDropdown" role="menu">
-                    <a href="{% url 'ai_predictions:dashboard' %}" class="user-dropdown-item">📊 Dashboard</a>
-                    <a href="{% url 'ai_predictions:prediction_form' %}" class="user-dropdown-item">🔮 Predicciones</a>
-                    <a href="{% url 'ai_predictions:prediction_history' %}" class="user-dropdown-item">🕘 Historial</a>
-                    <a href="{% url 'ai_predictions:mis_apuestas' %}" class="user-dropdown-item">🎟️ Mis apuestas</a>
-                    <a href="{% url 'football_data:dashboard' %}" class="user-dropdown-item">📁 Datos</a>
-                    <a href="{% url 'football_data:matches_list' %}" class="user-dropdown-item">📋 Partidos</a>
-                    <a href="{% url 'football_data:import' %}" class="user-dropdown-item">⬆️ Importar</a>
-                    <a href="{% url 'ai_predictions:scraper_corners' %}" class="user-dropdown-item">🤖 Scraper</a>
-                    <a href="{% url 'value_betting:dashboard' %}" class="user-dropdown-item">💰 Value Bets</a>
-                    <a href="{% url 'auto_betting:historial' %}" class="user-dropdown-item">🎰 Apuestas BetPlay</a>
-                    <a href="{% url 'auto_betting:paperbet' %}" class="user-dropdown-item">📄 Paperbet (Motores)</a>
-                    <a href="{% url 'auto_betting:configuracion' %}" class="user-dropdown-item">⚙️ Config BetPlay</a>
-                    <a href="{% url 'cuentas:configuracion_cuenta' %}" class="user-dropdown-item">👤 Mi cuenta</a>
-                    {% if user.is_superuser %}
-                    <a href="{% url 'cuentas:panel_usuarios' %}" class="user-dropdown-item">👥 Usuarios</a>
-                    <a href="{% url 'auto_betting:configuracion_umbrales' %}" class="user-dropdown-item">🎯 Umbrales (Global)</a>
-                    <a href="{% url 'auto_betting:cron_schedules' %}" class="user-dropdown-item">⏰ Horarios (Cron)</a>
-                    <a href="{% url 'inspector:lista' %}" class="user-dropdown-item">🔎 Inspector</a>
-                    <a href="{% url 'notificaciones:whatsapp_landing' %}" class="user-dropdown-item">📱 WhatsApp</a>
+                    {% if menu_permisos.pred_dashboard or menu_permisos.pred_nueva or menu_permisos.pred_historial or menu_permisos.pred_mis_apuestas %}
+                    <div class="user-dropdown-group">
+                        <button type="button" class="user-dropdown-group-btn" aria-expanded="false">📊 Predicciones <span class="group-caret">▸</span></button>
+                        <div class="user-dropdown-group-items">
+                            {% if menu_permisos.pred_dashboard %}<a href="{% url 'ai_predictions:dashboard' %}" class="user-dropdown-item">📊 Dashboard</a>{% endif %}
+                            {% if menu_permisos.pred_nueva %}<a href="{% url 'ai_predictions:prediction_form' %}" class="user-dropdown-item">🔮 Predicciones</a>{% endif %}
+                            {% if menu_permisos.pred_historial %}<a href="{% url 'ai_predictions:prediction_history' %}" class="user-dropdown-item">🕘 Historial</a>{% endif %}
+                            {% if menu_permisos.pred_mis_apuestas %}<a href="{% url 'ai_predictions:mis_apuestas' %}" class="user-dropdown-item">🎟️ Mis apuestas</a>{% endif %}
+                        </div>
+                    </div>
                     {% endif %}
+                    {% if menu_permisos.nba_prediccion or menu_permisos.nba_valor or menu_permisos.nba_dashboard or menu_permisos.mlb_prediccion or menu_permisos.mlb_valor or menu_permisos.mlb_dashboard %}
+                    <div class="user-dropdown-group">
+                        <button type="button" class="user-dropdown-group-btn" aria-expanded="false">🏀⚾ NBA / MLB <span class="group-caret">▸</span></button>
+                        <div class="user-dropdown-group-items">
+                            {% if menu_permisos.nba_prediccion %}<a href="{% url 'basketball_data:prediction_form' %}" class="user-dropdown-item">🏀 Predicción NBA</a>{% endif %}
+                            {% if menu_permisos.nba_valor %}<a href="{% url 'basketball_data:value_finder' %}" class="user-dropdown-item">🏀 Valor NBA</a>{% endif %}
+                            {% if menu_permisos.nba_dashboard %}<a href="{% url 'basketball_data:dashboard' %}" class="user-dropdown-item">🏀 Dashboard NBA</a>{% endif %}
+                            {% if menu_permisos.mlb_prediccion %}<a href="{% url 'baseball_data:prediction_form' %}" class="user-dropdown-item">⚾ Predicción MLB</a>{% endif %}
+                            {% if menu_permisos.mlb_valor %}<a href="{% url 'baseball_data:value_finder' %}" class="user-dropdown-item">⚾ Valor MLB</a>{% endif %}
+                            {% if menu_permisos.mlb_dashboard %}<a href="{% url 'baseball_data:dashboard' %}" class="user-dropdown-item">⚾ Dashboard MLB</a>{% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if menu_permisos.datos_dashboard or menu_permisos.datos_partidos or menu_permisos.datos_importar or menu_permisos.datos_scraper %}
+                    <div class="user-dropdown-group">
+                        <button type="button" class="user-dropdown-group-btn" aria-expanded="false">🗂 Datos <span class="group-caret">▸</span></button>
+                        <div class="user-dropdown-group-items">
+                            {% if menu_permisos.datos_dashboard %}<a href="{% url 'football_data:dashboard' %}" class="user-dropdown-item">📁 Datos</a>{% endif %}
+                            {% if menu_permisos.datos_partidos %}<a href="{% url 'football_data:matches_list' %}" class="user-dropdown-item">📋 Partidos</a>{% endif %}
+                            {% if menu_permisos.datos_importar %}<a href="{% url 'football_data:import' %}" class="user-dropdown-item">⬆️ Importar</a>{% endif %}
+                            {% if menu_permisos.datos_scraper %}<a href="{% url 'ai_predictions:scraper_corners' %}" class="user-dropdown-item">🤖 Scraper</a>{% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if menu_permisos.ap_value or menu_permisos.ap_betplay or menu_permisos.ap_paperbet or menu_permisos.ap_config %}
+                    <div class="user-dropdown-group">
+                        <button type="button" class="user-dropdown-group-btn" aria-expanded="false">🎰 Apuestas & Paperbet <span class="group-caret">▸</span></button>
+                        <div class="user-dropdown-group-items">
+                            {% if menu_permisos.ap_value %}<a href="{% url 'value_betting:dashboard' %}" class="user-dropdown-item">💰 Value Bets</a>{% endif %}
+                            {% if menu_permisos.ap_betplay %}<a href="{% url 'auto_betting:historial' %}" class="user-dropdown-item">🎰 Apuestas BetPlay</a>{% endif %}
+                            {% if menu_permisos.ap_paperbet %}<a href="{% url 'auto_betting:paperbet' %}" class="user-dropdown-item">📄 Paperbet (Motores)</a>{% endif %}
+                            {% if menu_permisos.ap_paperbet %}<a href="{% url 'auto_betting:paperparleys' %}" class="user-dropdown-item">🧾 Paperparleys</a>{% endif %}
+                            {% if menu_permisos.ap_config %}<a href="{% url 'auto_betting:configuracion' %}" class="user-dropdown-item">⚙️ Config BetPlay</a>{% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if user.is_superuser %}
+                    <div class="user-dropdown-group">
+                        <button type="button" class="user-dropdown-group-btn" aria-expanded="false">🛠 Administración <span class="group-caret">▸</span></button>
+                        <div class="user-dropdown-group-items">
+                            <a href="{% url 'cuentas:panel_usuarios' %}" class="user-dropdown-item">👥 Usuarios</a>
+                            <a href="{% url 'auto_betting:configuracion_umbrales' %}" class="user-dropdown-item">🎯 Umbrales (Global)</a>
+                            <a href="{% url 'auto_betting:configuracion_v2' %}" class="user-dropdown-item">🧭 Filtro V2 (Real)</a>
+                            <a href="{% url 'auto_betting:cron_schedules' %}" class="user-dropdown-item">⏰ Horarios (Cron)</a>
+                            <a href="{% url 'inspector:lista' %}" class="user-dropdown-item">🔎 Inspector</a>
+                            <a href="{% url 'notificaciones:whatsapp_landing' %}" class="user-dropdown-item">📱 WhatsApp</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <a href="{% url 'cuentas:configuracion_cuenta' %}" class="user-dropdown-item">👤 Mi cuenta</a>
                     <div class="user-dropdown-divider"></div>
                     <a href="{% url 'cuentas:logout' %}" class="user-dropdown-item user-dropdown-item-danger">⏻ Salir</a>
                 </div>
@@ -58,21 +119,42 @@ Requiere: contexto 'user', 'navbar_balance'/'navbar_balance_negativo' (context p
     var btn = document.getElementById('userMenuBtn');
     var menu = document.getElementById('userDropdown');
     if (!btn || !menu) return;
+
+    function collapseGroups() {
+        menu.querySelectorAll('.user-dropdown-group.open').forEach(function(g) {
+            g.classList.remove('open');
+            var b = g.querySelector('.user-dropdown-group-btn');
+            if (b) b.setAttribute('aria-expanded', 'false');
+        });
+    }
+
     btn.addEventListener('click', function(e) {
         e.stopPropagation();
         var isOpen = menu.classList.toggle('open');
         btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        if (!isOpen) collapseGroups();
     });
+
+    menu.querySelectorAll('.user-dropdown-group-btn').forEach(function(g) {
+        g.addEventListener('click', function() {
+            var grp = g.parentElement;
+            var isOpen = grp.classList.toggle('open');
+            g.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    });
+
     document.addEventListener('click', function(e) {
         if (!menu.contains(e.target) && !btn.contains(e.target)) {
             menu.classList.remove('open');
             btn.setAttribute('aria-expanded', 'false');
+            collapseGroups();
         }
     });
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             menu.classList.remove('open');
             btn.setAttribute('aria-expanded', 'false');
+            collapseGroups();
         }
     });
 })();

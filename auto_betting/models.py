@@ -7,6 +7,34 @@ from django.db import models
 from django.utils import timezone
 
 
+class BettingFilterV2(models.Model):
+    """
+    Filtro V2 (2026-10-03): regla de apuestas en dinero real.
+
+    Solo deja pasar combinaciones liga × mercado × día con ROI positivo
+    observado (backtest walk-forward motores de producción + sistema real).
+    Texto editable (una regla por línea: `liga | mercado | días`) desde
+    /auto-betting/configuracion/v2/. Singleton (pk=1).
+    """
+
+    activo = models.BooleanField(default=True, verbose_name="Filtro V2 activo")
+    reglas = models.TextField(blank=True, default="", verbose_name="Reglas (liga | mercado | días)")
+    actualizado = models.DateTimeField(auto_now=True)
+    actualizado_por = models.CharField(max_length=120, blank=True, default="")
+
+    class Meta:
+        verbose_name = "Filtro V2 (liga × mercado × día)"
+        verbose_name_plural = "Filtro V2"
+
+    def __str__(self):
+        return f"Filtro V2 {'ON' if self.activo else 'OFF'} ({len((self.reglas or '').splitlines())} líneas)"
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1, defaults={'activo': True})
+        return obj
+
+
 class AutoBetConfig(models.Model):
     """Configuración del auto-betting (una por usuario)."""
 
@@ -77,6 +105,11 @@ class MarketFilterConfig(models.Model):
     goals_over_enabled = models.BooleanField(default=True, verbose_name="Goles Over — Activo")
     goals_over_min_ev = models.FloatField(default=0.15, verbose_name="Goles Over — EV mínimo")
     goals_over_min_cuota = models.FloatField(default=0.0, verbose_name="Goles Over — Cuota mínima (0=usa global)")
+    # 2026-10-01 (ROI admin): tope de línea para Goles Over. Evidencia real admin:
+    # línea 2.5 ROI +16.7% (n=60), línea 3.5 −12.2% (n=43). P3b descalibró
+    # goals_over por la brecha de 3.5 (+17.9pp); con tope 2.5 la brecha es +5.1pp.
+    goals_over_min_line = models.FloatField(default=0.0, verbose_name="Goles Over — Línea mínima")
+    goals_over_max_line = models.FloatField(default=0.0, verbose_name="Goles Over — Línea máxima (0=sin tope)")
     goals_under_min_p = models.FloatField(default=0.54, verbose_name="Goles Under — P mínima")
     goals_under_min_confidence = models.FloatField(default=0.35, verbose_name="Goles Under — Confianza mínima")
     goals_under_enabled = models.BooleanField(default=True, verbose_name="Goles Under — Activo")
@@ -142,6 +175,17 @@ class MarketFilterConfig(models.Model):
     btts_no_min_ev = models.FloatField(default=0.0, verbose_name="BTTS No — EV mínimo")
     btts_no_min_cuota = models.FloatField(default=0.0, verbose_name="BTTS No — Cuota mínima (0=usa global)")
 
+    # Resultado Final 1X2 — motor x12_v2 migrado del paperbet (2026-10-03).
+    # La compuerta por defecto replica EXACTAMENTE la del ROI en papel:
+    # P >= 0.45, edge >= 5pp vs fair devig (constante MIN_EDGE_VS_MARKET) y
+    # cuota >= 1.80. La cuota mínima de este submercado es parte de la
+    # estrategia: reemplaza el piso per-user SOLO para x12.
+    x12_min_p = models.FloatField(default=0.45, verbose_name="Resultado Final (x12) — P mínima")
+    x12_min_confidence = models.FloatField(default=0.35, verbose_name="Resultado Final (x12) — Confianza mínima")
+    x12_enabled = models.BooleanField(default=True, verbose_name="Resultado Final (x12) — Activo")
+    x12_min_ev = models.FloatField(default=0.0, verbose_name="Resultado Final (x12) — EV mínimo")
+    x12_min_cuota = models.FloatField(default=1.80, verbose_name="Resultado Final (x12) — Cuota mínima")
+
     # ── Controles globales (auditoría 2026-08-23) ──
     cuota_minima_global = models.FloatField(
         default=2.5, verbose_name="Cuota mínima global",
@@ -183,6 +227,7 @@ class MarketFilterConfig(models.Model):
                 'min_p': self.goals_over_min_p, 'min_confidence': self.goals_over_min_confidence,
                 'enabled': self.goals_over_enabled, 'min_ev': self.goals_over_min_ev,
                 'min_cuota': self.goals_over_min_cuota,
+                'min_line': self.goals_over_min_line, 'max_line': self.goals_over_max_line,
             },
             'goals_under': {
                 'min_p': self.goals_under_min_p, 'min_confidence': self.goals_under_min_confidence,
@@ -232,6 +277,11 @@ class MarketFilterConfig(models.Model):
                 'min_p': self.btts_no_min_p, 'min_confidence': self.btts_no_min_confidence,
                 'enabled': self.btts_no_enabled, 'min_ev': self.btts_no_min_ev,
                 'min_cuota': self.btts_no_min_cuota,
+            },
+            'x12': {
+                'min_p': self.x12_min_p, 'min_confidence': self.x12_min_confidence,
+                'enabled': self.x12_enabled, 'min_ev': self.x12_min_ev,
+                'min_cuota': self.x12_min_cuota,
             },
         }
 
@@ -288,6 +338,15 @@ class AutoBet(models.Model):
     confidence = models.FloatField(null=True, blank=True, verbose_name="Confianza (%)")
     edge = models.FloatField(verbose_name="Edge (%)")
     ev = models.FloatField(verbose_name="EV")
+
+    # Opinión IA INFORMATIVA sobre apuestas reales (2026-10-07): se registra
+    # después de colocar en BetPlay (LLM_MODEL_REAL, default gpt-5.6-luna) y
+    # NUNCA bloquea ni filtra. NULL = sin opinión (deshabilitada o fallo).
+    llm_verdict = models.BooleanField(null=True, blank=True, verbose_name="Veredicto IA")
+    llm_confidence = models.IntegerField(null=True, blank=True, verbose_name="Confianza IA (%)")
+    llm_reason = models.TextField(blank=True, default="", verbose_name="Motivo IA")
+    llm_model = models.CharField(max_length=60, blank=True, default="", verbose_name="Modelo IA")
+    llm_asked_at = models.DateTimeField(null=True, blank=True, verbose_name="IA consultada el")
 
     # Resultado de la apuesta en BetPlay
     coupon_ref = models.BigIntegerField(null=True, blank=True, verbose_name="Coupon Ref")
@@ -464,6 +523,20 @@ class CronSchedule(models.Model):
         ('api_football_backfill', 'Backfill 2 temporadas (reset cuota 00:00 UTC)'),
         ('check_betplay_tokens', 'Verificación de tickets BetPlay'),
         ('inspect_bets', 'Inspector de apuestas (verificación de liquidaciones)'),
+        ('run_paper_bets_basket', 'Paperbet baloncesto 1Q+2Q (recolectar picks)'),
+        ('run_paper_bets_basket_gated', 'Paperbet gated basket 1Q+2Q (solo compuerta)'),
+        ('run_basket_1q2q_bets', 'Basket 1Q+2Q real (dinero real, ligas whitelist)'),
+        ('score_paper_bets_basket', 'Paperbet baloncesto 1Q+2Q (liquidar)'),
+        ('train_basket_models', 'Entrenar modelos MCO de baloncesto (API-Sports)'),
+        ('run_paper_trades_fx', 'Papertrading FX Deriv (MT5 Quant Lab)'),
+        ('run_paper_bets_ou', 'Paperbet OU al descanso (modelo EUROPA/NBA — picks)'),
+        ('score_paper_bets_ou', 'Paperbet OU al descanso (liquidación respaldo)'),
+        ('calibrar_ou', 'Calibración motor OU descanso (hoja Patron)'),
+        ('backfill_ou_sharp', 'Backfill líneas OU del descanso (OddsPapi)'),
+        ('reporte_ligas_ou', 'Reporte diario de ligas/compuertas OU descanso'),
+        ('ask_llm_real_ventana', 'Opinión IA apuestas reales (ventana T-X antes del inicio)'),
+        ('paperparleys', 'Paperparleys (generar+liquidar EV>=1.05, papel)'),
+        ('real_parleys', 'Parleys reales (motor independiente)'),
     ]
 
     tarea = models.CharField(max_length=64, unique=True, choices=TAREA_CHOICES, verbose_name="Tarea")
@@ -500,6 +573,9 @@ class CronSchedule(models.Model):
             ('capture_closing_odds', 0, 0, 15, True, 'Snapshots para CLV (cada 15 min)'),
             ('check_betplay_tokens', 3, 0, 0, True, 'Verificación tickets BetPlay (03:00, 11:00, 18:00 UTC)'),
             ('inspect_bets', 0, 0, 360, True, 'Inspector: verifica liquidaciones (revisa 24h atrás) cada 6h (00/06/12/18 UTC)'),
+            ('reporte_ligas_ou', 11, 0, 0, True, 'Reporte diario de ligas/compuertas del motor OU descanso (11:00 UTC)'),
+            ('ask_llm_real_ventana', 0, 0, 5, True, 'Opinión IA de apuestas reales a T-45 (configurable en umbrales) — cada 5 min'),
+            ('paperparleys', 0, 0, 60, True, 'Paperparleys: generar + liquidar parlays en papel (cada 60 min)'),
         ]
         for nombre, hora, minuto, cada, enabled, desc in defaults:
             obj, created = cls.objects.get_or_create(
@@ -624,14 +700,25 @@ class PaperBet(models.Model):
     motor = models.CharField(max_length=40, blank=True)
     seleccion = models.CharField(max_length=120)
     linea = models.FloatField(null=True, blank=True)
+    diferencia = models.FloatField(null=True, blank=True)  # Δ = predicción − línea (pts, trazabilidad)
     cuota = models.FloatField(null=True, blank=True)
     prob = models.FloatField(null=True, blank=True)      # probabilidad calibrada del motor
     ev = models.FloatField(null=True, blank=True)        # prob*cuota - 1
     closing_odds = models.FloatField(null=True, blank=True)  # cuota de cierre (CLV)
+    closing_linea = models.FloatField(null=True, blank=True)  # línea vista en el cierre (CLV del básquet)
+    # Pinnacle (The Odds API) — solo recolección de datos, no interviene en decisiones.
+    pin_pregame_linea = models.FloatField(null=True, blank=True)   # total pregame de Pinnacle
+    pin_break_linea = models.FloatField(null=True, blank=True)     # total de Pinnacle en 2Q→3Q
+    pin_break_at = models.DateTimeField(null=True, blank=True)     # cuándo se capturó el dato del descanso
     stake = models.IntegerField(default=10000)           # COP virtuales
+    # Stake Kelly (en unidades del bankroll de la config), motor basket_ou.
+    # El resultado principal del paper es 1 u plana (campo `stake`).
+    stake_kelly = models.FloatField(null=True, blank=True)
     llm_verdict = models.BooleanField(null=True, blank=True)   # True=aprobado, False=rechazado, None=no evaluado
     llm_reason = models.TextField(blank=True, default='')      # justificación del LLM
     llm_model = models.CharField(max_length=60, blank=True, default='')
+    # Confianza declarada por la IA (0-100), p. ej. la opinión de Luna en córners.
+    llm_confidence = models.IntegerField(null=True, blank=True)
     estado = models.CharField(max_length=8, choices=ESTADO_CHOICES, default='OPEN', db_index=True)
     resultado_real = models.CharField(max_length=20, blank=True)   # ej. '2-1' / 'Sí' / 'Home'
     payout = models.FloatField(null=True, blank=True)
@@ -696,3 +783,624 @@ class PaperParlay(models.Model):
     @property
     def resumen(self):
         return ' + '.join(f"{l.get('home','?')[:10]} vs {l.get('away','?')[:10]} ({l.get('seleccion','?')})" for l in (self.legs or []))
+
+
+class BasketSample(models.Model):
+    """Muestra de entrenamiento del motor basket_1q2q: un partido acabado.
+
+    Cuartos = suma de AMBOS equipos. `evento_clave` = 'liga|id_api' para no
+    repetir descargas.
+    """
+    liga = models.CharField(max_length=64, db_index=True)
+    fecha = models.DateField(null=True, blank=True)
+    q1 = models.FloatField()
+    q2 = models.FloatField()
+    q3 = models.FloatField(null=True, blank=True)
+    q4 = models.FloatField(null=True, blank=True)
+    total = models.FloatField()                       # final, con prórroga
+    partido = models.CharField(max_length=200, blank=True, default='')
+    fuente = models.CharField(max_length=80, blank=True, default='')
+    evento_clave = models.CharField(max_length=160, unique=True)
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Muestra baloncesto'
+        verbose_name_plural = 'Muestras baloncesto'
+        indexes = [models.Index(fields=['liga', 'fecha'])]
+
+    def __str__(self):
+        return f'{self.liga} · {self.partido} ({self.total})'
+
+
+class BasketModel(models.Model):
+    """Modelo MCO por liga: TOTAL = b0 + b1·(1Q) + b2·(2Q) — motor basket_1q2q."""
+    liga = models.CharField(max_length=64, unique=True)
+    origen = models.CharField(max_length=80, blank=True, default='')
+    n = models.IntegerField(default=0)
+    b0 = models.FloatField(default=0.0)
+    b1 = models.FloatField(default=0.0)
+    b2 = models.FloatField(default=0.0)
+    a0 = models.FloatField(default=0.0)              # modelo solo-1Q (FORECAST)
+    a1 = models.FloatField(default=0.0)
+    r2_dos = models.FloatField(default=0.0)
+    r2_uno = models.FloatField(default=0.0)
+    rmse_dos = models.FloatField(default=0.0)
+    rmse_uno = models.FloatField(default=0.0)
+    rmse_naive = models.FloatField(default=0.0)
+    rmse_test_dos = models.FloatField(default=0.0)   # holdout (se usa en Φ)
+    rmse_test_uno = models.FloatField(default=0.0)
+    rmse_test_naive = models.FloatField(default=0.0)
+    media_total = models.FloatField(default=0.0)
+    media_1q = models.FloatField(default=0.0)
+    media_2q = models.FloatField(default=0.0)
+    fecha_min = models.DateField(null=True, blank=True)
+    fecha_max = models.DateField(null=True, blank=True)
+    entrenado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Modelo baloncesto (MCO)'
+        verbose_name_plural = 'Modelos baloncesto (MCO)'
+        ordering = ['liga']
+
+    def __str__(self):
+        return f'{self.liga} (n={self.n}, RMSE test {self.rmse_test_dos:.1f})'
+
+
+class BasketMarketSnapshot(models.Model):
+    """Snapshot as-of del mercado de un partido de baloncesto en el descanso 2Q→3Q.
+
+    Se guarda una fila por partido y por pasada del bot (cada 2 min) mientras
+    el partido está en ventana: línea y cuotas completas del mercado "Total de
+    puntos - Prórroga incluida". Es la base point-in-time del backtest honesto
+    (CLV, benchmark devig, camino de la línea) y NUNCA se reconstruye desde
+    fuentes actuales.
+    """
+    evento_id = models.CharField(max_length=30, db_index=True)
+    capturado_en = models.DateTimeField(db_index=True)
+    start_time = models.DateTimeField(null=True, blank=True)
+    liga = models.CharField(max_length=120, blank=True, default='')
+    clave_liga = models.CharField(max_length=64, blank=True, default='', db_index=True)
+    home_team = models.CharField(max_length=120, blank=True, default='')
+    away_team = models.CharField(max_length=120, blank=True, default='')
+    q1 = models.FloatField(null=True, blank=True)
+    q2 = models.FloatField(null=True, blank=True)
+    period_id = models.CharField(max_length=20, blank=True, default='')
+    linea = models.FloatField(null=True, blank=True)
+    cuota_over = models.FloatField(null=True, blank=True)
+    cuota_under = models.FloatField(null=True, blank=True)
+    over_abierta = models.BooleanField(default=False)
+    under_abierta = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = 'Snapshot de mercado baloncesto'
+        verbose_name_plural = 'Snapshots de mercado baloncesto'
+        indexes = [models.Index(fields=['evento_id', 'capturado_en'])]
+
+    def __str__(self):
+        return (f'{self.home_team} vs {self.away_team} · {self.linea} '
+                f'O={self.cuota_over} U={self.cuota_under}')
+
+
+class PinnacleSnapshot(models.Model):
+    """Dato de Pinnacle (The Odds API) para un partido NBA — solo datos.
+
+    Una fila por evento y tipo: `pregame` (total antes del partido) y `break`
+    (total live capturado en el descanso 2Q→3Q). Alimenta las columnas
+    P. PRE / P. 2Q→3Q del paperbet de baloncesto. No interviene en ninguna
+    decisión de apuesta.
+    """
+    TIPO_CHOICES = [('pregame', 'Prepartido'), ('break', 'Descanso 2Q→3Q')]
+
+    tipo = models.CharField(max_length=8, choices=TIPO_CHOICES, db_index=True)
+    sport_key = models.CharField(max_length=32, db_index=True)
+    api_event_id = models.CharField(max_length=64, db_index=True)
+    kambi_event_id = models.CharField(max_length=30, blank=True, default='', db_index=True)
+    home_team = models.CharField(max_length=120, blank=True, default='')
+    away_team = models.CharField(max_length=120, blank=True, default='')
+    liga = models.CharField(max_length=120, blank=True, default='')
+    commence_time = models.DateTimeField(null=True, blank=True)
+    capturado_en = models.DateTimeField(db_index=True)
+    linea = models.FloatField(null=True, blank=True)
+    cuota_over = models.FloatField(null=True, blank=True)
+    cuota_under = models.FloatField(null=True, blank=True)
+    market_last_update = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Snapshot Pinnacle (baloncesto)'
+        verbose_name_plural = 'Snapshots Pinnacle (baloncesto)'
+        unique_together = [('api_event_id', 'tipo')]
+        indexes = [
+            models.Index(fields=['kambi_event_id', 'tipo']),
+            models.Index(fields=['tipo', 'capturado_en']),
+        ]
+
+    def __str__(self):
+        return (f'[{self.tipo}] {self.home_team} vs {self.away_team} · '
+                f'{self.linea} O={self.cuota_over} U={self.cuota_under}')
+
+
+class PinnacleCallLog(models.Model):
+    """Auditoría de las llamadas a The Odds API del recolector de baloncesto
+    (créditos gastados/restantes por llamada). Solo datos."""
+    capturado_en = models.DateTimeField(db_index=True)
+    sport_key = models.CharField(max_length=32)
+    tipo = models.CharField(max_length=8)
+    ok = models.BooleanField(default=False)
+    eventos = models.IntegerField(default=0)
+    creditos_restantes = models.IntegerField(null=True, blank=True)
+    detalle = models.CharField(max_length=200, blank=True, default='')
+
+    class Meta:
+        verbose_name = 'Llamada Pinnacle (baloncesto)'
+        verbose_name_plural = 'Llamadas Pinnacle (baloncesto)'
+        indexes = [models.Index(fields=['sport_key', 'tipo', 'capturado_en'])]
+
+    def __str__(self):
+        return (f'[{self.tipo}] {self.sport_key} ok={self.ok} '
+                f'eventos={self.eventos} restantes={self.creditos_restantes}')
+
+
+class BasketOuShadow(models.Model):
+    """Decisión SHADOW del motor Over/Under al descanso (`basket_ou`).
+
+    Una fila por partido (dedup por evento), con el último snapshot válido del
+    descanso. Se guarda SIEMPRE, aunque la decisión sea NO APOSTAR (evita el
+    sesgo de selección). Incluye la liquidación con stake plano de 1 u.
+    """
+    evento_id = models.CharField(max_length=30, unique=True)
+    creado = models.DateTimeField(auto_now_add=True)
+    actualizado = models.DateTimeField(auto_now=True)
+    start_time = models.DateTimeField(null=True, blank=True)
+    liga = models.CharField(max_length=120, blank=True, default='')
+    clave_liga = models.CharField(max_length=64, blank=True, default='', db_index=True)
+    cfg = models.CharField(max_length=64, blank=True, default='')
+    home_team = models.CharField(max_length=120, blank=True, default='')
+    away_team = models.CharField(max_length=120, blank=True, default='')
+    q1h = models.FloatField(null=True, blank=True)
+    q1a = models.FloatField(null=True, blank=True)
+    q2h = models.FloatField(null=True, blank=True)
+    q2a = models.FloatField(null=True, blank=True)
+    linea = models.FloatField(null=True, blank=True)
+    odds_over = models.FloatField(null=True, blank=True)
+    odds_under = models.FloatField(null=True, blank=True)
+    margen = models.FloatField(null=True, blank=True)
+    proy = models.FloatField(null=True, blank=True)
+    diff = models.FloatField(null=True, blank=True)
+    sigma = models.FloatField(null=True, blank=True)
+    p_over = models.FloatField(null=True, blank=True)
+    p_under = models.FloatField(null=True, blank=True)
+    ev_over = models.FloatField(null=True, blank=True)
+    ev_under = models.FloatField(null=True, blank=True)
+    lado = models.CharField(max_length=8, blank=True, default='')
+    p_side = models.FloatField(null=True, blank=True)
+    ev_side = models.FloatField(null=True, blank=True)
+    odds_side = models.FloatField(null=True, blank=True)
+    stake_kelly = models.FloatField(null=True, blank=True)   # unidades del bankroll
+    filtros = models.JSONField(default=dict, blank=True)
+    decision = models.CharField(max_length=20, blank=True, default='')
+    cfg_version = models.CharField(max_length=16, blank=True, default='')
+    cal_version = models.CharField(max_length=16, blank=True, default='')
+    n_snapshots = models.IntegerField(default=0)
+    total_reg = models.FloatField(null=True, blank=True)
+    total_ot = models.FloatField(null=True, blank=True)
+    resultado = models.CharField(max_length=8, blank=True, default='')  # GANA/PIERDE/PUSH
+    ganancia_u = models.FloatField(null=True, blank=True)    # con 1 u plana
+    settled_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Shadow OU descanso'
+        verbose_name_plural = 'Shadows OU descanso'
+        indexes = [models.Index(fields=['cfg', 'creado'])]
+
+    def __str__(self):
+        return (f'[OU] {self.home_team} vs {self.away_team} — '
+                f'{self.decision} ({self.linea})')
+
+
+class BasketOuCalib(models.Model):
+    """Calibración vigente del motor OU (hoja Patron) por config/liga."""
+    cfg = models.CharField(max_length=64, db_index=True)
+    calculada_en = models.DateTimeField(default=timezone.now)
+    n = models.IntegerField(default=0)
+    pct_1 = models.FloatField(default=0.25)
+    pct_2 = models.FloatField(default=0.25)
+    pct_3 = models.FloatField(default=0.25)
+    pct_4 = models.FloatField(default=0.25)
+    league_mean = models.FloatField(default=0.0)
+    sigma = models.FloatField(default=0.0)
+    sigma_fuente = models.CharField(max_length=8, default='default')
+    detalles = models.JSONField(default=dict, blank=True)
+    cfg_version = models.CharField(max_length=16, blank=True, default='')
+    congelada = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = 'Calibración OU descanso'
+        verbose_name_plural = 'Calibraciones OU descanso'
+        ordering = ['-calculada_en']
+
+    def __str__(self):
+        return (f'{self.cfg} n={self.n} sigma={self.sigma:.2f} '
+                f'({self.calculada_en:%Y-%m-%d %H:%M})')
+
+
+class BasketOuSharp(models.Model):
+    """Línea del descanso reconstruida del histórico real de casas (OddsPapi).
+
+    Una fila por partido: cuartos con desglose local/visitante, línea y cuotas
+    de BetPlay y Pinnacle justo antes del 3Q. Base del replay/backtest del
+    motor OU y de la comparación vs línea sharp. Solo datos.
+    """
+    api_fixture_id = models.CharField(max_length=40, unique=True)
+    fuente = models.CharField(max_length=16, default='oddspapi')
+    torneo = models.CharField(max_length=64, blank=True, default='')
+    clave_liga = models.CharField(max_length=64, blank=True, default='', db_index=True)
+    cfg = models.CharField(max_length=16, blank=True, default='')
+    home_team = models.CharField(max_length=120, blank=True, default='')
+    away_team = models.CharField(max_length=120, blank=True, default='')
+    start_time = models.DateTimeField(null=True, blank=True)
+    t_descanso = models.DateTimeField(null=True, blank=True)   # fin del 2Q
+    t_q3 = models.DateTimeField(null=True, blank=True)         # arranque del 3Q
+    q1h = models.FloatField(null=True, blank=True)
+    q1a = models.FloatField(null=True, blank=True)
+    q2h = models.FloatField(null=True, blank=True)
+    q2a = models.FloatField(null=True, blank=True)
+    q3 = models.FloatField(null=True, blank=True)
+    q4 = models.FloatField(null=True, blank=True)
+    total_reg = models.FloatField(null=True, blank=True)
+    total_ot = models.FloatField(null=True, blank=True)
+    linea = models.FloatField(null=True, blank=True)            # BetPlay
+    odds_over = models.FloatField(null=True, blank=True)
+    odds_under = models.FloatField(null=True, blank=True)
+    pin_linea = models.FloatField(null=True, blank=True)        # Pinnacle (sharp)
+    pin_over = models.FloatField(null=True, blank=True)
+    pin_under = models.FloatField(null=True, blank=True)
+    betplay_evento_id = models.CharField(max_length=30, blank=True, default='',
+                                         db_index=True)
+    capturado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Línea OU descanso (histórico)'
+        verbose_name_plural = 'Líneas OU descanso (histórico)'
+        indexes = [models.Index(fields=['clave_liga', 'start_time'])]
+
+    def __str__(self):
+        return (f'{self.clave_liga} · {self.home_team} vs {self.away_team} '
+                f'({self.linea})')
+
+
+class FxPaperTrade(models.Model):
+    """Operación paper de FX/CFD (motor `fx_deriv`, MT5 Quant Lab).
+
+    Una fila por entrada; se completa al cerrar (TP/SL/canal). `t_signal` es la
+    epoch de la barra de señal y con `estrategia` forma la clave de deduplicación
+    (una entrada por señal y estrategia). Todo es papel: USD virtuales.
+    """
+    ESTRATEGIA_CHOICES = [
+        ('mrga_h1', 'MRGA EURUSD H1 (TP35/SL10)'),
+        ('mrga_m5', 'MRGA EURUSD M5 (TP25/SL10)'),
+        ('donchian_xau_h4', 'Donchian XAUUSD H4 (20/10, 2xATR)'),
+    ]
+    ESTADO_CHOICES = [('OPEN', 'Abierta'), ('CLOSED', 'Cerrada')]
+    MOTIVO_CHOICES = [
+        ('TP', 'Take profit'), ('TP_GAP', 'Take profit (gap)'),
+        ('SL', 'Stop loss'), ('SL_GAP', 'Stop loss (gap)'),
+        ('CHANNEL', 'Canal reverso'),
+    ]
+
+    estrategia = models.CharField(max_length=20, choices=ESTRATEGIA_CHOICES, db_index=True)
+    simbolo = models.CharField(max_length=12)
+    direccion = models.SmallIntegerField()          # 1 = long, -1 = short
+    t_signal = models.BigIntegerField()             # epoch de la barra de señal (dedupe)
+    t_entrada = models.DateTimeField()
+    precio_entrada = models.FloatField()
+    sl = models.FloatField()
+    tp = models.FloatField(null=True, blank=True)
+    lots = models.FloatField()
+    estado = models.CharField(max_length=8, choices=ESTADO_CHOICES, default='OPEN', db_index=True)
+    t_salida = models.DateTimeField(null=True, blank=True)
+    precio_salida = models.FloatField(null=True, blank=True)
+    motivo = models.CharField(max_length=12, blank=True, default='')
+    pnl = models.FloatField(null=True, blank=True)          # USD
+    balance_post = models.FloatField(null=True, blank=True)  # balance tras cerrar
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Operación paper FX'
+        verbose_name_plural = 'Operaciones paper FX'
+        unique_together = [('estrategia', 't_signal')]
+        indexes = [models.Index(fields=['estrategia', 'estado'])]
+
+    def __str__(self):
+        d = 'LONG' if self.direccion == 1 else 'SHORT'
+        return f'[FX] {self.estrategia} {d} {self.simbolo} @ {self.precio_entrada} ({self.estado})'
+
+    @property
+    def direccion_txt(self):
+        return 'LONG' if self.direccion == 1 else 'SHORT'
+
+    @property
+    def net_usd(self):
+        return self.pnl if self.estado == 'CLOSED' else None
+
+
+class FxEngineState(models.Model):
+    """Estado persistente por estrategia del motor `fx_deriv`.
+
+    `last_bar_t` = epoch de la última barra cerrada procesada (cursor del
+    replay determinista). `trades_today`/`dia_servidor` replican el límite
+    diario del EA. La posición abierta se reconstruye de la fila OPEN de
+    FxPaperTrade (fuente única de verdad).
+    """
+    estrategia = models.CharField(max_length=20, unique=True, choices=FxPaperTrade.ESTRATEGIA_CHOICES)
+    balance = models.FloatField(default=10000.0)
+    last_bar_t = models.BigIntegerField(default=0)
+    trades_today = models.IntegerField(default=0)
+    dia_servidor = models.CharField(max_length=10, blank=True, default='')
+    ultimo_run = models.DateTimeField(null=True, blank=True)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Estado motor paper FX'
+        verbose_name_plural = 'Estados motor paper FX'
+
+    def __str__(self):
+        return f'{self.estrategia} · balance {self.balance:.2f} · last_bar_t {self.last_bar_t}'
+
+
+class LlmRealConfig(models.Model):
+    """Config web de la OPINIÓN IA de las apuestas reales (página de umbrales).
+
+    Controla el job que consulta la IA (única consulta por partido) cuando
+    faltan `anticipacion_min` minutos para el inicio, además del modelo y el
+    endpoint (base URL OpenAI-compatible). La API key NO vive aquí: se guarda
+    en el `.env` del proyecto (permisos 600) y nunca se muestra en la web.
+
+    Solo el admin principal la edita desde /auto-betting/configuracion/umbrales/.
+    """
+    enabled = models.BooleanField(
+        default=True, verbose_name="Opinión IA en apuestas reales")
+    anticipacion_min = models.PositiveSmallIntegerField(
+        default=45, verbose_name="Anticipación de la consulta (min antes del inicio)")
+    modelo = models.CharField(
+        max_length=80, blank=True, default='',
+        verbose_name="Modelo LLM (vacío = LLM_MODEL_REAL del entorno)")
+    base_url = models.CharField(
+        max_length=200, blank=True, default='',
+        verbose_name="Endpoint/base URL (vacío = api.openai.com/v1)")
+    actualizado = models.DateTimeField(auto_now=True)
+    actualizado_por = models.CharField(max_length=200, blank=True, default='')
+
+    class Meta:
+        verbose_name = 'Configuración IA de apuestas reales'
+        verbose_name_plural = 'Configuración IA de apuestas reales'
+
+    def __str__(self):
+        return (f'IA real: {"ON" if self.enabled else "OFF"} · '
+                f'T-{self.anticipacion_min} · {self.modelo or "modelo de entorno"}')
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+
+class LeagueRegistry(models.Model):
+    """Registro de ligas del motor OU descanso (spec de ligas 2026-10-16).
+
+    Cada liga se valida por separado (nunca se mezcla en la calibración).
+    Estados: DISCOVERY (recolectando, sin sombras) -> SHADOW (sombras, sin
+    apuestas) -> PAPER (apuestas paper) -> LIVE (dinero real; SOLO con
+    aprobación humana explícita, nunca automático).
+
+    `cfg_key` referencia una config congelada de `basket_ou.CFG` (EUROPA/NBA);
+    `cfg_json` guarda la config completa para ligas con config propia
+    (provisional o medida). El bot en vivo usa `config_efectiva()`.
+    """
+    ESTADOS = [
+        ('DISCOVERY', 'Discovery (recolectando datos)'),
+        ('SHADOW', 'Shadow (sombras, sin apuestas)'),
+        ('PAPER', 'Paper (apuestas simuladas)'),
+        ('LIVE', 'Live (requiere aprobación humana)'),
+    ]
+    ESTRUCTURAS = [
+        ('FIBA_4x10', 'FIBA 4x10'),
+        ('NBA_4x12', 'NBA 4x12'),
+        ('HALVES_2x20', '2 mitades 2x20'),
+    ]
+
+    league_id = models.CharField(max_length=64, unique=True)   # clave_liga del feed
+    nombre = models.CharField(max_length=120, blank=True, default='')
+    estructura = models.CharField(max_length=16, choices=ESTRUCTURAS,
+                                  default='FIBA_4x10')
+    ot_minutos = models.PositiveSmallIntegerField(default=5)
+    ids_externos = models.JSONField(default=dict, blank=True)
+    estado = models.CharField(max_length=10, choices=ESTADOS,
+                              default='DISCOVERY', db_index=True)
+    cfg_key = models.CharField(max_length=24, blank=True, default='')
+    cfg_json = models.JSONField(default=dict, blank=True)
+    cfg_version = models.CharField(max_length=16, blank=True, default='')
+    notas = models.TextField(blank=True, default='')
+    creado = models.DateTimeField(auto_now_add=True)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Liga del motor OU descanso'
+        verbose_name_plural = 'Ligas del motor OU descanso'
+        ordering = ['league_id']
+
+    def config_efectiva(self) -> dict:
+        """Config vigente de la liga: cfg_json (provisional/medida) o CFG[cfg_key]."""
+        from auto_betting import basket_ou as ou
+        if self.cfg_json:
+            return dict(self.cfg_json)
+        return dict(ou.CFG.get(self.cfg_key) or {})
+
+    def clave_calibracion(self) -> str:
+        """Clave con la que se guarda/lee su calibración (BasketOuCalib.cfg)."""
+        return self.cfg_key or self.league_id
+
+    def __str__(self):
+        return f'{self.league_id} [{self.estado}]'
+
+
+class TeamAlias(models.Model):
+    """Mapeo nombre_proveedor -> team_id interno (spec de ligas §1/§6)."""
+    nombre_proveedor = models.CharField(max_length=160, unique=True)
+    team_id = models.CharField(max_length=64)
+    liga = models.CharField(max_length=64, blank=True, default='')
+    fuente = models.CharField(max_length=40, blank=True, default='')
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Alias de equipo'
+        verbose_name_plural = 'Alias de equipos'
+
+    def __str__(self):
+        return f'{self.nombre_proveedor} -> {self.team_id}'
+
+
+# --------------------------------------------------------------- PAPERPARLEYS
+# Motor de parlays en papel sobre las apuestas reales del motor (AutoBet):
+# recorre los picks de cada día, recalibra la probabilidad del modelo con
+# deciles rodantes (winrate observado de bets resueltas de días ANTERIORES)
+# y genera TODAS las combinaciones de >=2 patas (mismo evento excluido,
+# mercados junk fuera) cuyo EV conjunto >= ev_gate, sin tope de parlays
+# por día. Cada combinación se traza con su corrida de generación (PPGenRun)
+# y sus piernas normalizadas (PPParleyLeg). La liquidación usa el resultado
+# real asentado en AutoBet con reglas de combinada: todas ganan -> pago del
+# producto de cuotas; una pierde -> 0; patas VOID -> la combinada se reduce
+# a las piernas restantes (pago proporcional); sin piernas útiles -> PUSH.
+
+
+class PPConfig(models.Model):
+    """Config del motor paperparleys (singleton pk=1)."""
+
+    ev_gate = models.FloatField(default=1.05, verbose_name="EV mínimo del parlay")
+    max_legs = models.IntegerField(default=6, verbose_name="Patas máximas por parlay")
+    stake = models.IntegerField(default=1000, verbose_name="Stake COP por parlay")
+    min_fit = models.IntegerField(default=50, verbose_name="Mínimo de bets para el fit de deciles")
+    junk_mercados = models.TextField(
+        default="descanso\nprimera parte\ncuotas del partido",
+        verbose_name="Frases de mercado excluidas (una por línea)")
+    notas = models.TextField(blank=True, default="")
+    creado = models.DateTimeField(auto_now_add=True)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Config Paperparleys"
+        verbose_name_plural = "Config Paperparleys"
+
+    def __str__(self):
+        return f"PPConfig EV>={self.ev_gate} patas<={self.max_legs} stake={self.stake}"
+
+
+class PPGenRun(models.Model):
+    """Auditabilidad de cada corrida de generación del motor."""
+
+    MODO_CHOICES = [
+        ('BACKFILL', 'Backfill histórico'),
+        ('MANUAL', 'Manual (manage.py / botón web)'),
+        ('LIVE', 'Programada (cron)'),
+    ]
+    modo = models.CharField(max_length=10, choices=MODO_CHOICES, default='MANUAL', db_index=True)
+    dia = models.DateField(null=True, blank=True, verbose_name='Día generado')
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    ok = models.BooleanField(default=True)
+    error = models.TextField(blank=True, default='')
+    args = models.CharField(max_length=300, blank=True, default='')
+
+    n_fit = models.IntegerField(default=0)
+    n_pool = models.IntegerField(default=0)
+    n_eventos = models.IntegerField(default=0)
+    n_generados = models.IntegerField(default=0)
+    n_skipped = models.IntegerField(default=0, verbose_name='Picks descartados (junk/sin prob)')
+    elapsed_ms = models.IntegerField(default=0)
+
+    fit_edges = models.JSONField(default=list)   # bordes de deciles de predicta_prob
+    fit_rates = models.JSONField(default=list)   # winrate por decil (p_rec)
+    fit_gwr = models.FloatField(null=True, blank=True, verbose_name='Winrate global del fit')
+
+    class Meta:
+        verbose_name = 'Corrida paperparleys'
+        verbose_name_plural = 'Corridas paperparleys'
+        ordering = ['-started_at']
+
+    def __str__(self):
+        return f'{self.modo} {self.dia} · {self.n_generados} parlays ({self.started_at:%m-%d %H:%M})'
+
+
+class PPParley(models.Model):
+    """Parlay en papel generado con los picks reales del motor.
+
+    key = '{dia}|{autobet_ids ordenados}' -> idempotencia entre corridas.
+    """
+    ESTADO_CHOICES = [
+        ('PENDIENTE', 'Pendiente'),
+        ('GANADO', 'Ganado'),
+        ('PERDIDO', 'Perdido'),
+        ('PUSH', 'Push (anulado)'),
+        ('VOID', 'Void total'),
+    ]
+
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                related_name='paper_parleys')
+    dia = models.DateField(db_index=True, verbose_name='Día (Bogotá) de las piernas')
+    key = models.CharField(max_length=300, unique=True, db_index=True)
+    gen_run = models.ForeignKey(PPGenRun, null=True, blank=True, on_delete=models.SET_NULL,
+                                related_name='parlays')
+
+    n_legs = models.IntegerField(db_index=True)
+    cuota_producto = models.FloatField()
+    prob_producto = models.FloatField()
+    ev = models.FloatField()
+    stake = models.IntegerField(default=1000)
+
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='PENDIENTE', db_index=True)
+    payout = models.FloatField(null=True, blank=True)
+    settled_at = models.DateTimeField(null=True, blank=True)
+    nota = models.CharField(max_length=300, blank=True, default="")
+    legs = models.JSONField(default=list)
+
+    creado = models.DateTimeField(auto_now_add=True)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Paperparley'
+        verbose_name_plural = 'Paperparleys'
+        indexes = [models.Index(fields=['usuario', 'dia']),
+                   models.Index(fields=['usuario', 'estado'])]
+
+    def __str__(self):
+        return f'{self.dia} x{self.n_legs} @{self.cuota_producto:.2f} ev={self.ev:.2f} [{self.estado}]'
+
+
+class PPParleyLeg(models.Model):
+    """Pierna normalizada de un paperparley (copia indexada de legs JSON)."""
+
+    parley = models.ForeignKey(PPParley, on_delete=models.CASCADE, related_name='leg_rows')
+    autobet = models.ForeignKey(AutoBet, on_delete=models.PROTECT, related_name='paper_parley_legs')
+    posicion = models.IntegerField(default=0)
+
+    evento_id = models.BigIntegerField(null=True, blank=True)
+    home_team = models.CharField(max_length=200, blank=True, default='')
+    away_team = models.CharField(max_length=200, blank=True, default='')
+    liga = models.CharField(max_length=200, blank=True, default='')
+    mercado = models.CharField(max_length=120)
+    seleccion = models.CharField(max_length=120)
+
+    cuota = models.FloatField()
+    prob = models.FloatField(verbose_name='Prob modelo (%)')
+    p_rec = models.FloatField(verbose_name='Prob recalibrada (decil)')
+    q = models.FloatField(verbose_name='q = p_rec * cuota')
+
+    estado_gen = models.CharField(max_length=10, blank=True, default='')
+    estado_final = models.CharField(max_length=10, blank=True, default='')
+
+    class Meta:
+        verbose_name = 'Pierna paperparley'
+        verbose_name_plural = 'Piernas paperparley'
+        indexes = [models.Index(fields=['autobet']), models.Index(fields=['parley', 'posicion'])]
+
+    def __str__(self):
+        return f'{self.parley_id} #{self.posicion} {self.seleccion} @{self.cuota:.2f}'

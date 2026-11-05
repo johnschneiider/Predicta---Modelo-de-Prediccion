@@ -29,7 +29,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opts):
         cutoff = timezone.now() - timedelta(days=opts['days_back'])
-        open_bets = PaperBet.objects.filter(estado='OPEN', start_time__gte=cutoff)
+        # Los motores de baloncesto (basket_*) se liquidan con API-Sports en
+        # score_paper_bets_basket: este liquidador es SOLO fútbol (API-Football)
+        # y los anularía como "sin cobertura API" a las 40 h.
+        open_bets = (PaperBet.objects.filter(estado='OPEN', start_time__gte=cutoff)
+                     .exclude(motor__startswith='basket_'))
         if not open_bets.exists():
             self.stdout.write('Sin apuestas OPEN.')
             return

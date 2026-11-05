@@ -597,7 +597,7 @@ def _add_candidate(candidates, market, offer, line, side, p, cuota_minima,
                    confidence=None, min_p=0.45, min_confidence=0.35,
                    enabled=True, sub_min_ev=0.0, sub_min_cuota=0.0, calib_cap=0.58,
                    min_line=0.0, max_line=0.0, fair_odds=None,
-                   min_edge_vs_market=MIN_EDGE_VS_MARKET):
+                   min_edge_vs_market=MIN_EDGE_VS_MARKET, precalibrated=False):
     # Submercado apagado desde la config (ej. Córners Under, BTTS No)
     if not enabled:
         return
@@ -624,7 +624,12 @@ def _add_candidate(candidates, market, offer, line, side, p, cuota_minima,
     # Dixon-Coles). Con la P cruda de vuelta, la sobreconfianza regresó:
     # WR real ~37% vs P 55-65% durante 7 días. Vuelve el shrinkage + cap
     # para goles/tiros/córners.
-    p = calibrate_probability(p, cap=calib_cap)
+    # 2026-10-03 (x12_v2): los motores migrados del paperbet ya entregan su
+    # probabilidad CALIBRADA (isotónica + margen) y su ROI se midió así.
+    # Re-calibrarlos aquí introduciría deriva -> `precalibrated=True` salta
+    # el shrinkage. Solo se conserva el clamp numérico.
+    if not precalibrated:
+        p = calibrate_probability(p, cap=calib_cap)
     p = min(0.97, max(0.03, p))
 
     # Filtro primario: P mínima absoluta (hard floor, no negociable)
@@ -791,6 +796,9 @@ def select_bets(markets_data, cuota_minima=2.0, min_p=0.45, min_confidence=0.35,
 
         elif mtype == 'x12':
             probs = md.get('probs') or {}
+            # 2026-10-03 (x12_v2): el motor migrado del paperbet entrega
+            # probabilidades ya calibradas; no se les aplica shrinkage.
+            precal = md.get('precalibrated', False)
             # 2026-09-04 (decisión de John): devigging 1X2 (tres vías)
             c1 = cx = c2 = 0.0
             for offer in odds:
@@ -820,11 +828,17 @@ def select_bets(markets_data, cuota_minima=2.0, min_p=0.45, min_confidence=0.35,
                 fair_odds = (1.0 / fair_p) if fair_p else None
                 eff_min_p, eff_min_conf, eff_enabled, eff_min_ev, eff_min_cuota, eff_min_line, eff_max_line = _resolve_filters(
                     market_filters, market_key, side, min_p, min_confidence)
-                _add_candidate(candidates, md['market'], offer, None, side, p, cuota_minima,
+                # x12_v2: la cuota mínima del submercado (1.80) es parte de la
+                # compuerta exacta del ROI en papel, no un piso global. Se
+                # aplica como suelo efectivo del mercado: si está definida,
+                # reemplaza el piso per-user SOLO para x12 (p.ej. admin con
+                # cuota_minima=2.0 no recorta las picks de 1.80-2.00).
+                cuota_floor = min(cuota_minima, eff_min_cuota) if eff_min_cuota else cuota_minima
+                _add_candidate(candidates, md['market'], offer, None, side, p, cuota_floor,
                               confidence=confidence, min_p=eff_min_p, min_confidence=eff_min_conf,
                               enabled=eff_enabled, sub_min_ev=eff_min_ev, sub_min_cuota=eff_min_cuota,
                               calib_cap=calib_cap, min_line=eff_min_line, max_line=eff_max_line,
-                              fair_odds=fair_odds)
+                              fair_odds=fair_odds, precalibrated=precal)
 
         elif mtype == 'btts':
             p_yes = md.get('p_yes')

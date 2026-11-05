@@ -12,6 +12,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from .forms import FormularioLogin, FormularioRegistro, FormularioCrearUsuario, FormularioEditarUsuario, FormularioCambiarContraseña
+from .menu import grupos_con_estado
 from .models import Usuario, LoginAttempt
 
 # ── Rate limit de login (anti fuerza bruta) ──
@@ -220,6 +221,47 @@ def vista_eliminar_usuario(request, user_id):
         return redirect('cuentas:panel_usuarios')
     
     return render(request, 'cuentas/eliminar_usuario.html', {'usuario': usuario})
+
+@method_decorator(user_passes_test(es_superusuario), name='dispatch')
+class VistaPermisosUsuario(View):
+    """
+    Asigna o deniega el acceso de un usuario a las opciones del menú
+    (navbar). Solo superusuarios. Por defecto todo denegado: el admin marca
+    las opciones permitidas.
+    """
+    def _usuario_o_redirigir(self, request, user_id):
+        usuario = get_object_or_404(Usuario, id=user_id)
+        if usuario.is_superuser:
+            messages.info(request, 'Los superusuarios tienen acceso total; sus permisos de menú no aplican.')
+            return None
+        return usuario
+
+    def get(self, request, user_id):
+        usuario = self._usuario_o_redirigir(request, user_id)
+        if usuario is None:
+            return redirect('cuentas:panel_usuarios')
+        return render(request, 'cuentas/permisos_usuario.html', {
+            'usuario': usuario,
+            'grupos': grupos_con_estado(usuario),
+        })
+
+    def post(self, request, user_id):
+        from .menu import OPCIONES_POR_CODIGO
+        from .models import PermisoMenu
+
+        usuario = self._usuario_o_redirigir(request, user_id)
+        if usuario is None:
+            return redirect('cuentas:panel_usuarios')
+
+        marcados = set(request.POST.getlist('permitido'))
+        for codigo in OPCIONES_POR_CODIGO:
+            PermisoMenu.objects.update_or_create(
+                usuario=usuario, codigo=codigo,
+                defaults={'permitido': codigo in marcados})
+
+        messages.success(request, f'Permisos de menú de {usuario.get_full_name()} actualizados exitosamente.')
+        return redirect('cuentas:permisos_usuario', user_id=usuario.id)
+
 
 @user_passes_test(es_superusuario)
 @require_POST

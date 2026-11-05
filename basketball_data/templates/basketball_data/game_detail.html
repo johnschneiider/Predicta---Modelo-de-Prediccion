@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ game }} — NBA — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+.bb-panel {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.bb-panel h3 {
+    font-family: var(--font-heading); font-size: 1.05rem; color: var(--text-primary);
+    margin: 0 0 1rem; padding-bottom: 0.75rem;
+    border-bottom: 0.5px solid var(--border-primary);
+}
+.bb-scoreline {
+    display: flex; align-items: center; justify-content: center; gap: 2rem;
+    text-align: center; margin-bottom: 1.5rem;
+}
+.bb-scoreline .team { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+.bb-scoreline .pts { font-size: 2.2rem; font-weight: 700; color: var(--accent-primary); }
+.bb-scoreline .vs { color: var(--text-tertiary); }
+.bb-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+.bb-stats {
+    background: var(--bg-primary); border: 0.5px solid var(--border-secondary);
+    border-radius: var(--radius-sm); padding: 1rem;
+}
+.bb-stats h4 { font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 0.75rem; }
+.bb-row { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 0.3rem 0; }
+.bb-row .k { color: var(--text-tertiary); }
+.bb-row .v { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.bb-table-wrap { overflow-x: auto; border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-primary); }
+table.bb-table {
+    width: 100%; border-collapse: collapse; font-size: 0.85rem;
+    background: var(--bg-surface);
+}
+table.bb-table thead th {
+    background: var(--bg-elevated); color: var(--text-tertiary);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    font-size: 0.72rem; padding: 0.7rem 0.6rem; text-align: left;
+    border-bottom: 1px solid var(--border-primary); white-space: nowrap;
+}
+table.bb-table tbody td {
+    padding: 0.55rem 0.6rem; border-bottom: 0.5px solid var(--border-secondary);
+    white-space: nowrap;
+}
+table.bb-table tbody tr:last-child td { border-bottom: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+
+  <div class="page-header">
+    <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-primary);">
+      {{ game.home_team.abbreviation }} vs {{ game.away_team.abbreviation }}
+    </h2>
+    <p class="page-subtitle">{{ game.game_date|date:"d/m/Y" }} · {{ game.season_type }}</p>
+  </div>
+
+  <div class="bb-panel">
+    <div class="bb-scoreline">
+      <div>
+        <div class="team">{{ game.home_team.full_name }}</div>
+        <div class="pts">{% if game.home_points is not None %}{{ game.home_points }}{% else %}—{% endif %}</div>
+      </div>
+      <div class="vs">vs</div>
+      <div>
+        <div class="team">{{ game.away_team.full_name }}</div>
+        <div class="pts">{% if game.away_points is not None %}{{ game.away_points }}{% else %}—{% endif %}</div>
+      </div>
+    </div>
+    {% if game.home_win is not None %}
+      <div style="text-align: center; color: var(--text-secondary); font-size: 0.85rem;">
+        Ganador: {% if game.home_win %}{{ game.home_team.full_name }}{% else %}{{ game.away_team.full_name }}{% endif %}
+        {% if game.total_points is not None %} · Total: {{ game.total_points }} pts{% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="bb-panel">
+    <h3>Estadísticas del partido</h3>
+    <div class="bb-grid2">
+      <div class="bb-stats">
+        <h4>{{ game.home_team.abbreviation }} (Local)</h4>
+        <div class="bb-row"><span class="k">Tiros de campo</span><span class="v">{{ game.home_fgm }}/{{ game.home_fga }} ({{ game.home_fg_pct|floatformat:1 }}%)</span></div>
+        <div class="bb-row"><span class="k">Triples</span><span class="v">{{ game.home_fg3m }}/{{ game.home_fg3a }} ({{ game.home_fg3_pct|floatformat:1 }}%)</span></div>
+        <div class="bb-row"><span class="k">Tiros libres</span><span class="v">{{ game.home_ftm }}/{{ game.home_fta }} ({{ game.home_ft_pct|floatformat:1 }}%)</span></div>
+        <div class="bb-row"><span class="k">Rebotes (Of/Def)</span><span class="v">{{ game.home_oreb }} / {{ game.home_dreb }}</span></div>
+        <div class="bb-row"><span class="k">Asistencias</span><span class="v">{{ game.home_ast }}</span></div>
+        <div class="bb-row"><span class="k">Pérdidas</span><span class="v">{{ game.home_tov }}</span></div>
+      </div>
+      <div class="bb-stats">
+        <h4>{{ game.away_team.abbreviation }} (Visitante)</h4>
+        <div class="bb-row"><span class="k">Tiros de campo</span><span class="v">{{ game.away_fgm }}/{{ game.away_fga }} ({{ game.away_fg_pct|floatformat:1 }}%)</span></div>
+        <div class="bb-row"><span class="k">Triples</span><span class="v">{{ game.away_fg3m }}/{{ game.away_fg3a }} ({{ game.away_fg3_pct|floatformat:1 }}%)</span></div>
+        <div class="bb-row"><span class="k">Tiros libres</span><span class="v">{{ game.away_ftm }}/{{ game.away_fta }} ({{ game.away_ft_pct|floatformat:1 }}%)</span></div>
+        <div class="bb-row"><span class="k">Rebotes (Of/Def)</span><span class="v">{{ game.away_oreb }} / {{ game.away_dreb }}</span></div>
+        <div class="bb-row"><span class="k">Asistencias</span><span class="v">{{ game.away_ast }}</span></div>
+        <div class="bb-row"><span class="k">Pérdidas</span><span class="v">{{ game.away_tov }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bb-panel">
+    <h3>Predicciones sobre este partido</h3>
+    {% if predictions %}
+      <div class="bb-table-wrap">
+        <table class="bb-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Modelo</th>
+              <th>Puntos predichos</th>
+              <th>Over 220</th>
+              <th>Over 230</th>
+              <th>Over 240</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pred in predictions %}
+              <tr>
+                <td>{{ pred.created_at|date:"d/m/Y H:i" }}</td>
+                <td>{{ pred.model_name }}</td>
+                <td>{{ pred.predicted_total_points|floatformat:1 }}</td>
+                <td>{{ pred.over_220_probability|floatformat:2 }}</td>
+                <td>{{ pred.over_230_probability|floatformat:2 }}</td>
+                <td>{{ pred.over_240_probability|floatformat:2 }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">Sin predicciones para este partido.</div>
+    {% endif %}
+  </div>
+
+  <div style="margin-top: 1.5rem;">
+    <a href="{% url 'basketball_data:games_list' %}" style="color: var(--text-tertiary); font-size: 0.85rem; text-decoration: none;">← Volver a partidos</a>
+  </div>
+
+</div>
+{% endblock %}

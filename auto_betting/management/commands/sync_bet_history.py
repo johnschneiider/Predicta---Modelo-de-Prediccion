@@ -53,10 +53,12 @@ class Command(BaseCommand):
             ghosts_msg = f" 👻 {ghosts} registros fantasma eliminados." if ghosts else ""
             snaps = result.get('snapshots', 0)
             snaps_msg = f" 📸 {snaps} snapshots capturados." if snaps else ""
+            estados = result.get('estados_sync', 0)
+            estados_msg = f" 🔄 {estados} estados AutoBet sincronizados." if estados else ""
             self.stdout.write(
                 self.style.SUCCESS(
                     f"   🏁 Historial sincronizado (desde {since_str}): "
                     f"{result['creados']} nuevos, {result['actualizados']} actualizados, "
-                    f"{result['omitidos']} omitidos.{snaps_msg}{ghosts_msg} Total en DB: {result['total']}."
+                    f"{result['omitidos']} omitidos.{snaps_msg}{estados_msg}{ghosts_msg} Total en DB: {result['total']}."
                 )
             )

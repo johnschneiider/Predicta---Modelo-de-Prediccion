@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Promedios de Remates — Value Betting{% endblock %}
+
+{% block extra_head %}
+<style>
+.sh-hero {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: 2.5rem 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.sh-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-primary), var(--warning), var(--danger));
+}
+.sh-hero h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(1.6rem, 5vw, 2.3rem);
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.02em;
+}
+.sh-hero p {
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+    max-width: 640px;
+    margin: 0.25rem auto;
+}
+.sh-hero .sh-meta {
+    display: inline-block;
+    margin-top: 0.75rem;
+    padding: 0.3rem 0.9rem;
+    border-radius: var(--radius-full);
+    background: var(--accent-subtle);
+    color: var(--accent-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.sh-back {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--accent-primary);
+    text-decoration: none;
+}
+.sh-back:hover { text-decoration: underline; }
+
+.sh-table-wrap {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+.sh-table-header {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 0.5px solid var(--border-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.sh-table-header h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+.sh-table-header .badge {
+    background: var(--accent-subtle);
+    color: var(--accent-primary);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+.sh-table-scroll { overflow-x: auto; }
+table.sh-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+table.sh-table th {
+    text-align: left;
+    padding: 0.7rem 1rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 0.5px solid var(--border-primary);
+    white-space: nowrap;
+}
+table.sh-table th.group-home { color: var(--accent-primary); }
+table.sh-table th.group-away { color: var(--warning); }
+table.sh-table th.sub { font-size: 0.68rem; }
+table.sh-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 0.5px solid var(--border-subtle);
+    color: var(--text-secondary);
+    vertical-align: middle;
+}
+table.sh-table tr:hover td { background: var(--bg-overlay); }
+table.sh-table tr:last-child td { border-bottom: none; }
+table.sh-table td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.sh-table td.team {
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+.sh-fav { color: var(--accent-primary); font-weight: 600; }
+.sh-against { color: var(--warning); font-weight: 600; }
+.sh-na { color: var(--text-tertiary); }
+.sh-empty {
+    text-align: center;
+    padding: 2.5rem 2rem;
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+}
+.sh-search {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.sh-search input {
+    flex: 1;
+    min-width: 240px;
+    max-width: 420px;
+    padding: 0.75rem 1.1rem;
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color 0.2s;
+}
+.sh-search input:focus { border-color: var(--accent-border); }
+.sh-search input::placeholder { color: var(--text-tertiary); }
+.sh-search-count {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+}
+.sh-no-results {
+    display: none;
+    text-align: center;
+    padding: 2.5rem 2rem;
+    color: var(--text-tertiary);
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+
+  <a class="sh-back" href="{% url 'value_betting:dashboard' %}">← Volver al dashboard</a>
+
+  <div class="sh-hero">
+    <h1>⚽ PROMEDIOS DE REMATES POR EQUIPO</h1>
+    <p>Remates totales a favor y recibidos, separados por condición: de <strong>local</strong> y de <strong>visitante</strong>.</p>
+    <p>Fuente: partidos con estadísticas de remates · mínimo {{ min_matches }} partidos por condición.</p>
+    <span class="sh-meta">Últimos {{ window_days }} días (desde {{ since|date:"d/m/Y" }}) · {{ total_matches }} partidos analizados</span>
+  </div>
+
+  <div class="sh-search">
+    <input type="text" id="teamSearch" placeholder="🔍 Buscar equipo…" autocomplete="off" spellcheck="false" aria-label="Buscar equipo">
+    <span class="sh-search-count" id="searchCount"></span>
+  </div>
+
+  <div class="sh-no-results" id="shNoResults">Ningún equipo coincide con la búsqueda.</div>
+
+  {% for league in leagues %}
+  <div class="sh-table-wrap">
+    <div class="sh-table-header">
+      <h3>🏆 {{ league.label }}</h3>
+      <span class="badge">{{ league.team_count }} equipos</span>
+    </div>
+    <div class="sh-table-scroll">
+      <table class="sh-table">
+        <thead>
+          <tr>
+            <th rowspan="2">Equipo</th>
+            <th colspan="3" class="group-home">De local</th>
+            <th colspan="3" class="group-away">De visitante</th>
+          </tr>
+          <tr>
+            <th class="sub">PJ</th>
+            <th class="sub">A favor</th>
+            <th class="sub">Recibe</th>
+            <th class="sub">PJ</th>
+            <th class="sub">A favor</th>
+            <th class="sub">Recibe</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in league.teams %}
+          <tr>
+            <td class="team">{{ t.name }}</td>
+            {% if t.home %}
+              <td class="num">{{ t.home.pj }}</td>
+              <td class="num"><span class="sh-fav">{{ t.home.avg_for|floatformat:1 }}</span></td>
+              <td class="num"><span class="sh-against">{{ t.home.avg_against|floatformat:1 }}</span></td>
+            {% else %}
+              <td class="num sh-na">—</td>
+              <td class="num sh-na">—</td>
+              <td class="num sh-na">—</td>
+            {% endif %}
+            {% if t.away %}
+              <td class="num">{{ t.away.pj }}</td>
+              <td class="num"><span class="sh-fav">{{ t.away.avg_for|floatformat:1 }}</span></td>
+              <td class="num"><span class="sh-against">{{ t.away.avg_against|floatformat:1 }}</span></td>
+            {% else %}
+              <td class="num sh-na">—</td>
+              <td class="num sh-na">—</td>
+              <td class="num sh-na">—</td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% empty %}
+  <div class="sh-table-wrap">
+    <div class="sh-empty">No hay partidos con datos de remates en la ventana seleccionada.</div>
+  </div>
+  {% endfor %}
+
+</div>
+
+<script>
+(function () {
+  var input = document.getElementById('teamSearch');
+  var count = document.getElementById('searchCount');
+  var noResults = document.getElementById('shNoResults');
+  if (!input) return;
+
+  var wraps = Array.prototype.slice.call(document.querySelectorAll('.sh-table-wrap'));
+  var norm = function (s) {
+    return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  };
+
+  var total = 0;
+  wraps.forEach(function (w) {
+    var badge = w.querySelector('.badge');
+    if (badge) {
+      var m = badge.textContent.match(/\d+/);
+      badge.setAttribute('data-total', m ? m[0] : '0');
+      total += parseInt(m ? m[0] : '0', 10);
+    }
+  });
+
+  function apply() {
+    var q = norm(input.value.trim());
+    var shown = 0;
+    wraps.forEach(function (w) {
+      var visible = 0;
+      var rows = w.querySelectorAll('tbody tr');
+      Array.prototype.forEach.call(rows, function (r) {
+        var cell = r.querySelector('td.team');
+        var name = cell ? cell.textContent : '';
+        var match = !q || norm(name).indexOf(q) !== -1;
+        r.style.display = match ? '' : 'none';
+        if (match) visible++;
+      });
+      shown += visible;
+      var badge = w.querySelector('.badge');
+      if (badge) {
+        var t = badge.getAttribute('data-total');
+        badge.textContent = q ? (visible + ' / ' + t + ' equipos') : (t + ' equipos');
+      }
+      w.style.display = (q && visible === 0) ? 'none' : '';
+    });
+    count.textContent = shown + ' / ' + total + ' equipos';
+    noResults.style.display = (q && shown === 0) ? 'block' : 'none';
+  }
+
+  input.addEventListener('input', apply);
+  apply();
+})();
+</script>
+{% endblock %}

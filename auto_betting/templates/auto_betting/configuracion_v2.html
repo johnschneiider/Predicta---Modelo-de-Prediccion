@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Filtro V2 — Auto-Betting Real{% endblock %}
+
+{% block extra_head %}
+<style>
+  .v2-container { max-width: 900px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .v2-header { text-align: center; margin-bottom: 1.6rem; }
+  .v2-header h2 { margin-bottom: 0.4rem; letter-spacing: -0.01em; }
+  .v2-header .subtitle { color: var(--text-secondary); font-size: 0.9rem; }
+  .v2-card {
+    background: var(--bg-surface);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 1.2rem;
+  }
+  .v2-status { display: flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; margin-bottom: 0.8rem; }
+  .v2-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .v2-dot.on { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+  .v2-dot.off { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+  .v2-label { font-size: 0.8rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+  textarea.v2-rules {
+    width: 100%; min-height: 420px; resize: vertical;
+    background: var(--bg-primary); color: var(--text-primary);
+    border: 0.5px solid var(--border-secondary); border-radius: var(--radius-sm);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.82rem; line-height: 1.5; padding: 0.9rem;
+  }
+  textarea.v2-rules:focus { outline: none; border-color: var(--accent-primary); }
+  .v2-actions { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+  .v2-btn {
+    background: var(--accent-primary); color: var(--btn-primary-text);
+    border: none; padding: 0.7rem 1.6rem; border-radius: var(--radius-sm);
+    font-weight: 600; cursor: pointer; font-size: 0.95rem;
+  }
+  .v2-btn:hover { background: var(--accent-hover); }
+  .v2-btn-ghost {
+    background: transparent; color: var(--text-secondary);
+    border: 0.5px solid var(--border-primary); padding: 0.7rem 1.2rem;
+    border-radius: var(--radius-sm); text-decoration: none; font-size: 0.95rem;
+  }
+  .v2-help { font-size: 0.82rem; color: var(--text-tertiary); line-height: 1.6; }
+  .v2-help code { background: var(--bg-primary); padding: 0.1rem 0.35rem; border-radius: 4px; }
+  .v2-errors { background: rgba(239,68,68,0.08); border: 0.5px solid rgba(239,68,68,0.35);
+    color: #fca5a5; border-radius: var(--radius-sm); padding: 0.8rem 1rem; font-size: 0.85rem; margin-bottom: 1rem; }
+  .v2-check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="v2-container">
+  <div class="v2-header">
+    <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-primary);">
+      🧭 Filtro V2 — regla de apuestas real
+    </h2>
+    <div class="subtitle">
+      Solo deja pasar combinaciones <strong>liga × mercado × día</strong> con ROI positivo observado.
+      Auditar semanalmente.
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="message message-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% if errores %}
+    <div class="v2-errors">
+      <strong>Errores de formato:</strong>
+      <ul style="margin: 0.4rem 0 0 1.1rem;">
+        {% for e in errores %}<li>{{ e }}</li>{% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="v2-card">
+    <form method="post">
+      {% csrf_token %}
+      <div class="v2-status">
+        <span class="v2-dot {% if obj.activo %}on{% else %}off{% endif %}"></span>
+        <span>
+          Estado actual: <strong>{% if obj.activo %}ACTIVO{% else %}INACTIVO{% endif %}</strong>
+          · {{ n_reglas }} reglas válidas
+          {% if obj.actualizado_por %}· editado por {{ obj.actualizado_por }}{% endif %}
+        </span>
+      </div>
+
+      <label class="v2-check">
+        <input type="checkbox" name="activo" {% if obj.activo %}checked{% endif %}>
+        Filtro V2 activo (si se desmarca, vuelve el comportamiento sin filtro)
+      </label>
+
+      <div style="margin-top: 1rem;">
+        <div class="v2-label">Reglas (liga | mercado | días)</div>
+        <textarea name="reglas" class="v2-rules">{{ reglas }}</textarea>
+      </div>
+
+      <div class="v2-actions">
+        <button type="submit" class="v2-btn">💾 Guardar reglas</button>
+        <a href="{% url 'auto_betting:configuracion_umbrales' %}" class="v2-btn-ghost">🎯 Umbrales por submercado</a>
+        <span class="v2-help">{{ n_reglas }} reglas activas (líneas con # se ignoran).</span>
+      </div>
+    </form>
+  </div>
+
+  <div class="v2-card">
+    <div class="v2-label" style="margin-bottom: 0.6rem;">Cómo se escribe</div>
+    <div class="v2-help">
+      Una regla por línea: <code>liga | mercado | días</code><br>
+      • <strong>liga</strong>: nombre exacto (ej. <code>Serie A</code>) o <code>*</code> (cualquiera).<br>
+      • <strong>mercado</strong>: <code>goals_over</code>, <code>goals_under</code>, <code>corners_over</code>,
+        <code>corners_under</code>, <code>shots_on_target_over</code>, <code>shots_on_target_under</code>,
+        <code>remates_over</code>, <code>remates_under</code>, <code>btts_si</code>, <code>btts_no</code>,
+        <code>x12</code> — o <code>*</code>.<br>
+      • <strong>días</strong>: <code>lun,mar,mié,jue,vie,sáb,dom</code> — o <code>*</code>.<br>
+      Ejemplo: <code>Serie A | x12 | sáb,jue,vie</code> · <code>* | remates_over | lun,jue,vie,sáb,dom</code>
+    </div>
+  </div>
+</div>
+{% endblock %}

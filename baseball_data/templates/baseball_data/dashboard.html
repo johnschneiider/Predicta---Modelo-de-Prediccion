@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard MLB — Predicta{% endblock %}
+
+{% block extra_head %}
+<style>
+.bb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.bb-stat-card {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md); padding: 1.25rem; text-align: center;
+}
+.bb-stat-card .num { font-size: 1.6rem; font-weight: 700; color: var(--accent-primary); }
+.bb-stat-card .lbl { font-size: 0.78rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+.bb-panel {
+    background: var(--bg-surface); border: 0.5px solid var(--border-primary);
+    border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.bb-panel h3 {
+    font-family: var(--font-heading); font-size: 1.05rem; color: var(--text-primary);
+    margin: 0 0 1rem; padding-bottom: 0.75rem;
+    border-bottom: 0.5px solid var(--border-primary);
+}
+.bb-table-wrap { overflow-x: auto; border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-primary); }
+table.bb-table {
+    width: 100%; border-collapse: collapse; font-size: 0.85rem;
+    background: var(--bg-surface);
+}
+table.bb-table thead th {
+    background: var(--bg-elevated); color: var(--text-tertiary);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    font-size: 0.72rem; padding: 0.7rem 0.6rem; text-align: left;
+    border-bottom: 1px solid var(--border-primary); white-space: nowrap;
+}
+table.bb-table tbody td {
+    padding: 0.55rem 0.6rem; border-bottom: 0.5px solid var(--border-secondary);
+    white-space: nowrap;
+}
+table.bb-table tbody tr:hover td { background: var(--bg-overlay); }
+table.bb-table tbody tr:last-child td { border-bottom: none; }
+.bb-link { color: var(--accent-primary); text-decoration: none; font-weight: 600; }
+.bb-link:hover { text-decoration: underline; }
+.bb-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.bb-btn {
+    background: var(--accent-primary); color: var(--btn-primary-text);
+    border: none; padding: 0.6rem 1.4rem; border-radius: var(--radius-sm);
+    font-weight: 600; cursor: pointer; font-size: 0.9rem; text-decoration: none;
+}
+.bb-btn:hover { background: var(--accent-hover); }
+.bb-btn-ghost {
+    background: transparent; color: var(--text-secondary);
+    border: 0.5px solid var(--border-primary); padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-sm); text-decoration: none; font-size: 0.9rem;
+}
+.bb-btn-ghost:hover { color: var(--text-primary); border-color: var(--accent-primary); }
+.bb-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.4rem 0; }
+.bb-row .k { color: var(--text-secondary); }
+.bb-row .v { color: var(--text-primary); font-variant-numeric: tabular-nums; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+
+  <div class="page-header">
+    <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: var(--text-primary);">
+      ⚾ Dashboard MLB
+    </h2>
+    <p class="page-subtitle">Baseline Poisson + búsqueda de valor en todos los mercados</p>
+  </div>
+
+  <div class="bb-grid">
+    <div class="bb-stat-card"><div class="num">{{ total_teams }}</div><div class="lbl">Equipos</div></div>
+    <div class="bb-stat-card"><div class="num">{{ total_games }}</div><div class="lbl">Partidos</div></div>
+    <div class="bb-stat-card"><div class="num">{{ total_predictions }}</div><div class="lbl">Predicciones</div></div>
+    <div class="bb-stat-card"><div class="num">{{ avg_total }}</div><div class="lbl">Promedio carreras totales</div></div>
+  </div>
+
+  <div class="bb-panel">
+    <h3>Acciones</h3>
+    <div class="bb-actions">
+      <a href="{% url 'baseball_data:value_finder' %}" class="bb-btn">💰 Valor MLB (vs BetPlay)</a>
+      <a href="{% url 'baseball_data:prediction_form' %}" class="bb-btn-ghost">🔮 Predecir partido</a>
+      <a href="{% url 'baseball_data:games_list' %}" class="bb-btn-ghost">📋 Partidos</a>
+      <a href="{% url 'baseball_data:backtest_report' %}" class="bb-btn-ghost">📈 Backtest walking-forward</a>
+    </div>
+  </div>
+
+  {% if backtest %}
+  <div class="bb-panel">
+    <h3>Backtest walking-forward (último)</h3>
+    <div class="bb-row"><span class="k">Partidos evaluados ({{ backtest.season }}, warm {{ backtest.warm_season }})</span><span class="v">{{ backtest.n_games }}</span></div>
+    <div class="bb-row"><span class="k">MAE total de carreras</span><span class="v">{{ backtest.mae_total_runs }}</span></div>
+    <div class="bb-row"><span class="k">RMSE total de carreras</span><span class="v">{{ backtest.rmse_total_runs }}</span></div>
+    {% for key, m in backtest.markets.items %}
+      {% if key == 'total_7.5' or key == 'ml_home' or key == 'rl_home_1.5' or key == 'f5_4.5' %}
+        <div class="bb-row"><span class="k">{{ key }} (n={{ m.n }})</span><span class="v">Brier {{ m.brier }} · skill {{ m.brier_skill }}</span></div>
+      {% endif %}
+    {% endfor %}
+    <div style="margin-top: 0.75rem;">
+      <a href="{% url 'baseball_data:backtest_report' %}" class="bb-link">Ver informe completo →</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="bb-panel">
+    <h3>Partidos recientes</h3>
+    {% if recent_games %}
+      <div class="bb-table-wrap">
+        <table class="bb-table">
+          <thead>
+            <tr><th>Fecha</th><th>Partido</th><th>Marcador</th><th>Total</th></tr>
+          </thead>
+          <tbody>
+            {% for g in recent_games %}
+              <tr>
+                <td>{{ g.date|date:"d/m/Y" }}</td>
+                <td><a href="{% url 'baseball_data:game_detail' g.id %}" class="bb-link">{{ g.away_team.name }} @ {{ g.home_team.name }}</a></td>
+                <td>{{ g.away_runs|default:"—" }} - {{ g.home_runs|default:"—" }}</td>
+                <td>{% if g.total_runs is not None %}{{ g.total_runs }}{% else %}—{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">Sin partidos cargados.</div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

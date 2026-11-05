@@ -3,7 +3,7 @@ Tests del gestor de capital: balance paralelo, resolución de stake por modo
 y protección del escenario "sin saldo".
 """
 
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 from django.test import TestCase
 from django.utils import timezone
@@ -13,8 +13,8 @@ from cuentas.models import Usuario
 
 from .models import CapitalAjuste, CapitalConfig, CapitalLegada
 from .services import (
-    bankroll_cop, get_config, normalizar_stake_cop, resolve_stake,
-    snapshot_legadas,
+    balance_filtrado, balance_timeline, bankroll_cop, get_config,
+    normalizar_stake_cop, resolve_stake, snapshot_legadas,
 )
 
 
@@ -205,6 +205,140 @@ class CapitalServicesTests(TestCase):
         apuesta.save()
         self.assertEqual(bankroll_cop(self.usuario), 50000 - 800 + 1904)
 
+    # ── serie del gráfico: en juego y total ──────────────────────────────
+
+    def test_balance_timeline_en_juego_y_total(self):
+        # OPEN: el stake se descuenta del balance pero sigue siendo dinero
+        # del usuario → en_juego lo refleja y total = balance + en_juego.
+        from .services import balance_timeline
+        self._activar_compuesto(balance=100000)
+        self._historial('OPEN', stake=999000, payout=0, days_ago=0)
+        tl = balance_timeline(self.usuario)
+        self.assertEqual(tl['final'], 100000 - 999)
+        self.assertEqual(tl['en_juego'], 999)
+        self.assertEqual(tl['total'], 100000)
+        ultimo = tl['points'][-1]
+        self.assertEqual(ultimo['total'], ultimo['bal'] + ultimo['en_juego'])
+        self.assertEqual(ultimo['en_juego'], 999)
+
+    def test_balance_timeline_al_asentar_sale_de_en_juego(self):
+        from .services import balance_timeline
+        self._activar_compuesto(balance=100000)
+        apuesta = self._historial('OPEN', stake=500000, payout=0, days_ago=1)
+        self.assertEqual(balance_timeline(self.usuario)['total'], 100000)
+        apuesta.bet_status = 'WON'
+        apuesta.payout = 950000
+        apuesta.save()
+        tl = balance_timeline(self.usuario)
+        # −500 (stake) + 950 (payout) = +450 → balance 100450, nada en juego.
+        self.assertEqual(tl['final'], 100450)
+        self.assertEqual(tl['en_juego'], 0)
+        self.assertEqual(tl['total'], 100450)
+
+    # ── modo filtrado: dinero de los partidos del rango ──────────────────
+
+    def test_balance_timeline_filtrado_muestra_dinero_de_partidos(self):
+        from datetime import datetime, time as dtime
+        from .services import balance_timeline
+        self._activar_compuesto(balance=100000)
+        hoy = timezone.localdate()
+        # WON con partido HOY 08:00 → asienta ~11:00: realizado +450
+        ganada = self._historial('WON', stake=500000, payout=950000, days_ago=1)
+        ganada.event_start_date = timezone.make_aware(datetime.combine(hoy, dtime(8, 0)))
+        ganada.save()
+        # OPEN con partido HOY 20:00 → en juego 800
+        abierta = self._historial('OPEN', stake=800000, payout=0, days_ago=1)
+        abierta.event_start_date = timezone.make_aware(datetime.combine(hoy, dtime(20, 0)))
+        abierta.save()
+        # OPEN con partido en 5 días → fuera del rango, no cuenta
+        fuera = self._historial('OPEN', stake=999000, payout=0, days_ago=1)
+        fuera.event_start_date = timezone.make_aware(
+            datetime.combine(hoy + timedelta(days=5), dtime(20, 0)))
+        fuera.save()
+
+        tl = balance_timeline(self.usuario, desde=hoy, hasta=hoy)
+        self.assertTrue(tl['filtrado'])
+        self.assertEqual(tl['en_juego'], 800)
+        self.assertEqual(tl['realizado'], 450)
+        self.assertEqual(tl['total'], 1250)
+        for p in tl['points']:
+            self.assertEqual(p['total'], p['en_juego'] + p['realizado'])
+        self.assertEqual(tl['points'][-1]['total'], 1250)
+
+        # Sin filtro: modo cuenta (bal + en juego de toda la cuenta).
+        full = balance_timeline(self.usuario)
+        self.assertFalse(full['filtrado'])
+        self.assertEqual(full['en_juego'], 800 + 999)
+        self.assertEqual(full['total'], full['bankroll'] + full['en_juego'])
+
+    def test_balance_timeline_filtrado_incluye_autobet_pendiente(self):
+        from .services import balance_timeline
+        self._activar_compuesto(balance=50000)
+        self._autobet_open(stake=800000, coupon_ref=888000001)
+        hoy = timezone.localdate()
+        tl = balance_timeline(self.usuario, desde=hoy, hasta=hoy)
+        self.assertTrue(tl['filtrado'])
+        self.assertEqual(tl['en_juego'], 800)
+        self.assertEqual(tl['realizado'], 0)
+        self.assertEqual(tl['total'], 800)
+
+    # ── crecimiento del capital por rango (tarjeta del historial) ────────
+
+    def test_crecimiento_capital_sin_fechas_usa_todo_el_periodo(self):
+        # Regresión 2026-10-12: sin filtros la tarjeta desaparecía.
+        from .services import crecimiento_capital
+        self._activar_compuesto(balance=100000)
+        self._historial('WON', stake=500000, payout=1000000, days_ago=1)  # +500
+        c = crecimiento_capital(self.usuario)
+        self.assertIsNotNone(c)
+        self.assertFalse(c['sin_datos'])
+        self.assertEqual(c['inicio'], 100000)
+        self.assertEqual(c['fin'], 100500)
+        self.assertEqual(c['delta'], 500)
+        self.assertEqual(c['pct'], 0.5)
+        self.assertEqual(c['fecha_fin'], timezone.localdate().strftime('%d/%m'))
+
+    def test_crecimiento_capital_rango_antes_del_ancla_no_desaparece(self):
+        # Regresión 2026-10-12: un rango anterior al ancla ocultaba la tarjeta.
+        from .services import crecimiento_capital
+        self._activar_compuesto(balance=100000)  # ancla: hace 10 días
+        hoy = timezone.localdate()
+        c = crecimiento_capital(self.usuario,
+                                desde=hoy - timedelta(days=30),
+                                hasta=hoy - timedelta(days=20))
+        self.assertIsNotNone(c)
+        self.assertTrue(c['sin_datos'])
+        self.assertEqual(c['motivo'], 'antes_ancla')
+        self.assertIsNone(c['pct'])
+        self.assertIsNone(c['delta'])
+
+    def test_crecimiento_capital_rango_futuro_sin_movimientos(self):
+        from .services import crecimiento_capital
+        self._activar_compuesto(balance=100000)
+        hoy = timezone.localdate()
+        c = crecimiento_capital(self.usuario,
+                                desde=hoy + timedelta(days=5),
+                                hasta=hoy + timedelta(days=8))
+        self.assertTrue(c['sin_datos'])
+        self.assertEqual(c['motivo'], 'sin_movimientos')
+
+    def test_crecimiento_capital_desde_antes_del_ancla_arranca_en_el_ancla(self):
+        from .services import crecimiento_capital
+        cfg = self._activar_compuesto(balance=100000)
+        self._historial('WON', stake=500000, payout=1000000, days_ago=3)  # +500
+        hoy = timezone.localdate()
+        c = crecimiento_capital(self.usuario, desde=hoy - timedelta(days=20), hasta=hoy)
+        self.assertFalse(c['sin_datos'])
+        self.assertEqual(c['inicio'], 100000)
+        self.assertEqual(c['fin'], 100500)
+        self.assertEqual(c['pct'], 0.5)
+        self.assertEqual(c['fecha_inicio'],
+                         timezone.localtime(cfg.ancla).date().strftime('%d/%m'))
+
+    def test_crecimiento_capital_sin_modo_compuesto_devuelve_none(self):
+        from .services import crecimiento_capital
+        self.assertIsNone(crecimiento_capital(self.usuario))
+
     # ── navegación / context processor ───────────────────────────────────
     def test_navbar_balance_solo_con_modo_activado(self):
         from django.test import RequestFactory
@@ -390,3 +524,143 @@ class ResolveStakeAntibloqueoTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data['stake'], 500000)
         self.assertEqual(form._stake_ajustado, (525, 500))
+
+
+class BalanceFiltradoTests(TestCase):
+    """Serie de la tarjeta nueva: saldo real recortado o aporte filtrado."""
+
+    def setUp(self):
+        self.usuario = Usuario.objects.create_user(
+            email='filtrado@test.com', username='filtrado', password='x',
+        )
+        self.cfg = get_config(self.usuario)
+        self.cfg.modo = CapitalConfig.MODO_COMPUESTO
+        self.cfg.balance_inicial = 100000
+        self.cfg.ancla = timezone.now() - timedelta(days=10)
+        self.cfg.save()
+        self._seq = 0
+
+    def _apuesta(self, status, stake, payout=0, sport='FOOTBALL',
+                 is_system=True, placed_days_ago=3, event_hours_ago=None):
+        """Crea una apuesta con fechas relativas; stake/payout en Kambi."""
+        self._seq += 1
+        event = None
+        if event_hours_ago is not None:
+            event = timezone.now() - timedelta(hours=event_hours_ago)
+        return HistorialApuesta.objects.create(
+            usuario=self.usuario,
+            coupon_ref=880000000 + self._seq,
+            placed_date=timezone.now() - timedelta(days=placed_days_ago),
+            event_start_date=event,
+            bet_status=status, stake=stake, payout=payout,
+            sport=sport, is_system=is_system,
+        )
+
+    def test_sin_filtros_devuelve_balance_timeline(self):
+        self._apuesta('WON', stake=500000, payout=950000,
+                      event_hours_ago=30)
+        esperado = balance_timeline(self.usuario)
+        obtenido = balance_filtrado(self.usuario)
+        self.assertEqual(obtenido['points'], esperado['points'])
+        self.assertEqual(obtenido['inicial'], esperado['inicial'])
+        self.assertEqual(obtenido['final'], esperado['final'])
+        self.assertEqual(obtenido['modo'], 'real')
+        self.assertFalse(obtenido['filtrado'])
+        self.assertFalse(obtenido['parcial'])
+
+    def test_solo_fechas_recorta_y_arranca_en_saldo_real(self):
+        # Antes de la ventana: su stake ya está reflejado en el saldo real
+        # de partida; NO se vuelve a descontar.
+        self._apuesta('LOST', stake=10000, payout=0, placed_days_ago=8,
+                      event_hours_ago=24 * 7)
+        # Dentro de la ventana: WON con +20 COP netos.
+        self._apuesta('WON', stake=20000, payout=50000, placed_days_ago=3,
+                      event_hours_ago=48)
+        # OPEN dentro: −5 COP.
+        self._apuesta('OPEN', stake=5000, payout=0, placed_days_ago=1)
+
+        hoy = timezone.localdate()
+        desde = hoy - timedelta(days=5)
+        serie = balance_filtrado(self.usuario, desde=desde, hasta=hoy)
+
+        self.assertEqual(serie['modo'], 'real')
+        self.assertTrue(serie['filtrado'])
+        self.assertFalse(serie['parcial'])
+        self.assertEqual(serie['inicial'], 99990)   # 100000 − 10 previos
+        self.assertEqual(serie['final'], 100015)    # −20 +50 −5
+
+        inicio = timezone.make_aware(datetime.combine(desde, time.min))
+        fin = timezone.make_aware(datetime.combine(hoy, time.max))
+        self.assertEqual(datetime.fromisoformat(serie['points'][0]['t']), inicio)
+        self.assertEqual(serie['points'][0]['bal'], 99990)
+        self.assertEqual(datetime.fromisoformat(serie['points'][-1]['t']), fin)
+        self.assertEqual(serie['points'][-1]['bal'], 100015)
+        for p in serie['points']:
+            t = datetime.fromisoformat(p['t'])
+            self.assertGreaterEqual(t, inicio)
+            self.assertLessEqual(t, fin)
+
+    def test_sport_cambia_la_serie_y_usa_modo_filtrado(self):
+        self._apuesta('WON', stake=10000, payout=30000, sport='FOOTBALL',
+                      placed_days_ago=2, event_hours_ago=30)
+        self._apuesta('LOST', stake=50000, payout=0, sport='BASKETBALL',
+                      placed_days_ago=2, event_hours_ago=30)
+
+        hoy = timezone.localdate()
+        desde = hoy - timedelta(days=5)
+        futbol = balance_filtrado(
+            self.usuario, desde=desde, hasta=hoy, sport='FOOTBALL')
+        basket = balance_filtrado(
+            self.usuario, desde=desde, hasta=hoy, sport='BASKETBALL')
+        todos = balance_filtrado(self.usuario, desde=desde, hasta=hoy)
+
+        self.assertEqual(futbol['modo'], 'filtrado')
+        self.assertTrue(futbol['filtrado'])
+        self.assertTrue(futbol['parcial'])
+        self.assertEqual(basket['modo'], 'filtrado')
+        self.assertEqual(todos['modo'], 'real')
+        self.assertEqual(futbol['inicial'], 100000)
+        self.assertEqual(futbol['final'], 100020)   # −10 +30
+        self.assertEqual(basket['final'], 99950)    # −50
+        self.assertEqual(todos['final'], 99970)     # ambos aportes
+        self.assertNotEqual(futbol['points'], basket['points'])
+        self.assertNotEqual(futbol['points'], todos['points'])
+        self.assertTrue(all(set(p) == {'t', 'bal'} for p in futbol['points']))
+
+    def test_tipo_sistema_y_manual_filtran(self):
+        self._apuesta('WON', stake=10000, payout=20000, sport='FOOTBALL',
+                      is_system=True, placed_days_ago=2, event_hours_ago=30)
+        self._apuesta('LOST', stake=30000, payout=0, sport='BASKETBALL',
+                      is_system=False, placed_days_ago=2, event_hours_ago=30)
+
+        hoy = timezone.localdate()
+        desde = hoy - timedelta(days=5)
+        sistema = balance_filtrado(
+            self.usuario, desde=desde, hasta=hoy, tipo='sistema')
+        manual = balance_filtrado(
+            self.usuario, desde=desde, hasta=hoy, tipo='manual')
+        todos = balance_filtrado(self.usuario, desde=desde, hasta=hoy)
+
+        self.assertEqual(sistema['modo'], 'filtrado')
+        self.assertEqual(manual['modo'], 'filtrado')
+        self.assertTrue(sistema['parcial'])
+        self.assertTrue(manual['parcial'])
+        self.assertEqual(sistema['final'], 100010)  # +10
+        self.assertEqual(manual['final'], 99970)    # −30
+        self.assertEqual(todos['final'], 99980)     # ambos
+        self.assertNotEqual(sistema['points'], manual['points'])
+
+    def test_sin_ancla_o_balance_devuelve_none(self):
+        otro = Usuario.objects.create_user(
+            email='sinancla@test.com', username='sinancla', password='x',
+        )
+        self.assertIsNone(balance_filtrado(otro))
+        cfg = get_config(otro)
+        cfg.balance_inicial = 100000
+        cfg.save()
+        self.assertIsNone(balance_filtrado(otro))
+
+    def test_rango_invertido_devuelve_none(self):
+        hoy = timezone.localdate()
+        self.assertIsNone(balance_filtrado(
+            self.usuario, desde=hoy, hasta=hoy - timedelta(days=2)))
