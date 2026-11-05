@@ -70,7 +70,7 @@ def login(ticket, punter_id="2585240"):
             and _cached_ticket == ticket
             and _cached_punter_id == punter_id
             and time.time() < _token_expires_at - 300):  # >5 min de validez
-        logger.info(f"Login BetPlay OK (cached) | token={_cached_token[:8]}...")
+        logger.info("Login BetPlay OK (cached)")
         return _cached_token, _cached_routing_key
 
     body = {
@@ -83,7 +83,7 @@ def login(ticket, punter_id="2585240"):
     }
     status, data = _req(f"{AUTH_BASE}/punter/login?lang=es_CO&market=CO", "POST", body)
     if status == 200 and "token" in data:
-        logger.info(f"Login BetPlay OK | token={data['token'][:8]}... | currency={data.get('currency')}")
+        logger.info(f"Login BetPlay OK | currency={data.get('currency')}")
         # Cache por 55 min (token dura 60 min, dejamos 5 min de margen)
         _cached_token = data["token"]
         _cached_routing_key = data.get("routingKey", "")
@@ -304,6 +304,9 @@ def fetch_btts_odds(event_id):
 
 def _build_coupon(outcome, event_data, stake=500000):
     """Construye el body del cupón para validar/colocar."""
+    is_live = outcome.get("is_live")
+    is_live_flag = True if is_live is None else bool(is_live)
+    is_prematch_flag = True if is_live is None else not bool(is_live)
     return {
         "couponRows": [
             {"index": 0, "odds": outcome["odds"], "outcomeId": outcome["outcome_id"], "type": "SIMPLE"}
@@ -331,7 +334,7 @@ def _build_coupon(outcome, event_data, stake=500000):
                 "betOfferTags": outcome.get("betoffer_tags", []),
                 "criterion": outcome.get("criterion", {}),
                 "eachWayApproved": True, "fromBetBuilder": True, "fromPrePack": False,
-                "isLiveBetoffer": True, "isPrematchBetoffer": True, "oddsApproved": True,
+                "isLiveBetoffer": is_live_flag, "isPrematchBetoffer": is_prematch_flag, "oddsApproved": True,
                 "label": outcome["label"], "line": int(outcome["line"] * 1000) if outcome.get("line") else None,
                 "type": outcome["type"], "status": outcome["status"],
                 "odds": outcome["odds"], "displayOrder": outcome.get("display_order", 0),
@@ -358,20 +361,35 @@ def validate_coupon(token, outcome, event_data, stake=500000):
 
 
 def place_bet(token, outcome, event_data, stake=500000):
-    """Coloca una apuesta. Devuelve (success, response)."""
+    """Coloca una apuesta. Devuelve (success, response).
+
+    Incidente 2026-11-04/05: en apuestas EN VIVO, Kambi responde
+    status=LIVE_DELAY_PENDING con couponRef, pero la apuesta SÍ queda
+    aceptada. Al tratarlo como fallo, el motor no registraba AutoBet y
+    reintentaba cada N minutos → apuestas reales repetidas del mismo
+    evento/mercado. Ahora: si la respuesta trae couponRef (SUCCESS o
+    LIVE_DELAY_PENDING), la apuesta se da por colocada y única.
+    """
     body = _build_coupon(outcome, event_data, stake)
     status, data = _req(
         f"{AUTH_BASE}/coupon.json?{COMMON_PARAMS}",
         "POST", body, _auth_headers(token)
     )
-    if status == 200 and data.get("status") == "SUCCESS":
-        coupon = data.get("coupon", {})
-        return True, {
-            "coupon_ref": coupon.get("couponRef"),
-            "bet_ref": coupon.get("bets", [{}])[0].get("betRef") if coupon.get("bets") else None,
-            "potential_payout": coupon.get("bets", [{}])[0].get("potentialPayout") if coupon.get("bets") else None,
-            "played_odds": coupon.get("bets", [{}])[0].get("playedOdds") if coupon.get("bets") else None,
-        }
+    if status == 200:
+        st = data.get("status")
+        coupon = data.get("coupon") or {}
+        coupon_ref = coupon.get("couponRef") or data.get("couponRef")
+        aceptado = st == "SUCCESS" or (st == "LIVE_DELAY_PENDING" and coupon_ref)
+        if aceptado:
+            bets = coupon.get("bets") or []
+            first = bets[0] if bets else {}
+            return True, {
+                "coupon_ref": coupon_ref,
+                "bet_ref": first.get("betRef"),
+                "potential_payout": first.get("potentialPayout"),
+                "played_odds": first.get("playedOdds"),
+                "delay_pending": st == "LIVE_DELAY_PENDING",
+            }
     return False, data
 
 
@@ -641,6 +659,27 @@ def sync_historial(since_str='2026-08-01', usuario=None):
                     'que no existen en BetPlay (cuenta/ticket distinto o cupón cancelado).'
                 )
 
+    # ── Sync de estado AutoBet ← HistorialApuesta (2026-10-05) ──
+    # AutoBet nacía y quedaba OPEN para siempre; la liquidación real vive en
+    # HistorialApuesta (sync de BetPlay). Reconciliamos por coupon_ref para que
+    # la página de seguimiento muestre el estado real (WIN/LOSE/VOID/CASHOUT).
+    _STATUS_MAP = {
+        'WON': 'WIN', 'HALF_WON': 'WIN',
+        'LOST': 'LOSE', 'HALF_LOST': 'LOSE',
+        'VOID': 'VOID', 'CANCELLED': 'VOID',
+        'CASHOUT': 'CASHOUT',
+    }
+    _grupos = {}
+    for _ref, _st in HistorialApuesta.objects.filter(usuario=owner).values_list('coupon_ref', 'bet_status'):
+        _mapped = _STATUS_MAP.get((_st or '').upper())
+        if _mapped and _ref:
+            _grupos.setdefault(_mapped, []).append(_ref)
+    estados_sync = 0
+    for _mapped, _refs in _grupos.items():
+        estados_sync += AutoBet.objects.filter(
+            usuario=owner, coupon_ref__in=_refs,
+        ).exclude(estado=_mapped).update(estado=_mapped, actualizado=now)
+
     return {
         'ok': True,
         'borrados': borrados,
@@ -649,5 +688,6 @@ def sync_historial(since_str='2026-08-01', usuario=None):
         'omitidos': omitidos,
         'snapshots': snapshots,
         'borrados_ghost': borrados_ghost,
+        'estados_sync': estados_sync,
         'total': HistorialApuesta.objects.filter(usuario=owner).count(),
     }
