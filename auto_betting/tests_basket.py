@@ -1300,6 +1300,22 @@ class PlaceBetLiveDelayTests(TestCase):
         self.assertTrue(resp['delay_pending'])
 
     @mock.patch('auto_betting.services._req')
+    def test_live_delay_con_couponref_http_202_es_exito(self, req):
+        # Incidente 2026-11-05/06: Kambi devolvió el cupón aceptado con
+        # HTTP distinto de 200; el guard `status == 200` dejaba pasar el
+        # fallo y el motor repetía la apuesta real.
+        req.return_value = (202, {
+            'status': 'LIVE_DELAY_PENDING', 'delayBeforeAcceptingBet': 3,
+            'couponRef': 13325023702,
+            'coupon': {'couponRef': 13325023702},
+        })
+        ok, resp = ab.place_bet('t', self._out(),
+                                {'event_id': 9, 'path': []}, 25000000)
+        self.assertTrue(ok)
+        self.assertEqual(resp['coupon_ref'], 13325023702)
+        self.assertTrue(resp['delay_pending'])
+
+    @mock.patch('auto_betting.services._req')
     def test_live_delay_sin_couponref_sigue_siendo_fallo(self, req):
         req.return_value = (200, {
             'status': 'LIVE_DELAY_PENDING', 'delayBeforeAcceptingBet': 1})

@@ -363,19 +363,20 @@ def validate_coupon(token, outcome, event_data, stake=500000):
 def place_bet(token, outcome, event_data, stake=500000):
     """Coloca una apuesta. Devuelve (success, response).
 
-    Incidente 2026-11-04/05: en apuestas EN VIVO, Kambi responde
-    status=LIVE_DELAY_PENDING con couponRef, pero la apuesta SÍ queda
-    aceptada. Al tratarlo como fallo, el motor no registraba AutoBet y
-    reintentaba cada N minutos → apuestas reales repetidas del mismo
-    evento/mercado. Ahora: si la respuesta trae couponRef (SUCCESS o
-    LIVE_DELAY_PENDING), la apuesta se da por colocada y única.
+    Incidentes 2026-11-04/05 y 2026-11-05/06: en apuestas EN VIVO, Kambi
+    responde status=LIVE_DELAY_PENDING con couponRef (a veces con HTTP
+    distinto de 200), pero la apuesta SÍ queda aceptada. Al tratarlo como
+    fallo, el motor no registraba AutoBet y reintentaba cada N minutos →
+    apuestas reales repetidas del mismo evento/mercado. Ahora: si el
+    cuerpo trae couponRef (SUCCESS o LIVE_DELAY_PENDING), la apuesta se
+    da por colocada y única, SIN depender del código HTTP.
     """
     body = _build_coupon(outcome, event_data, stake)
     status, data = _req(
         f"{AUTH_BASE}/coupon.json?{COMMON_PARAMS}",
         "POST", body, _auth_headers(token)
     )
-    if status == 200:
+    if isinstance(data, dict):
         st = data.get("status")
         coupon = data.get("coupon") or {}
         coupon_ref = coupon.get("couponRef") or data.get("couponRef")
@@ -390,6 +391,11 @@ def place_bet(token, outcome, event_data, stake=500000):
                 "played_odds": first.get("playedOdds"),
                 "delay_pending": st == "LIVE_DELAY_PENDING",
             }
+        logger.warning(
+            f"place_bet falló: HTTP={status} kambi_status={st} "
+            f"couponRef={coupon_ref} body={str(data)[:160]}")
+    else:
+        logger.warning(f"place_bet falló: HTTP={status} body={str(data)[:160]}")
     return False, data
 
 
